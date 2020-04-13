@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_height="match_parent"
+    android:layout_width="match_parent"
+    android:background="#eeeeee"
+    android:clickable="true"
+    android:focusable="true"
+    android:orientation="vertical"
+    >
+
+    <LinearLayout
+        android:id="@+id/custom_list_linear_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="5dp">
+
+        <EditText
+            android:id="@+id/custom_list_add_text"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:autofillHints="@string/custom_list_text_hint"
+            android:imeOptions="actionDone"
+            android:inputType="textUri"
+            android:hint="@string/custom_list_text_hint"
+
+            />
+        <ImageButton
+            android:id="@+id/custom_list_add_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:contentDescription="@string/custom_list_button_description"
+            android:background="@null"
+            android:src="@android:drawable/ic_input_add"
+            android:padding="5dp"
+            />
+    </LinearLayout>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/custom_list_recycler_view"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:padding="10dp"
+        android:layout_weight="1"
+        android:dividerHeight="2dp"
+        android:visibility="gone"
+    />
+
+    <ProgressBar
+        android:id="@+id/custom_list_recycler_progress"
+        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"
+        android:visibility="visible"
+        android:layout_gravity="center_vertical|center_horizontal"
+        android:gravity="center_vertical|center_horizontal"
+        />
+
+</LinearLayout>

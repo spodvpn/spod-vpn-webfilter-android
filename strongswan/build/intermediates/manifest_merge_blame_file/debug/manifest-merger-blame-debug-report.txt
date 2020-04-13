@@ -1,0 +1,201 @@
+1<?xml version="1.0" encoding="utf-8"?>
+2<!--
+3    Copyright (C) 2012-2018 Tobias Brunner
+4    Copyright (C) 2012 Giuliano Grassi
+5    Copyright (C) 2012 Ralf Sager
+6    HSR Hochschule fuer Technik Rapperswil
+7
+8    This program is free software; you can redistribute it and/or modify it
+9    under the terms of the GNU General Public License as published by the
+10    Free Software Foundation; either version 2 of the License, or (at your
+11    option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+12
+13    This program is distributed in the hope that it will be useful, but
+14    WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+15    or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+16    for more details.
+17-->
+18<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+19    package="org.strongswan.android"
+20    android:versionCode="69"
+21    android:versionName="2.2.1" >
+22
+23    <uses-sdk
+24        android:minSdkVersion="15"
+24-->/Users/rafael/SpodVPNWebFilter/strongswan/src/main/AndroidManifest.xml
+25        android:targetSdkVersion="28" />
+25-->/Users/rafael/SpodVPNWebFilter/strongswan/src/main/AndroidManifest.xml
+26
+27    <uses-permission android:name="android.permission.INTERNET" />
+27-->/Users/rafael/SpodVPNWebFilter/strongswan/src/main/AndroidManifest.xml:21:5-67
+27-->/Users/rafael/SpodVPNWebFilter/strongswan/src/main/AndroidManifest.xml:21:22-64
+28    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+28-->/Users/rafael/SpodVPNWebFilter/strongswan/src/main/AndroidManifest.xml:22:5-79
+28-->/Users/rafael/SpodVPNWebFilter/strongswan/src/main/AndroidManifest.xml:22:22-76
+29    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+29-->/Users/rafael/SpodVPNWebFilter/strongswan/src/main/AndroidManifest.xml:23:5-77
+29-->/Users/rafael/SpodVPNWebFilter/strongswan/src/main/AndroidManifest.xml:23:22-74
+30    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+30-->/Users/rafael/SpodVPNWebFilter/strongswan/src/main/AndroidManifest.xml:24:5-80
+30-->/Users/rafael/SpodVPNWebFilter/strongswan/src/main/AndroidManifest.xml:24:22-77
+31
+32    <application
+32-->/Users/rafael/SpodVPNWebFilter/strongswan/src/main/AndroidManifest.xml:26:5-109:19
+33        android:name="org.strongswan.android.logic.StrongSwanApplication"
+33-->/Users/rafael/SpodVPNWebFilter/strongswan/src/main/AndroidManifest.xml:27:9-52
+34        android:allowBackup="false"
+34-->/Users/rafael/SpodVPNWebFilter/strongswan/src/main/AndroidManifest.xml:31:9-36
+35        android:icon="@mipmap/ic_launcher"
+35-->/Users/rafael/SpodVPNWebFilter/strongswan/src/main/AndroidManifest.xml:28:9-43
+36        android:label="@string/app_name"
+36-->/Users/rafael/SpodVPNWebFilter/strongswan/src/main/AndroidManifest.xml:29:9-41
+37        android:networkSecurityConfig="@xml/network_security_config" >
+37-->/Users/rafael/SpodVPNWebFilter/strongswan/src/main/AndroidManifest.xml:30:9-69
+38        <activity
+38-->/Users/rafael/SpodVPNWebFilter/strongswan/src/main/AndroidManifest.xml:32:9-39:20
+39            android:name="org.strongswan.android.ui.MainActivity"
+39-->/Users/rafael/SpodVPNWebFilter/strongswan/src/main/AndroidManifest.xml:33:13-44
+40            android:label="@string/main_activity_name"
+40-->/Users/rafael/SpodVPNWebFilter/strongswan/src/main/AndroidManifest.xml:34:13-55
+41            android:launchMode="singleTop" >
+41-->/Users/rafael/SpodVPNWebFilter/strongswan/src/main/AndroidManifest.xml:35:13-43
+42            <intent-filter>
+42-->/Users/rafael/SpodVPNWebFilter/strongswan/src/main/AndroidManifest.xml:36:13-38:29
+43                <action android:name="android.intent.action.MAIN" />
+43-->/Users/rafael/SpodVPNWebFilter/strongswan/src/main/AndroidManifest.xml:37:17-69
+43-->/Users/rafael/SpodVPNWebFilter/strongswan/src/main/AndroidManifest.xml:37:25-66
+44            </intent-filter>
+45        </activity>
+46        <activity
+46-->/Users/rafael/SpodVPNWebFilter/strongswan/src/main/AndroidManifest.xml:40:9-54:20
+47            android:name="org.strongswan.android.ui.VpnProfileControlActivity"
+47-->/Users/rafael/SpodVPNWebFilter/strongswan/src/main/AndroidManifest.xml:41:13-57
+48            android:excludeFromRecents="true"
+48-->/Users/rafael/SpodVPNWebFilter/strongswan/src/main/AndroidManifest.xml:44:13-46
+49            android:launchMode="singleTask"
+49-->/Users/rafael/SpodVPNWebFilter/strongswan/src/main/AndroidManifest.xml:45:13-44
+50            android:taskAffinity=""
+50-->/Users/rafael/SpodVPNWebFilter/strongswan/src/main/AndroidManifest.xml:43:13-36
+51            android:theme="@style/TransparentActivity" >
+51-->/Users/rafael/SpodVPNWebFilter/strongswan/src/main/AndroidManifest.xml:42:13-55
+52            <intent-filter>
+52-->/Users/rafael/SpodVPNWebFilter/strongswan/src/main/AndroidManifest.xml:46:13-49:29
+53                <action android:name="org.strongswan.android.action.START_PROFILE" />
+53-->/Users/rafael/SpodVPNWebFilter/strongswan/src/main/AndroidManifest.xml:47:17-86
+53-->/Users/rafael/SpodVPNWebFilter/strongswan/src/main/AndroidManifest.xml:47:25-83
+54
+55                <category android:name="android.intent.category.DEFAULT" />
+55-->/Users/rafael/SpodVPNWebFilter/strongswan/src/main/AndroidManifest.xml:48:17-76
+55-->/Users/rafael/SpodVPNWebFilter/strongswan/src/main/AndroidManifest.xml:48:27-73
+56            </intent-filter>
+57            <intent-filter>
+57-->/Users/rafael/SpodVPNWebFilter/strongswan/src/main/AndroidManifest.xml:50:13-53:29
+58                <action android:name="org.strongswan.android.action.DISCONNECT" />
+58-->/Users/rafael/SpodVPNWebFilter/strongswan/src/main/AndroidManifest.xml:51:17-83
+58-->/Users/rafael/SpodVPNWebFilter/strongswan/src/main/AndroidManifest.xml:51:25-80
+59
+60                <category android:name="android.intent.category.DEFAULT" />
+60-->/Users/rafael/SpodVPNWebFilter/strongswan/src/main/AndroidManifest.xml:48:17-76
+60-->/Users/rafael/SpodVPNWebFilter/strongswan/src/main/AndroidManifest.xml:48:27-73
+61            </intent-filter>
+62        </activity>
+63        <activity android:name="org.strongswan.android.ui.VpnProfileDetailActivity" >
+63-->/Users/rafael/SpodVPNWebFilter/strongswan/src/main/AndroidManifest.xml:56:9-58:20
+63-->/Users/rafael/SpodVPNWebFilter/strongswan/src/main/AndroidManifest.xml:57:13-56
+64        </activity>
+65        <activity
+65-->/Users/rafael/SpodVPNWebFilter/strongswan/src/main/AndroidManifest.xml:59:9-62:20
+66            android:name="org.strongswan.android.ui.TrustedCertificatesActivity"
+66-->/Users/rafael/SpodVPNWebFilter/strongswan/src/main/AndroidManifest.xml:60:13-59
+67            android:label="@string/trusted_certs_title" >
+67-->/Users/rafael/SpodVPNWebFilter/strongswan/src/main/AndroidManifest.xml:61:13-56
+68        </activity>
+69        <activity
+69-->/Users/rafael/SpodVPNWebFilter/strongswan/src/main/AndroidManifest.xml:63:9-66:20
+70            android:name="org.strongswan.android.ui.SelectedApplicationsActivity"
+70-->/Users/rafael/SpodVPNWebFilter/strongswan/src/main/AndroidManifest.xml:64:13-60
+71            android:label="@string/profile_select_apps" >
+71-->/Users/rafael/SpodVPNWebFilter/strongswan/src/main/AndroidManifest.xml:65:13-56
+72        </activity>
+73        <activity
+73-->/Users/rafael/SpodVPNWebFilter/strongswan/src/main/AndroidManifest.xml:67:9-70:20
+74            android:name="org.strongswan.android.ui.LogActivity"
+74-->/Users/rafael/SpodVPNWebFilter/strongswan/src/main/AndroidManifest.xml:68:13-43
+75            android:label="@string/log_title" >
+75-->/Users/rafael/SpodVPNWebFilter/strongswan/src/main/AndroidManifest.xml:69:13-46
+76        </activity>
+77        <activity
+77-->/Users/rafael/SpodVPNWebFilter/strongswan/src/main/AndroidManifest.xml:71:3-74:20
+78            android:name="org.strongswan.android.ui.SettingsActivity"
+78-->/Users/rafael/SpodVPNWebFilter/strongswan/src/main/AndroidManifest.xml:72:13-48
+79            android:label="@string/pref_title" >
+79-->/Users/rafael/SpodVPNWebFilter/strongswan/src/main/AndroidManifest.xml:73:13-47
+80        </activity>
+81        <activity
+81-->/Users/rafael/SpodVPNWebFilter/strongswan/src/main/AndroidManifest.xml:75:9-78:20
+82            android:name="org.strongswan.android.ui.RemediationInstructionsActivity"
+82-->/Users/rafael/SpodVPNWebFilter/strongswan/src/main/AndroidManifest.xml:76:13-63
+83            android:label="@string/remediation_instructions_title" >
+83-->/Users/rafael/SpodVPNWebFilter/strongswan/src/main/AndroidManifest.xml:77:13-67
+84        </activity>
+85        <activity
+85-->/Users/rafael/SpodVPNWebFilter/strongswan/src/main/AndroidManifest.xml:79:9-87:20
+86            android:name="org.strongswan.android.ui.VpnProfileSelectActivity"
+86-->/Users/rafael/SpodVPNWebFilter/strongswan/src/main/AndroidManifest.xml:80:13-56
+87            android:icon="@mipmap/ic_shortcut"
+87-->/Users/rafael/SpodVPNWebFilter/strongswan/src/main/AndroidManifest.xml:82:13-47
+88            android:label="@string/strongswan_shortcut" >
+88-->/Users/rafael/SpodVPNWebFilter/strongswan/src/main/AndroidManifest.xml:81:13-56
+89            <intent-filter>
+89-->/Users/rafael/SpodVPNWebFilter/strongswan/src/main/AndroidManifest.xml:83:13-86:29
+90                <action android:name="android.intent.action.CREATE_SHORTCUT" />
+90-->/Users/rafael/SpodVPNWebFilter/strongswan/src/main/AndroidManifest.xml:84:17-80
+90-->/Users/rafael/SpodVPNWebFilter/strongswan/src/main/AndroidManifest.xml:84:25-77
+91
+92                <category android:name="android.intent.category.DEFAULT" />
+92-->/Users/rafael/SpodVPNWebFilter/strongswan/src/main/AndroidManifest.xml:48:17-76
+92-->/Users/rafael/SpodVPNWebFilter/strongswan/src/main/AndroidManifest.xml:48:27-73
+93            </intent-filter>
+94        </activity>
+95
+96        <service
+96-->/Users/rafael/SpodVPNWebFilter/strongswan/src/main/AndroidManifest.xml:88:9-91:19
+97            android:name="org.strongswan.android.logic.VpnStateService"
+97-->/Users/rafael/SpodVPNWebFilter/strongswan/src/main/AndroidManifest.xml:89:13-50
+98            android:exported="false" >
+98-->/Users/rafael/SpodVPNWebFilter/strongswan/src/main/AndroidManifest.xml:90:13-37
+99        </service>
+100        <service
+100-->/Users/rafael/SpodVPNWebFilter/strongswan/src/main/AndroidManifest.xml:92:9-99:19
+101            android:name="org.strongswan.android.logic.CharonVpnService"
+101-->/Users/rafael/SpodVPNWebFilter/strongswan/src/main/AndroidManifest.xml:93:13-51
+102            android:exported="false"
+102-->/Users/rafael/SpodVPNWebFilter/strongswan/src/main/AndroidManifest.xml:94:13-37
+103            android:permission="android.permission.BIND_VPN_SERVICE" >
+103-->/Users/rafael/SpodVPNWebFilter/strongswan/src/main/AndroidManifest.xml:95:13-69
+104            <intent-filter>
+104-->/Users/rafael/SpodVPNWebFilter/strongswan/src/main/AndroidManifest.xml:96:13-98:29
+105                <action android:name="android.net.VpnService" />
+105-->/Users/rafael/SpodVPNWebFilter/strongswan/src/main/AndroidManifest.xml:97:17-65
+105-->/Users/rafael/SpodVPNWebFilter/strongswan/src/main/AndroidManifest.xml:97:25-62
+106            </intent-filter>
+107        </service>
+108
+109        <provider
+109-->/Users/rafael/SpodVPNWebFilter/strongswan/src/main/AndroidManifest.xml:101:9-108:20
+110            android:name="org.strongswan.android.data.LogContentProvider"
+110-->/Users/rafael/SpodVPNWebFilter/strongswan/src/main/AndroidManifest.xml:102:13-52
+111            android:authorities="br.com.spod.spodwebfilter.org.strongswan.android.content.log"
+111-->/Users/rafael/SpodVPNWebFilter/strongswan/src/main/AndroidManifest.xml:103:13-95
+112            android:exported="true" >
+112-->/Users/rafael/SpodVPNWebFilter/strongswan/src/main/AndroidManifest.xml:104:13-36
+113
+114            <!--
+115                 android:grantUriPermissions="true" combined with a custom permission does
+116                 not work (probably too many indirections with ACTION_SEND) so we secure
+117                 this provider with a custom ticketing system
+118            -->
+119        </provider>
+120    </application>
+121
+122</manifest>

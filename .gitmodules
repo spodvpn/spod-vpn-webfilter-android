@@ -1,0 +1,3 @@
+[submodule "strongswan-src/strongswan"]
+	path = strongswan-src/strongswan
+	url = https://github.com/strongswan/strongswan

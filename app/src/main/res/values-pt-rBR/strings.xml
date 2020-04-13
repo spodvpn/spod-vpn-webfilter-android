@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Spod VPN &amp; Filtro Web</string>
+    <string name="alert_detail_fourth_row">Desbloquear hostname</string>
+    <string name="alert_detail_second_row">Data</string>
+    <string name="alert_detail_third_row">Horário</string>
+    <string name="alert_detail_title">%1$s Bloqueado</string>
+    <string name="alert_detail_unblock_already_removed">Esse hostname já foi removido da sua lista de \'Sites bloqueados\', vá para a aba \'Mais\' para gerenciá-la.</string>
+    <string name="alert_detail_unblock_already_unblocked">Esse hostname já está na sua lista de \'Sites desbloqueados\', vá para a aba \'Mais\' para gerenciá-la.</string>
+    <string name="alerts_blocked_site">Site bloqueado\nOrigem: %1$s</string>
+    <string name="alerts_blocked_sites_title">Sites bloqueados</string>
+    <string name="alerts_blocked_threat">Ameaça bloqueada\nOrigem: %1$s</string>
+    <string name="alerts_blocked_threats_title">Ameaças Bloqueadas</string>
+    <string name="alerts_blocked_tracker">Rastreador bloqueado\nOrigem: %1$s</string>
+    <string name="alerts_blocked_trackers_title">Rastreadores \nBloqueados</string>
+    <string name="alerts_empty">Mensagem: Nenhum alerta por enquanto, continue navegando para ver os bloqueios aqui!</string>
+    <string name="alerts_generic_fragment_icon_description">Logo</string>
+    <string name="alerts_no_credentials_message">Nenhum alerta por enquanto, conecte na VPN e comece a usar para ver os bloqueios aqui!</string>
+    <string name="annual_duration">1 ano</string>
+    <string name="block_list_title">Sites Bloqueados</string>
+    <string name="block_threats_button">Bloquear Ameaças</string>
+    <string name="block_trackers_button">Bloquear Rastreadores</string>
+    <string name="bottom_sheet_cancel">Cancelar</string>
+    <string name="bottom_sheet_confirm">Redefinir download/upload</string>
+    <string name="bottom_sheet_last_reset">Última redefinição: %1$s</string>
+    <string name="bottom_sheet_title">Deseja redefinir os dados de uso?</string>
+    <string name="bottom_sheet_unblock_confirm">Sim, desbloquear</string>
+    <string name="bottom_sheet_unblock_title">Deseja bloquear o hostname abaixo?</string>
+    <string name="cloudButtonDescription">Botão logo</string>
+    <string name="connect">Conectar</string>
+    <string name="connected">Conectado</string>
+    <string name="connecting">Conectando</string>
+    <string name="connecting.">Conectando.</string>
+    <string name="connecting..">Conectando..</string>
+    <string name="connecting...">Conectando…</string>
+    <string name="custom_list_block_description">Hostnames adicionados neste lista serão bloqueados pelo Filtro Web para este aparelho.</string>
+    <string name="custom_list_button_description">Botão adicionar hostname</string>
+    <string name="custom_list_empty">Nenhum hostname</string>
+    <string name="custom_list_recycler_view_button_hint">Botão remover hostname</string>
+    <string name="custom_list_text_hint">Adicionar hostname manualmente</string>
+    <string name="custom_list_unblock_description">Hostnames adicionados nesta lista não serão mais bloqueados pelo Filtro Web neste aparelho.</string>
+    <string name="default_vpn_gateway">vpn.spod.com.br</string>
+    <string name="disconnect">Desconectar</string>
+    <string name="disconnected">Desconectado</string>
+    <string name="disconnecting...">Desconectando…</string>
+    <string name="error_connecting_to_server">Falha na conexão com o servidor</string>
+    <string name="error_from_server">Erro: %1$s</string>
+    <string name="error_request_1">Erro na requisição, tente novamente (0001)</string>
+    <string name="error_request_2">Erro na requisição, tente novamente (0002)</string>
+    <string name="loading">Carregando…</string>
+    <string name="monthly_duration">1 mês</string>
+    <string name="more_tab_eighteenth_item">Entrar em contato</string>
+    <string name="more_tab_eigth_item">Redefinir download/upload</string>
+    <string name="more_tab_eleventh_item">Sobre a atualização</string>
+    <string name="more_tab_fifteenth_item">FAQ</string>
+    <string name="more_tab_fifth_item">Servidor Conectado</string>
+    <string name="more_tab_first_item">Versão</string>
+    <string name="more_tab_ninth_item">Versão do firewall</string>
+    <string name="more_tab_second_item">Usuário (Aleatório)</string>
+    <string name="more_tab_second_section">Filtro Web</string>
+    <string name="more_tab_seventeenth_item">Política de Privacidade</string>
+    <string name="more_tab_seventh_item">Upload total</string>
+    <string name="more_tab_sixth_item">Download total</string>
+    <string name="more_tab_sixteenth_item">Termos de Uso</string>
+    <string name="more_tab_tenth_item">Última atualização</string>
+    <string name="more_tab_third_item">Tipo de Assinatura</string>
+    <string name="more_tab_third_section">Ajuda</string>
+    <string name="more_tab_thirteenth_item">Sites bloqueados</string>
+    <string name="more_tab_twelfth_item">Sites desbloqueados</string>
+    <string name="never">Nunca</string>
+    <string name="new_user_message">Clique na nuvem acima para começar!</string>
+    <string name="not_available">N/D</string>
+    <string name="region">BR</string>
+    <string name="request_message">Mensagem</string>
+    <string name="spodLogoDescription">Logo Spod</string>
+    <string name="store_fragment_title">Comprar Assinatura</string>
+    <string name="switch_country_brazil">Mudando para servidores no Brasil!</string>
+    <string name="switch_country_usa">Mudando para servidores nos EUA!</string>
+    <string name="terms_annual_sub_text">"<![CDATA[<p>• Duração: %1$s<br>• Preço: %2$s<br>• Desconto: %3$s<br>• O pagamento será cobrado na sua conta do Google Play.<br>• A assinatura renova automaticamente e sua conta será cobrada pelo preço acima se não houver o cancelamento em pelo menos 24 horas antes do término do período.<br>• Após a compra você pode gerenciar suas assinaturas através das configurações da sua conta.<br>• Usuários novos podem desfrutar do Free Trial por um período de 1 mês, após o qual sua conta será cobrada automaticamente por uma %4$s no preço acima.<br>• Ao adquirir uma assinatura, qualquer período de Free Trial remanescente será perdido.<br><br>Para mais informações visite nossos <a href="%5$s">Termos de Uso</a> e <a href="%6$s">Política de Privacidade</a></p>]]> "</string>
+    <string name="terms_continue_button">Continuar</string>
+    <string name="terms_monthly_sub_text">"<![CDATA[<p>• Duração: %1$s<br>• Preço: %2$s<br>. O pagamento será cobrado na sua conta do Google Play.<br>• A assinatura renova automaticamente e sua conta será cobrada pelo preço acima se não houver o cancelamento em pelo menos 24 horas antes do término do período.<br>• Após a compra você pode gerenciar suas assinaturas através das configurações da sua conta.<br>• Usuários novos podem desfrutar do Free Trial por um período de 1 mês, após o qual sua conta será cobrada automaticamente por uma %3$s no preço acima.<br>• Ao adquirir uma assinatura, qualquer período de Free Trial remanescente será perdido.<br><br>Para mais informações visite nossos <a href="%4$s">Termos de Uso</a> e <a href="%5$s">Política de Privacidade</a></p>]]> "</string>
+    <string name="threat">Ameaça</string>
+    <string name="title_alerts">Alertas</string>
+    <string name="title_home">Conectar</string>
+    <string name="title_more">Mais</string>
+    <string name="title_more_info">Mais informações</string>
+    <string name="title_notifications">Notificações</string>
+    <string name="tracker">Rastreador</string>
+    <string name="unblock_list_title">Sites desbloqueados</string>
+    <string name="website_url">https://spod.com.br</string>
+
+    <string-array name="help_urls">
+        <item>https://spod.com.br/blog</item>
+        <item>https://spod.com.br/faq.html</item>
+        <item>https://spod.com.br/termos.html</item>
+        <item>https://spod.com.br/privacidade.html</item>
+        <item>mailto:suporte@spod.com.br</item>
+    </string-array>
+
+    <string name="terms_annual_discount">16%, melhor custo benefício!</string>
+
+    <string name="billing_not_available">Erro: Loja In-App não disponível (verifique sua conexão de internet e conta Google Play configurada).</string>
+    <string name="toggle_always_on_button">VPN sempre ativa</string>
+
+    <!-- strongSwan-specific strings -->
+    <string name="state_connected">Conectado</string>
+    <string name="state_connecting">Conectando&#8230;</string>
+    <string name="state_disconnecting">Desconectando&#8230;</string>
+    <string name="disconnect_question">Desconectar VPN?</string>
+    <string name="disconnect_active_connection">Isso vai desconectar a conexão de VPN atual!</string>
+
+</resources>

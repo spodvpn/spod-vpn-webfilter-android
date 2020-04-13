@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="AlertDialogTheme" parent="AlertDialogTheme.Base">
+        <item name="android:windowBackground">@android:color/transparent</item>
+    </style>
+    <style name="ApplicationTheme" parent="ApplicationTheme.Base">
+        <item name="android:activatedBackgroundIndicator">@drawable/activated_background</item>
+        <item name="android:selectableItemBackground">@drawable/activated_background</item>
+    </style>
+</resources>

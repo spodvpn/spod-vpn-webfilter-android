@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#333333"
+    android:alpha="0.9"
+    android:clickable="true"
+    android:focusable="true"
+    >
+
+    <TextView
+        android:id="@+id/fragment_message_close"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:background="@null"
+        android:textSize="18sp"
+        android:textAlignment="center"
+        android:layout_gravity="center"
+        android:gravity="center"
+        android:text="x"
+        android:textColor="#ffffff"
+        android:fontFamily="sans-serif-condensed"
+        android:layout_marginTop="0dp"
+        android:layout_marginEnd="5dp"
+        android:textStyle="bold"
+        android:layout_alignEnd="@id/fragment_message_text"
+        />
+
+    <TextView
+        android:id="@+id/fragment_message_text"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:textColor="#ffffff"
+        android:gravity="center"
+        android:layout_gravity="center"
+        android:textAlignment="center"
+        />
+
+</RelativeLayout>

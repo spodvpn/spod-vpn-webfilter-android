@@ -1,0 +1,159 @@
+<resources>
+    <string name="app_name">Spod VPN &amp; Web Filter</string>
+    <string name="app_title" translatable="false">Spod VPN</string>
+    <string name="title_home">Connect</string>
+    <string name="title_alerts">Alerts</string>
+    <string name="title_more">More</string>
+    <string name="title_more_info">More Info</string>
+
+    <string name="title_notifications">Notifications</string>
+    <string name="disconnect">Disconnect</string>
+    <string name="connect">Connect</string>
+    <string name="loading">Loading…</string>
+
+    <string name="connecting">Connecting</string>
+    <string name="connecting.">Connecting.</string>
+    <string name="connecting..">Connecting..</string>
+    <string name="connecting...">Connecting…</string>
+
+    <string name="connected">Connected</string>
+    <string name="disconnecting...">Disconnecting…</string>
+    <string name="disconnected">Disconnected</string>
+
+    <string name="never">Never</string>
+
+    <string name="cloudButtonDescription">Cloud button</string>
+    <string name="spodLogoDescription">Spod logo</string>
+
+    <string name="more_tab_first_section" translatable="false">App</string>
+    <string name="more_tab_first_item">Version</string>
+    <string name="more_tab_second_item">Username (Random)</string>
+    <string name="more_tab_third_item">Subscription Type</string>
+    <string name="more_tab_fifth_item">Server connected</string>
+    <string name="more_tab_sixth_item">Total download</string>
+    <string name="more_tab_seventh_item">Total upload</string>
+    <string name="more_tab_eigth_item">Reset download/upload</string>
+
+    <string name="more_tab_second_section">Web Filter</string>
+    <string name="more_tab_ninth_item">Firewall revision</string>
+    <string name="more_tab_tenth_item">Last update</string>
+    <string name="more_tab_eleventh_item">Change log</string>
+    <string name="more_tab_twelfth_item">Unblocked sites</string>
+    <string name="more_tab_thirteenth_item">Blocked sites</string>
+
+    <string name="more_tab_third_section">Help</string>
+    <string name="more_tab_fourteenth_item" translatable="false">Blog</string>
+    <string name="more_tab_fifteenth_item">Frequently Asked Questions</string>
+    <string name="more_tab_sixteenth_item">Terms of Use</string>
+    <string name="more_tab_seventeenth_item">Privacy Policy</string>
+    <string name="more_tab_eighteenth_item">Contact Us</string>
+
+    <string name="copyright" translatable="false">© Spod 2020</string>
+
+    <string name="region">US</string>
+
+    <string name="not_available">N/A</string>
+
+    <string-array name="help_urls">
+        <item>https://spod.com.br/en/blog</item>
+        <item>https://spod.com.br/en/faq.html</item>
+        <item>https://spod.com.br/en/termos.html</item>
+        <item>https://spod.com.br/en/privacidade.html</item>
+        <item>mailto:support@spod.com.br</item>
+    </string-array>
+
+    <string name="custom_list_empty">No hostnames</string>
+    <string name="block_list_title">Blocked Sites</string>
+    <string name="unblock_list_title">Unblocked Sites</string>
+    <string name="custom_list_text_hint">Manually add hostname</string>
+    <string name="custom_list_button_description">Add hostname button</string>
+    <string name="custom_list_recycler_view_button_hint">Remove hostname button</string>
+    <string name="custom_list_unblock_description">Hostnames added to this list will no longer be blocked by the Web Filter on this device.</string>
+    <string name="custom_list_block_description">Hostnames added to this list will be blocked by the Web Filter for this specific device only.</string>
+
+    <string name="request_status_success" translatable="false">Sucesso</string>
+    <string name="request_message">Message</string>
+
+    <string name="preferences_key" translatable="false">br.com.spod.spodvpnwebfilter</string>
+    <string name="preferences_whitelist_key" translatable="false">br.com.spod.spodvpnwebfilter.whitelist</string>
+    <string name="preferences_blacklist_key" translatable="false">br.com.spod.spodvpnwebfilter.blacklist</string>
+    <string name="preferences_username" translatable="false">br.com.spod.spodvpnwebfilter.username</string>
+    <string name="preferences_user_consent" translatable="false">br.com.spod.spodvpnwebfilter.user_consent</string>
+    <string name="preferences_reset_download_upload" translatable="false">br.com.spod.spodvpnwebfilter.reset_download_upload</string>
+    <string name="preferences_lists_key" translatable="false">br.com.spod.spodvpnwebfilter.lists</string>
+    <string name="preferences_block_trackers_list" translatable="false">block\-tracking</string>
+    <string name="preferences_block_threats_list" translatable="false">malware\-phishing</string>
+
+    <string name="bottom_sheet_title">Would you like to reset your usage data?</string>
+    <string name="bottom_sheet_confirm">Reset download/upload</string>
+    <string name="bottom_sheet_cancel">Cancel</string>
+    <string name="bottom_sheet_last_reset">Last reset: %1$s</string>
+
+    <string name="bottom_sheet_unblock_title">Would you like to unblock the hostname below?</string>
+    <string name="bottom_sheet_unblock_confirm">Yes, unblock.</string>
+
+    <string name="error_connecting_to_server">Error connecting to the server</string>
+    <string name="error_from_server">Error: %1$s</string>
+
+    <string name="alerts_blocked_trackers_title">Blocked Trackers</string>
+    <string name="alerts_blocked_threats_title">Blocked Threats</string>
+    <string name="alerts_blocked_sites_title">Blocked Sites</string>
+
+    <string name="alerts_generic_fragment_icon_description">Icon</string>
+
+    <string name="alerts_no_credentials_message">No alerts yet, connect to the VPN and whenever a block occurs an alert will be generated!</string>
+    <string name="alerts_empty">Message: Nothing here yet, keep browsing and you\'ll see the alerts here!</string>
+
+    <string name="alerts_blocked_tracker">Tracker blocked\nSource: %1$s</string>
+    <string name="alerts_blocked_threat">Threat blocked\nSource: %1$s</string>
+    <string name="alerts_blocked_site">Site blocked\nSource: %1$s</string>
+
+    <string name="tracker">Tracker</string>
+    <string name="threat">Threat</string>
+    <string name="site" translatable="false">Site</string>
+    <string name="alert_detail_title">%1$s Blocked</string>
+
+    <string name="alert_detail_first_row" translatable="false">Hostname</string>
+    <string name="alert_detail_second_row">Date</string>
+    <string name="alert_detail_third_row">Hour</string>
+    <string name="alert_detail_fourth_row">Unblock hostname</string>
+
+    <string name="alert_detail_unblock_already_unblocked">This hostname is already in your \'Unblocked Sites\' list, which you can manage in the \'More\' tab."</string>
+    <string name="alert_detail_unblock_already_removed">This hostname was already removed from the \'Blocked Sites\' list, which you can manage in the \'More\' tab.</string>
+
+    <string name="block_trackers_button">Block Trackers</string>
+    <string name="block_threats_button">Block Threats</string>
+
+    <string name="website_url">https://spod.com.br/en</string>
+    <string name="default_vpn_gateway">us.vpn.spod.com.br</string>
+
+    <string name="new_user_message">Tap on the cloud above to get started!</string>
+
+    <string name="store_fragment_title">Buy Subscription</string>
+
+    <string name="monthly_duration">1 month</string>
+    <string name="annual_duration">1 year</string>
+
+    <string name="terms_continue_button">Continue</string>
+    <string name="terms_monthly_sub_text"><![CDATA[<p>• Duration: %1$s<br>• Price: %2$s<br>• Payment will be charged to Google Play Account at confirmation of purchase.<br>• Subscription automatically renews and account will be charged the price above unless cancelled at least 24 hours before the end of the current period.<br>• Subscriptions and auto-renewal may be managed in your Account Settings after purchase.<br>• First time users are eligible to a Free Trial period 1 month after which your account will be automatically charged for a %3$s at the price above.<br>• Any unused portion of a free trial period will be forfeited when the user purchases a subscription.<br><br>More information available in our <a href="%4$s">Terms of use</a> and <a href="%5$s">Privacy Policy</a></p>]]></string>
+    <string name="terms_annual_sub_text"><![CDATA[<p>• Duration: %1$s<br>• Price: %2$s<br>• Discount: %3$s<br>• Payment will be charged to Google Play Account at confirmation of purchase.<br>• Subscription automatically renews and account will be charged the price above unless cancelled at least 24 hours before the end of the current period.<br>• Subscriptions and auto-renewal may be managed in your Account Settings after purchase.<br>• First time users are eligible to a Free Trial period 1 month after which your account will be automatically charged for a %4$s at the price above.<br>• Any unused portion of a free trial period will be forfeited when the user purchases a subscription.<br><br>More information available in our <a href="%5$s">Terms of use</a> and <a href="%6$s">Privacy Policy</a></p>]]></string>
+    <string name="terms_annual_discount">16% off, best deal!</string>
+
+    <string name="purchased_key" translatable="false">br.com.spod.spodvpnwebfilter.purchased</string>
+    <string name="error_request_1">Request error, please try again (0001)</string>
+    <string name="error_request_2">Request error, please try again (0002)</string>
+
+    <string name="switch_country_usa">Switching to servers in the USA!</string>
+    <string name="switch_country_brazil">Switching to servers in Brazil!</string>
+
+    <string name="billing_not_available">Error: In-App Purchase store is not available (check you internet connection and Google Play account configured).</string>
+    <string name="toggle_always_on_button">Always-on VPN</string>
+
+    <!-- strongSwan-specific strings -->
+    <string name="state_connected">Connected</string>
+    <string name="state_connecting">Connecting&#8230;</string>
+    <string name="state_disconnecting">Disconnecting&#8230;</string>
+    <string name="disconnect_question">Disconnect VPN?</string>
+    <string name="disconnect_active_connection">This will disconnect the active VPN connection!!</string>
+
+</resources>

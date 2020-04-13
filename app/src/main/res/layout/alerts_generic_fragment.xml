@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.swiperefreshlayout.widget.SwipeRefreshLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:id="@+id/alerts_generic_fragment_refresh"
+    >
+
+    <RelativeLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <View
+            android:id="@+id/alerts_generic_fragment_banner"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:layout_marginTop="10dp"
+            />
+
+        <TextView
+            android:id="@+id/alerts_generic_fragment_counter"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#ffffff"
+            android:layout_marginStart="10dp"
+            android:layout_alignStart="@id/alerts_generic_fragment_banner"
+            android:gravity="center_vertical"
+            android:layout_alignTop="@id/alerts_generic_fragment_banner"
+            android:layout_alignBottom="@id/alerts_generic_fragment_banner"
+            android:textSize="20sp"
+            />
+
+        <TextView
+            android:id="@+id/alerts_generic_fragment_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:textColor="#ffffff"
+            android:textSize="18sp"
+            android:layout_alignStart="@id/alerts_generic_fragment_banner"
+            android:layout_alignTop="@id/alerts_generic_fragment_banner"
+            android:layout_alignEnd="@id/alerts_generic_fragment_banner"
+            android:layout_alignBottom="@id/alerts_generic_fragment_banner"
+            />
+
+        <ImageView
+            android:id="@+id/alerts_generic_fragment_icon"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:contentDescription="@string/alerts_generic_fragment_icon_description"
+            android:layout_marginEnd="20dp"
+            android:gravity="center_vertical"
+            android:layout_alignTop="@id/alerts_generic_fragment_banner"
+            android:layout_alignBottom="@id/alerts_generic_fragment_banner"
+            android:layout_alignEnd="@id/alerts_generic_fragment_banner"
+            />
+
+        <FrameLayout
+            android:id="@+id/alerts_generic_fragment_container"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginTop="15dp"
+            android:layout_below="@id/alerts_generic_fragment_banner"
+            android:paddingBottom="60dp">
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/alerts_generic_fragment_recycler_view"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                />
+            <!-- alert details -->
+        </FrameLayout>
+
+    </RelativeLayout>
+
+</androidx.swiperefreshlayout.widget.SwipeRefreshLayout>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">spod.com.br</domain>
+        <pin-set>
+            <pin digest="SHA-256">p9ekOWDhIusAWAEhEeR9L0GBndlh6uSrDKEsYSX1Y8U=</pin>
+            <pin digest="SHA-256">ocgMy6r0cn2f2xbWdqkzsjJw4AO/YnBFqTfNu21HXj8=</pin>
+        </pin-set>
+    </domain-config>
+</network-security-config>
