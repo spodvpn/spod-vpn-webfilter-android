@@ -121,7 +121,11 @@ public class StoreFragment extends Fragment implements PurchasesUpdatedListener,
             public void onBillingServiceDisconnected() {
                 Log.v(TAG, "BILLING | onBillingServiceDisconnected | DISCONNECTED");
                 GlobalMethods globalMethods = new GlobalMethods(getActivity());
-                globalMethods.showAlertWithMessage(getString(R.string.error_connecting_to_server), true);
+                try {
+                    globalMethods.showAlertWithMessage(getString(R.string.error_connecting_to_server), true);
+                } catch (IllegalStateException exception) {
+                    Log.v(TAG, "Got an IllegalStateException, probably running in the background...");
+                }
             }
         });
     }
