@@ -381,10 +381,18 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
         VpnStateService.State currentState = mService.getState();
         String currentText = statusButton.getText().toString();
 
-        if(currentText.equals(getString(R.string.connecting___))) currentText = getString(R.string.connecting);
-        else if(currentText.equals(getString(R.string.connecting))) currentText = getString(R.string.connecting_);
-        else if(currentText.equals(getString(R.string.connecting_))) currentText = getString(R.string.connecting__);
-        else if(currentText.equals(getString(R.string.connecting__))) currentText = getString(R.string.connecting___);
+        try {
+            if (currentText.equals(getString(R.string.connecting___)))
+                currentText = getString(R.string.connecting);
+            else if (currentText.equals(getString(R.string.connecting)))
+                currentText = getString(R.string.connecting_);
+            else if (currentText.equals(getString(R.string.connecting_)))
+                currentText = getString(R.string.connecting__);
+            else if (currentText.equals(getString(R.string.connecting__)))
+                currentText = getString(R.string.connecting___);
+        } catch (IllegalStateException exception) {
+            Log.v(TAG, "Got an IllegalStateException, probably running in the background...");
+        }
 
         //Only if we're still connecting
         if(currentState == VpnStateService.State.CONNECTING || currentState == VpnStateService.State.DISCONNECTING) {
