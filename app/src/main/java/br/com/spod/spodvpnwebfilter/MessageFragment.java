@@ -65,6 +65,8 @@ public class MessageFragment extends Fragment
                 frameLayout.setVisibility(View.GONE);
             } catch (NullPointerException exception) {
                 Log.v(TAG, "Got an exception while trying to close MessageFragment, most likely it was already closed, ignore!");
+            } catch (IllegalStateException exception) {
+                Log.v(TAG, "Got an IllegalStateException, probably running in the background...");
             }
         });
 
