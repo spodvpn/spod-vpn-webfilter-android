@@ -28,7 +28,7 @@
     <string name="more_tab_first_section" translatable="false">App</string>
     <string name="more_tab_first_item">Version</string>
     <string name="more_tab_second_item">Username (Random)</string>
-    <string name="more_tab_third_item">Subscription Type</string>
+    <string name="more_tab_third_item">Subscription</string>
     <string name="more_tab_fifth_item">Server connected</string>
     <string name="more_tab_sixth_item">Total download</string>
     <string name="more_tab_seventh_item">Total upload</string>
