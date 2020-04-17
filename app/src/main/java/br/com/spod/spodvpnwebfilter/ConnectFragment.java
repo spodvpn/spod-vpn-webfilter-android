@@ -754,6 +754,8 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
             } catch (JSONException exception) {
                 Log.v(TAG, "verifyReceipt: JSONException: " + exception.getLocalizedMessage());
                 exception.printStackTrace();
+            } catch (IllegalStateException exception) {
+                Log.v(TAG, "Got an IllegalStateException, probably running in the background...");
             }
         });
     }
@@ -834,9 +836,15 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
         }
         mDataSource.close();
 
-        //Show success message
         if(globalMethods == null) this.globalMethods = new GlobalMethods(getActivity());
-        globalMethods.showAlertWithMessage(message, true);
+        if(message == null) {
+            //No VPN profile found, show initial welcome message
+            globalMethods.showAlertWithMessage(getString(R.string.new_user_message), false);
+            return;
+        } else {
+            //Show success message
+            globalMethods.showAlertWithMessage(message, true);
+        }
 
         mService.reconnect();
         final Handler handler = new Handler();
