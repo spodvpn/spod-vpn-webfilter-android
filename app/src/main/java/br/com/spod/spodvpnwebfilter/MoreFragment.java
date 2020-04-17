@@ -39,6 +39,7 @@ public class MoreFragment extends Fragment implements MoreRecyclerViewAdapter.It
     private static final int BLOCK_LIST_ROW = 13;
     private static final int RESET_USAGE_ROW = 7;
     private static final int COPYRIGHT_ROW = 20;
+    private static final int SUB_INFO_ROW = 3;
 
     private VpnProfile profile;
     private GlobalMethods globalMethods;
@@ -176,6 +177,11 @@ public class MoreFragment extends Fragment implements MoreRecyclerViewAdapter.It
             String[] help_urls = getResources().getStringArray(R.array.help_urls);
             Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(help_urls[position-HELP_SECTION-1]));
             startActivity(browserIntent);
+        }
+        else if(position == SUB_INFO_ROW) {
+            //Open Google Play's subscription management page
+            Intent manageSubIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/account/subscriptions"));
+            startActivity(manageSubIntent);
         }
     }
 
