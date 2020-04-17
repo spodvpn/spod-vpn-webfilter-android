@@ -34,6 +34,7 @@ public class MoreRecyclerViewAdapter extends RecyclerView.Adapter<RecyclerView.V
     private static final int HELP_SECTION = 14;
     private static final int COPYRIGHT_ROW = 20;
     private static final int CHANGE_LOG_ROW = 11;
+    private static final int SUB_INFO_ROW = 3;
 
     String subscriptionType, totalDownload, totalUpload, firewallVersion, firewallReleaseDate, changeLog, connectedServer;
     private String appVersion, username;
