@@ -38,6 +38,9 @@ class GlobalMethods
 
     void showAlertWithMessage(String message, boolean autoDismiss)
     {
+        //Hide any pre existing message
+        this.closeAlert();
+
         //Make container visible
         FrameLayout frameLayout = mActivity.findViewById(R.id.message_container);
         frameLayout.setVisibility(View.VISIBLE);
