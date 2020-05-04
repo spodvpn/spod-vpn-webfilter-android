@@ -70,6 +70,7 @@ import java.net.HttpURLConnection;
 import java.net.Inet4Address;
 import java.net.Inet6Address;
 import java.net.InetAddress;
+import java.net.NetworkInterface;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
@@ -80,6 +81,7 @@ import java.security.cert.X509Certificate;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
@@ -214,10 +216,6 @@ public class CharonVpnService extends VpnService implements Runnable, VpnStateSe
 		/* use a separate thread as main thread for charon */
 		mConnectionHandler = new Thread(this);
 		/* the thread is started when the service is bound */
-		Log.v("AQUI", "CharonVpnService/onCreate: About to BIND!");
-
-		if(mServiceConnection == null) Log.v("AQUI", "CharonVpnService/onCreate: mServiceConnection == null");
-		else Log.v("AQUI", "CharonVpnService/onCreate: mServiceConnection IS NOT null");
 		try {
 			if(mService != null) mService.registerListener(this);
 			unbindService(mServiceConnection);
@@ -307,6 +305,43 @@ public class CharonVpnService extends VpnService implements Runnable, VpnStateSe
 						 * a possible deadlock during deinitialization */
 						mCurrentCertificateAlias = mCurrentProfile.getCertificateAlias();
 						mCurrentUserCertificateAlias = mCurrentProfile.getUserCertificateAlias();
+
+						//TMP begin
+						try {
+							List<NetworkInterface> interfaces = Collections.list(NetworkInterface.getNetworkInterfaces());
+							for (NetworkInterface intf : interfaces) {
+								List<InetAddress> addrs = Collections.list(intf.getInetAddresses());
+								for (InetAddress addr : addrs) {
+									//Log.v(TAG, "Interface name: "+intf.getName());
+									if (!addr.isLoopbackAddress() && addr instanceof Inet4Address && intf.getName().equals("wlan0")) {
+										//addr.getHostAddress()
+										//Log.v(TAG, "FOUND wlan address: "+addr.getHostAddress());
+
+										byte[] local_addr = addr.getAddress();
+										local_addr[3] = 0;
+										InetAddress local_inet_addr = Inet4Address.getByAddress(local_addr);
+										//Log.v(TAG, "Modified ADDRESS: "+local_inet_addr.getHostAddress());
+										//Log.v(TAG, "FOUND prefixLength: "+intf.getInterfaceAddresses().get(0).getNetworkPrefixLength());
+
+										String subnet = local_inet_addr.getHostAddress() + "/" + intf.getInterfaceAddresses().get(0).getNetworkPrefixLength();
+										//Log.v(TAG, "FINALLY: '"+subnet+"'...");
+
+										Log.v(TAG, "SETTINGS excludedSubnets = "+subnet);
+										mCurrentProfile.setExcludedSubnets("192.168.0.0/24");
+										//mCurrentProfile.setExcludedSubnets(subnet);
+
+										//NetworkInterface networkInterface = NetworkInterface.getByInetAddress(localHost);
+										//networkInterface.getInterfaceAddresses().get(0).getNetworkPrefixLength();
+
+									}
+								}
+							}
+
+						} catch (Exception e) {
+							e.printStackTrace();
+						}
+
+						//TMP end
 
 						startConnection(mCurrentProfile);
 						mIsDisconnecting = false;
@@ -1410,33 +1445,4 @@ public class CharonVpnService extends VpnService implements Runnable, VpnStateSe
 	{
 		return Build.MODEL + " - " + Build.BRAND + "/" + Build.PRODUCT + "/" + Build.MANUFACTURER;
 	}
-
-	/*private class WatchdogThread extends Thread
-	{
-		final String watchdog_log_file = getFilesDir().getAbsolutePath();// + File.separator + "watchdog.log";
-		int run_count = 0;
-
-		public void run() {
-			//AQUI
-
-			//LOG_FILE = "charon.log"
-			//mLogFile = getFilesDir().getAbsolutePath() + File.separator + LOG_FILE;
-
-
-			//Write to log file
-			String msg = "TESTE: "+run_count;
-			FileOutputStream stream;
-			File file = new File(watchdog_log_file, "watchdog.log");
-			try {
-				stream = new FileOutputStream(file);
-				stream.write(msg.getBytes());
-				stream.close();
-
-			} catch (Exception exception) {
-				Log.v("Watchdog", "Got an exception: " + exception.getLocalizedMessage());
-				exception.printStackTrace();
-			}
-
-		}
-	}*/
 }
