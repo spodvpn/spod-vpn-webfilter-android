@@ -70,6 +70,7 @@ import java.net.HttpURLConnection;
 import java.net.Inet4Address;
 import java.net.Inet6Address;
 import java.net.InetAddress;
+import java.net.InterfaceAddress;
 import java.net.NetworkInterface;
 import java.net.URL;
 import java.net.UnknownHostException;
@@ -307,40 +308,35 @@ public class CharonVpnService extends VpnService implements Runnable, VpnStateSe
 						mCurrentUserCertificateAlias = mCurrentProfile.getUserCertificateAlias();
 
 						//TMP begin
+						//Get wifi local ip address, if any
+						Log.v(TAG, "DEBUG: run(): Trying to set wifi local area network excluded subnet...");
+						String excludedSubnets = "";
 						try {
 							List<NetworkInterface> interfaces = Collections.list(NetworkInterface.getNetworkInterfaces());
 							for (NetworkInterface intf : interfaces) {
 								List<InetAddress> addrs = Collections.list(intf.getInetAddresses());
 								for (InetAddress addr : addrs) {
-									//Log.v(TAG, "Interface name: "+intf.getName());
+									Log.v(TAG, "DEBUG: Interface name: "+intf.getName());
 									if (!addr.isLoopbackAddress() && addr instanceof Inet4Address && intf.getName().equals("wlan0")) {
-										//addr.getHostAddress()
-										//Log.v(TAG, "FOUND wlan address: "+addr.getHostAddress());
-
-										byte[] local_addr = addr.getAddress();
-										local_addr[3] = 0;
-										InetAddress local_inet_addr = Inet4Address.getByAddress(local_addr);
-										//Log.v(TAG, "Modified ADDRESS: "+local_inet_addr.getHostAddress());
-										//Log.v(TAG, "FOUND prefixLength: "+intf.getInterfaceAddresses().get(0).getNetworkPrefixLength());
-
-										String subnet = local_inet_addr.getHostAddress() + "/" + intf.getInterfaceAddresses().get(0).getNetworkPrefixLength();
-										//Log.v(TAG, "FINALLY: '"+subnet+"'...");
-
-										Log.v(TAG, "SETTINGS excludedSubnets = "+subnet);
-										mCurrentProfile.setExcludedSubnets("192.168.0.0/24");
-										//mCurrentProfile.setExcludedSubnets(subnet);
-
-										//NetworkInterface networkInterface = NetworkInterface.getByInetAddress(localHost);
-										//networkInterface.getInterfaceAddresses().get(0).getNetworkPrefixLength();
-
+										int c=0;
+										for (InterfaceAddress interfaceAddress : intf.getInterfaceAddresses()) {
+											Log.v(TAG, String.format("DEBUG: interfaceAddress[%d]: %s/%s", c, interfaceAddress.getAddress().getHostAddress(), interfaceAddress.getNetworkPrefixLength()));
+											if(interfaceAddress.getAddress().getHostAddress().equals(addr.getHostAddress())) {
+												//Found the corresponding interfaceAddress, get network prefix length
+												Log.v(TAG, String.format("DEBUG: Found corresponding interface (%s == %s), correct prefix: %d", addr.getHostAddress(), interfaceAddress.getAddress().getHostAddress(), interfaceAddress.getNetworkPrefixLength()));
+												excludedSubnets = addr.getHostAddress() + "/" + interfaceAddress.getNetworkPrefixLength();
+											}
+											c++;
+										}
 									}
 								}
 							}
-
+							Log.v(TAG, "DEBUG: Setting excludedSubnets = '"+excludedSubnets+"'...");
+							mCurrentProfile.setExcludedSubnets(excludedSubnets);
+							mDataSource.updateVpnProfile(mCurrentProfile);
 						} catch (Exception e) {
 							e.printStackTrace();
 						}
-
 						//TMP end
 
 						startConnection(mCurrentProfile);
@@ -601,6 +597,7 @@ public class CharonVpnService extends VpnService implements Runnable, VpnStateSe
 		{
 			if (mService != null)
 			{
+				//TMP: might be a better place
 				mService.startConnection(profile);
 			}
 		}
