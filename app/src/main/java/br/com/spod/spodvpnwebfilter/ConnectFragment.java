@@ -216,11 +216,17 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
             MainActivity mainActivity = (MainActivity)getActivity();
             if (mainActivity != null) {
                 mainActivity.server_connected = mService.getProfile().getGateway();
+
+                //Set button color
+                statusButton.setBackgroundTintList(mainActivity.getResources().getColorStateList(R.color.connected_green, null));
+
+                //Change images (only if we were disconnected before)
+                if(statusImageButton.getDrawable() != mainActivity.getResources().getDrawable(R.drawable.status_image_animation_off_on, null))
+                    statusImageButton.setImageResource(R.drawable.status_image_animation_off_on);
             }
 
             //Set status text button
             statusButton.setText(R.string.connected);
-            statusButton.setBackgroundTintList(getActivity().getResources().getColorStateList(R.color.connected_green, null));
             statusButton.setWidth((int)TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 120, getResources().getDisplayMetrics()));
 
             this.tryingToConnect = false;
@@ -231,9 +237,7 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
             //Step 1: Fade in
             statusImageButton.animate().alpha(1.0f).setDuration(700).setListener(null);
 
-            //Step 2: Change images (only if we were disconnected before)
-            if(statusImageButton.getDrawable() != getActivity().getResources().getDrawable(R.drawable.status_image_animation_off_on, null))
-                statusImageButton.setImageResource(R.drawable.status_image_animation_off_on);
+            //Step 2: Animation
             AnimationDrawable turnOnAnimation = (AnimationDrawable) statusImageButton.getDrawable();
             turnOnAnimation.start();
 
@@ -249,7 +253,9 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
 
             //Set connectedServer string
             MainActivity mainActivity = (MainActivity)getActivity();
-            mainActivity.server_connected = "";
+            if(mainActivity != null) {
+                mainActivity.server_connected = "";
+            }
 
             //Animation: On -> Off
             Log.v(TAG, "Animation: On -> Off");
@@ -707,11 +713,13 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
             Purchase.PurchasesResult purchasesResult = null;
             if (mainActivity != null) {
                 purchasesResult = mainActivity.billingClient.queryPurchases(BillingClient.SkuType.SUBS);
-                for (int i = 0; i<purchasesResult.getPurchasesList().size(); i++) {
-                    if (purchasesResult.getPurchasesList().get(i).getPurchaseState() == Purchase.PurchaseState.PURCHASED) {
-                        //Found correct purchase (receipt), send info for server validation
-                        Purchase purchase = purchasesResult.getPurchasesList().get(i);
-                        postData.put("Recibo", purchase.getOriginalJson());
+                if(purchasesResult.getPurchasesList() != null) {
+                    for (int i = 0; i < purchasesResult.getPurchasesList().size(); i++) {
+                        if (purchasesResult.getPurchasesList().get(i).getPurchaseState() == Purchase.PurchaseState.PURCHASED) {
+                            //Found correct purchase (receipt), send info for server validation
+                            Purchase purchase = purchasesResult.getPurchasesList().get(i);
+                            postData.put("Recibo", purchase.getOriginalJson());
+                        }
                     }
                 }
             }

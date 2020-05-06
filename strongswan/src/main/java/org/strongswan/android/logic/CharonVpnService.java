@@ -307,38 +307,6 @@ public class CharonVpnService extends VpnService implements Runnable, VpnStateSe
 						mCurrentCertificateAlias = mCurrentProfile.getCertificateAlias();
 						mCurrentUserCertificateAlias = mCurrentProfile.getUserCertificateAlias();
 
-						//TMP begin
-						//Get wifi local ip address, if any
-						Log.v(TAG, "DEBUG: run(): Trying to set wifi local area network excluded subnet...");
-						String excludedSubnets = "";
-						try {
-							List<NetworkInterface> interfaces = Collections.list(NetworkInterface.getNetworkInterfaces());
-							for (NetworkInterface intf : interfaces) {
-								List<InetAddress> addrs = Collections.list(intf.getInetAddresses());
-								for (InetAddress addr : addrs) {
-									Log.v(TAG, "DEBUG: Interface name: "+intf.getName());
-									if (!addr.isLoopbackAddress() && addr instanceof Inet4Address && intf.getName().equals("wlan0")) {
-										int c=0;
-										for (InterfaceAddress interfaceAddress : intf.getInterfaceAddresses()) {
-											Log.v(TAG, String.format("DEBUG: interfaceAddress[%d]: %s/%s", c, interfaceAddress.getAddress().getHostAddress(), interfaceAddress.getNetworkPrefixLength()));
-											if(interfaceAddress.getAddress().getHostAddress().equals(addr.getHostAddress())) {
-												//Found the corresponding interfaceAddress, get network prefix length
-												Log.v(TAG, String.format("DEBUG: Found corresponding interface (%s == %s), correct prefix: %d", addr.getHostAddress(), interfaceAddress.getAddress().getHostAddress(), interfaceAddress.getNetworkPrefixLength()));
-												excludedSubnets = addr.getHostAddress() + "/" + interfaceAddress.getNetworkPrefixLength();
-											}
-											c++;
-										}
-									}
-								}
-							}
-							Log.v(TAG, "DEBUG: Setting excludedSubnets = '"+excludedSubnets+"'...");
-							mCurrentProfile.setExcludedSubnets(excludedSubnets);
-							mDataSource.updateVpnProfile(mCurrentProfile);
-						} catch (Exception e) {
-							e.printStackTrace();
-						}
-						//TMP end
-
 						startConnection(mCurrentProfile);
 						mIsDisconnecting = false;
 
@@ -597,8 +565,7 @@ public class CharonVpnService extends VpnService implements Runnable, VpnStateSe
 		{
 			if (mService != null)
 			{
-				//TMP: might be a better place
-				mService.startConnection(profile);
+			    mService.startConnection(profile);
 			}
 		}
 	}
