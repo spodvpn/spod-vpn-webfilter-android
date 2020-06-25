@@ -9,9 +9,9 @@ Our VPN service is focused on develivering more security, privacy and anonymity 
 * Security and Privacy: Everything between your device and our servers is encrypted using AES-256 to keep third parties from snooping into your traffic including which apps/websites you use and its data (username, passwords, etc).
 * Anonymity: We created a simple way to anonymize everything that goes through our network: There’s no registration!
 * Multi-Region: Choose between servers in the US or Brazil to keep a low latency or simply to connect from another country.
-* Alerts: The Alerts tab inside the App will show you everything that was blocked by the Web Filter.
+* Alerts: The Alerts tab inside the App will show you everything that was blocked by the Web Filter. PUSH notifications are also available.
 * Custom lists: Now you can unblock a specific tracker/threat and also configure a custom hostname to be blocked!
-* Multi-Platform: Single subscription for both iOS and macOS.
+* Multi-Platform: Available for Android, iOS and macOS.
 
 
 ## Web Filter firewall
