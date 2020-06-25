@@ -2,6 +2,7 @@ package br.com.spod.spodvpnwebfilter;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.service.notification.NotificationListenerService;
 import android.util.Log;
 import android.view.View;
 import android.widget.FrameLayout;
@@ -54,11 +55,15 @@ class GlobalMethods
     void closeAlert()
     {
         //Find visible message alert and close it!
-        Fragment messageFragment = mActivity.getSupportFragmentManager().findFragmentByTag("MessageFragment");
-        if(messageFragment != null && messageFragment.isVisible()) {
-            FragmentTransaction transaction = mActivity.getSupportFragmentManager().beginTransaction();
-            transaction.remove(messageFragment);
-            transaction.commit();
+        try {
+            Fragment messageFragment = mActivity.getSupportFragmentManager().findFragmentByTag("MessageFragment");
+            if (messageFragment != null && messageFragment.isVisible()) {
+                FragmentTransaction transaction = mActivity.getSupportFragmentManager().beginTransaction();
+                transaction.remove(messageFragment);
+                transaction.commit();
+            }
+        } catch (IllegalStateException exception) {
+            Log.v(TAG, "Got an IllegalStateException, probably running in the background...");
         }
     }
 
@@ -128,5 +133,4 @@ class GlobalMethods
 
         return String.format(Locale.getDefault(),"%2.2f", bytes) + " " + medida;
     }
-
 }

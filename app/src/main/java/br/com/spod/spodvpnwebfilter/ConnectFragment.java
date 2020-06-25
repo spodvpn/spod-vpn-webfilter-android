@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
+import android.graphics.Point;
 import android.graphics.drawable.AnimationDrawable;
 import android.net.Uri;
 import android.os.Bundle;
@@ -13,8 +14,10 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.provider.Settings;
 import android.util.Base64;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.TypedValue;
+import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -26,6 +29,10 @@ import android.widget.TextView;
 
 import com.android.billingclient.api.BillingClient;
 import com.android.billingclient.api.Purchase;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.iid.FirebaseInstanceId;
+import com.google.firebase.iid.InstanceIdResult;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -47,6 +54,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
+import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 
@@ -64,8 +72,14 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
     private ImageButton blockThreatsImageButton;
     private ImageButton blockThreatsCheckmarkButton;
 
+    private TextView sendNotificationsButton;
+    private ImageButton sendNotificationsImageButton;
+    private ImageButton sendNotificationsCheckmarkButton;
+
     private TextView settingsAppButton;
     private ImageButton settingsAppImageButton;
+
+    private boolean shouldShouldSettingsAppButton;
 
     private ProgressBar mProgressBar;
     private GlobalMethods globalMethods;
@@ -159,17 +173,12 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
         blockThreatsCheckmarkButton = view.findViewById(R.id.connect_block_threats_checkmark_button);
         blockThreatsCheckmarkButton.setOnClickListener(this);
 
-        //Adjust buttons width according to the size of the title
-        if(getString(R.string.region).equals("US")) {
-            //US: 120dp
-            blockTrackersButton.getLayoutParams().width = (int)TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 120, getResources().getDisplayMetrics());
-            blockThreatsButton.getLayoutParams().width = (int)TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 120, getResources().getDisplayMetrics());
-        } else {
-            //BR: 170dp
-            blockTrackersButton.getLayoutParams().width = (int)TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 170, getResources().getDisplayMetrics());
-            blockThreatsButton.getLayoutParams().width = (int)TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 170, getResources().getDisplayMetrics());
-        }
-
+        sendNotificationsButton = view.findViewById(R.id.connect_send_notifications_button);
+        sendNotificationsButton.setOnClickListener(this);
+        sendNotificationsImageButton = view.findViewById(R.id.connect_send_notifications_image_button);
+        sendNotificationsImageButton.setOnClickListener(this);
+        sendNotificationsCheckmarkButton = view.findViewById(R.id.connect_send_notifications_checkmark_button);
+        sendNotificationsCheckmarkButton.setOnClickListener(this);
         settingsAppButton = view.findViewById(R.id.connect_toggle_always_on_button);
         settingsAppButton.setOnClickListener(this);
         settingsAppImageButton = view.findViewById(R.id.connect_toggle_always_on_image_button);
@@ -181,6 +190,25 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
 
         enableButtons(false);
         Objects.requireNonNull(getActivity()).setTitle(getString(R.string.app_name));
+
+        //Make buttons wider for pt-BR
+        if(! getString(R.string.region).equals("US")) {
+            blockTrackersButton.getLayoutParams().width = (int)TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 170, getResources().getDisplayMetrics());
+            blockThreatsButton.getLayoutParams().width = (int)TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 170, getResources().getDisplayMetrics());
+            sendNotificationsButton.getLayoutParams().width = (int)TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 170, getResources().getDisplayMetrics());
+        }
+
+        SharedPreferences sharedPreferences = getActivity().getSharedPreferences(getString(R.string.preferences_key), Context.MODE_PRIVATE);
+        boolean sendNotifications = sharedPreferences.getBoolean(getString(R.string.preferences_send_notification), false);
+        if(sendNotifications) updateNotificationToken();
+
+        //Get display size to determine if settingsAppButton should be displayed
+        DisplayMetrics metrics = getResources().getDisplayMetrics();
+        Display d = getActivity().getWindowManager().getDefaultDisplay();
+        Point size = new Point();
+        d.getSize(size);
+        int height = size.y;
+        this.shouldShouldSettingsAppButton = height / metrics.densityDpi >= 4;
 
         return view;
     }
@@ -227,7 +255,11 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
 
             //Set status text button
             statusButton.setText(R.string.connected);
-            statusButton.setWidth((int)TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 120, getResources().getDisplayMetrics()));
+            try {
+                statusButton.setWidth((int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 120, getResources().getDisplayMetrics()));
+            } catch (IllegalStateException exception) {
+                Log.v(TAG, "Got an IllegalStateException, probably running in the background...");
+            }
 
             this.tryingToConnect = false;
 
@@ -249,7 +281,11 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
         {
             statusButton.setText(R.string.disconnected);
             statusButton.setBackgroundTintList(Objects.requireNonNull(getActivity()).getResources().getColorStateList(R.color.disconnected_red, null));
-            statusButton.setWidth((int)TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 150, getResources().getDisplayMetrics()));
+            try {
+                statusButton.setWidth((int)TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 150, getResources().getDisplayMetrics()));
+            } catch (IllegalStateException exception) {
+                Log.v(TAG, "Got an IllegalStateException, probably running in the background...");
+            }
 
             //Set connectedServer string
             MainActivity mainActivity = (MainActivity)getActivity();
@@ -295,14 +331,22 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
         else if(mService.getState() == VpnStateService.State.CONNECTING) {
             this.tryingToConnect = true;
             statusButton.setText(R.string.connecting___);
-            statusButton.setBackgroundTintList(Objects.requireNonNull(getActivity()).getResources().getColorStateList(R.color.connecting_orange, null));
-            statusButton.setWidth((int)TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 150, getResources().getDisplayMetrics()));
+            try {
+                statusButton.setBackgroundTintList(Objects.requireNonNull(getActivity()).getResources().getColorStateList(R.color.connecting_orange, null));
+                statusButton.setWidth((int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 150, getResources().getDisplayMetrics()));
+            } catch (IllegalStateException exception) {
+                Log.v(TAG, "Got an IllegalStateException, probably running in the background...");
+            }
             animateStatusButton(); //Kickstart the status button animation
         }
         else if(mService.getState() == VpnStateService.State.DISCONNECTING) {
             statusButton.setText(R.string.disconnecting___);
-            statusButton.setBackgroundTintList(Objects.requireNonNull(getActivity()).getResources().getColorStateList(R.color.connecting_orange, null));
-            statusButton.setWidth((int)TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 160, getResources().getDisplayMetrics()));
+            try {
+                statusButton.setBackgroundTintList(Objects.requireNonNull(getActivity()).getResources().getColorStateList(R.color.connecting_orange, null));
+                statusButton.setWidth((int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 160, getResources().getDisplayMetrics()));
+            } catch (IllegalStateException exception) {
+                Log.v(TAG, "Got an IllegalStateException, probably running in the background...");
+            }
         }
     }
 
@@ -428,6 +472,9 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
         blockTrackersCheckmarkButton.setClickable(enabled);
         blockThreatsImageButton.setClickable(enabled);
         blockThreatsCheckmarkButton.setClickable(enabled);
+        sendNotificationsButton.setEnabled(enabled);
+        sendNotificationsImageButton.setClickable(enabled);
+        sendNotificationsCheckmarkButton.setClickable(enabled);
 
         if(enabled) {
             blockTrackersButton.setAlpha(0.5f);
@@ -436,8 +483,11 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
             blockThreatsImageButton.setAlpha(0.5f);
             blockTrackersCheckmarkButton.setVisibility(View.GONE);
             blockThreatsCheckmarkButton.setVisibility(View.GONE);
-            settingsAppButton.setVisibility(View.VISIBLE);
-            settingsAppImageButton.setVisibility(View.VISIBLE);
+            if(this.shouldShouldSettingsAppButton) settingsAppButton.setVisibility(View.VISIBLE);
+            if(this.shouldShouldSettingsAppButton) settingsAppImageButton.setVisibility(View.VISIBLE);
+            sendNotificationsButton.setAlpha(0.5f);
+            sendNotificationsImageButton.setAlpha(0.5f);
+            sendNotificationsCheckmarkButton.setVisibility(View.GONE);
 
             //Turn on depending on user config (if enabled, Alpha will be set to 1.0f)!
             SharedPreferences sharedPreferences = Objects.requireNonNull(getContext()).getSharedPreferences(getString(R.string.preferences_key), Context.MODE_PRIVATE);
@@ -455,6 +505,12 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
                     blockThreatsCheckmarkButton.setAlpha(1.0f);
                     blockThreatsCheckmarkButton.setVisibility(View.VISIBLE);
                 }
+                if(sharedPreferences.getBoolean(getString(R.string.preferences_send_notification), false)) {
+                    sendNotificationsButton.setAlpha(1.0f);
+                    sendNotificationsImageButton.setAlpha(1.0f);
+                    sendNotificationsCheckmarkButton.setAlpha(1.0f);
+                    sendNotificationsCheckmarkButton.setVisibility(View.VISIBLE);
+                }
             }
         } else {
             //NOT enabled, probably not even connected, set everyone to Alpha=0.3f and hide checkmarks;
@@ -464,9 +520,11 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
             blockThreatsImageButton.setAlpha(0.3f);
             blockThreatsCheckmarkButton.setAlpha(0.3f);
             blockThreatsCheckmarkButton.setVisibility(View.GONE);
-            settingsAppButton.setVisibility(View.GONE);
-            settingsAppImageButton.setVisibility(View.GONE);
-
+            if(this.shouldShouldSettingsAppButton) settingsAppButton.setVisibility(View.GONE);
+            if(this.shouldShouldSettingsAppButton) settingsAppImageButton.setVisibility(View.GONE);
+            sendNotificationsImageButton.setAlpha(0.3f);
+            sendNotificationsCheckmarkButton.setAlpha(0.3f);
+            sendNotificationsCheckmarkButton.setVisibility(View.GONE);
         }
     }
 
@@ -498,6 +556,17 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
                 vpnSettingsIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 startActivity(vpnSettingsIntent);
                 break;
+            case R.id.connect_send_notifications_button:
+            case R.id.connect_send_notifications_image_button:
+            case R.id.connect_send_notifications_checkmark_button:
+                SharedPreferences sharedPreferences = getContext().getSharedPreferences(getString(R.string.preferences_key), Context.MODE_PRIVATE);
+                boolean sendNotifications = sharedPreferences.getBoolean(getString(R.string.preferences_send_notification), false);
+                if(sendNotifications)
+                    updateNotificationSettings(false, null); //sendNotifications is currently enabled and user clicked the button: disable!
+                else
+                    updateNotificationToken(); //sendNotifications is currently disabled and user clicked the button: enable!
+
+                break;
         }
     }
 
@@ -511,8 +580,8 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
         blockThreatsButton.setVisibility(View.GONE);
         blockThreatsImageButton.setVisibility(View.GONE);
         blockThreatsCheckmarkButton.setVisibility(View.GONE);
-        settingsAppButton.setVisibility(View.GONE);
-        settingsAppImageButton.setVisibility(View.GONE);
+        if(this.shouldShouldSettingsAppButton) settingsAppButton.setVisibility(View.GONE);
+        if(this.shouldShouldSettingsAppButton) settingsAppImageButton.setVisibility(View.GONE);
 
         SharedPreferences sharedPreferences = Objects.requireNonNull(getContext()).getSharedPreferences(getString(R.string.preferences_key), Context.MODE_PRIVATE);
 
@@ -538,8 +607,8 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
             blockThreatsButton.setVisibility(View.VISIBLE);
             blockThreatsImageButton.setVisibility(View.VISIBLE);
             blockThreatsCheckmarkButton.setVisibility(View.VISIBLE);
-            settingsAppButton.setVisibility(View.VISIBLE);
-            settingsAppImageButton.setVisibility(View.VISIBLE);
+            if(this.shouldShouldSettingsAppButton) settingsAppButton.setVisibility(View.VISIBLE);
+            if(this.shouldShouldSettingsAppButton) settingsAppImageButton.setVisibility(View.VISIBLE);
 
             //Handle response
             JSONObject jsonResponse;
@@ -857,5 +926,161 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
         mService.reconnect();
         final Handler handler = new Handler();
         handler.postDelayed(this::stateChanged, 500);
+    }
+
+    private void updateNotificationToken()
+    {
+        FirebaseInstanceId.getInstance().getInstanceId()
+                .addOnCompleteListener(task -> {
+                    if(!task.isSuccessful()) {
+                        Log.v(TAG, "updateNotificationToken: Task failed!");
+                        return;
+                    }
+
+                    // Get new Instance ID token
+                    try {
+                        String token = task.getResult().getToken();
+                        SharedPreferences sharedPreferences = getContext().getSharedPreferences(getString(R.string.preferences_key), Context.MODE_PRIVATE);
+                        boolean sendNotifications = sharedPreferences.getBoolean(getString(R.string.preferences_send_notification), false);
+                        if(! sendNotifications)
+                            updateNotificationSettings(true, token);
+                        else
+                            updateNotificationTokenOnServer(token);
+
+                    } catch (Exception e) {
+                        Log.v(TAG, "updateNotificationToken: Exception!");
+                        e.printStackTrace();
+                    }
+                });
+    }
+
+    private void updateNotificationTokenOnServer(String token)
+    {
+        if(globalMethods == null) this.globalMethods = new GlobalMethods(getActivity());
+        try {
+            SharedPreferences sharedPreferences = getContext().getSharedPreferences(getString(R.string.preferences_key), Context.MODE_PRIVATE);
+            String username = sharedPreferences.getString(getString(R.string.preferences_username), "");
+            boolean sendNotifications = sharedPreferences.getBoolean(getString(R.string.preferences_send_notification), false);
+            if(! sendNotifications) return;
+
+            UUID uuid = null;
+            if (username != null) {
+                uuid = UUID.nameUUIDFromBytes(username.getBytes());
+            }
+            VpnProfileDataSource mDataSource = new VpnProfileDataSource(getContext());
+            mDataSource.open();
+            VpnProfile profile = null;
+            if (uuid != null) {
+                profile = mDataSource.getVpnProfile(uuid);
+            }
+            mDataSource.close();
+
+            if (profile == null || profile.getUsername().isEmpty() || profile.getPassword().isEmpty()) {
+                return; //Fail silently
+            }
+
+            //Create POST parameters JSONObject
+            JSONObject postData = new JSONObject();
+            try {
+                postData.put("TokenID", token);
+                postData.put("SO", "G"); //'G'oogle
+            } catch (JSONException exception) {
+                Log.v(TAG, "JSONException while trying create POST params: " + exception.getLocalizedMessage());
+                exception.printStackTrace();
+            }
+
+            //Actually make the request
+            globalMethods.APIRequest("https://spod.com.br/services/vpn/atualizarTokenId", postData, response -> {
+                //Handle response here
+                JSONObject jsonResponse;
+                try {
+                    jsonResponse = new JSONObject(response);
+                    if (jsonResponse.getString("Status").equals(getString(R.string.request_status_success))) {
+                        Log.v(TAG, "Updated tokenID on server with success!");
+                    } else {
+                        //Fail silently
+                        Log.v(TAG, "Error updating tokenID on server!");
+                    }
+                } catch (JSONException exception) {
+                    Log.v(TAG, "updateNotificationOnServer: JSONException: " + exception.getLocalizedMessage());
+                } catch (IllegalStateException exception) {
+                    Log.v(TAG, "Got an IllegalStateException, probably running in the background...");
+                }
+            });
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void updateNotificationSettings(boolean status, String tokenID)
+    {
+        //Hide buttons and show progress bar!
+        mProgressBar.setVisibility(View.VISIBLE);
+        blockTrackersButton.setVisibility(View.GONE);
+        blockTrackersImageButton.setVisibility(View.GONE);
+        blockTrackersCheckmarkButton.setVisibility(View.GONE);
+        blockThreatsButton.setVisibility(View.GONE);
+        blockThreatsImageButton.setVisibility(View.GONE);
+        blockThreatsCheckmarkButton.setVisibility(View.GONE);
+        if(this.shouldShouldSettingsAppButton) settingsAppButton.setVisibility(View.GONE);
+        if(this.shouldShouldSettingsAppButton) settingsAppImageButton.setVisibility(View.GONE);
+        sendNotificationsButton.setVisibility(View.GONE);
+        sendNotificationsImageButton.setVisibility(View.GONE);
+        sendNotificationsCheckmarkButton.setVisibility(View.GONE);
+
+        SharedPreferences sharedPreferences = Objects.requireNonNull(getContext()).getSharedPreferences(getString(R.string.preferences_key), Context.MODE_PRIVATE);
+
+        if(globalMethods == null) this.globalMethods = new GlobalMethods(getActivity());
+
+        //Create POST parameters JSONObject
+        JSONObject postData = new JSONObject();
+        try {
+            postData.put("SendNotifications", status);
+            postData.put("Idioma", getString(R.string.language));
+
+            if(! status) postData.put("TokenID", "Disable");
+            else {
+                if (tokenID != null && tokenID.length() > 0) postData.put("TokenID", tokenID);
+                else postData.put("TokenID", "Disable");
+            }
+        } catch (JSONException exception) {
+            Log.v(TAG, "JSONException while trying to update preferences: " + exception.getLocalizedMessage());
+            exception.printStackTrace();
+        }
+
+        //Actually make the request
+        globalMethods.APIRequest("https://spod.com.br/services/vpn/atualizarNotificacoes", postData, response -> {
+            //Hide progress bar and show buttons again!
+            mProgressBar.setVisibility(View.GONE);
+            blockTrackersButton.setVisibility(View.VISIBLE);
+            blockTrackersImageButton.setVisibility(View.VISIBLE);
+            blockTrackersCheckmarkButton.setVisibility(View.VISIBLE);
+            blockThreatsButton.setVisibility(View.VISIBLE);
+            blockThreatsImageButton.setVisibility(View.VISIBLE);
+            blockThreatsCheckmarkButton.setVisibility(View.VISIBLE);
+            if(this.shouldShouldSettingsAppButton) settingsAppButton.setVisibility(View.VISIBLE);
+            if(this.shouldShouldSettingsAppButton) settingsAppImageButton.setVisibility(View.VISIBLE);
+            sendNotificationsButton.setVisibility(View.VISIBLE);
+            sendNotificationsImageButton.setVisibility(View.VISIBLE);
+            sendNotificationsCheckmarkButton.setVisibility(View.VISIBLE);
+
+            //Handle response
+            JSONObject jsonResponse;
+            try {
+                jsonResponse = new JSONObject(response);
+                if (jsonResponse.getString("Status").equals(getString(R.string.request_status_success))) {
+                    SharedPreferences.Editor sharedPreferencesEditor = sharedPreferences.edit();
+                    sharedPreferencesEditor.putBoolean(getString(R.string.preferences_send_notification), jsonResponse.getInt("SendNotifications") == 1);
+                    sharedPreferencesEditor.apply();
+                    enableButtons(true); //refresh UI to reflect changes!
+                } else {
+                    globalMethods.showAlertWithMessage(getString(R.string.error_from_server, jsonResponse.getString(getString(R.string.request_message))), true);
+                }
+            } catch (JSONException exception) {
+                Log.v(TAG, "updateNotificationSettings: JSONException: " + exception.getLocalizedMessage());
+                globalMethods.showAlertWithMessage(getString(R.string.error_connecting_to_server), true);
+            }
+        });
     }
 }

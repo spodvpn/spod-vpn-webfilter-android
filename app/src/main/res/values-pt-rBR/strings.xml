@@ -20,6 +20,7 @@
     <string name="block_list_title">Sites Bloqueados</string>
     <string name="block_threats_button">Bloquear Ameaças</string>
     <string name="block_trackers_button">Bloquear Rastreadores</string>
+    <string name="send_notifications_button">Enviar Notificações</string>
     <string name="bottom_sheet_cancel">Cancelar</string>
     <string name="bottom_sheet_confirm">Redefinir download/upload</string>
     <string name="bottom_sheet_last_reset">Última redefinição: %1$s</string>
@@ -71,6 +72,7 @@
     <string name="new_user_message">Clique na nuvem acima para começar!</string>
     <string name="not_available">N/D</string>
     <string name="region">BR</string>
+    <string name="language">Portugues</string>
     <string name="request_message">Mensagem</string>
     <string name="spodLogoDescription">Logo Spod</string>
     <string name="store_fragment_title">Comprar Assinatura</string>

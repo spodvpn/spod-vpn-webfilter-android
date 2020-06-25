@@ -11,3 +11,4 @@
 /app/debug
 /app/release
 /strongswan/build/outputs/logs
+/app/google-services.json 

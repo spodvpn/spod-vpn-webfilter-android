@@ -1,5 +1,6 @@
 package br.com.spod.spodvpnwebfilter;
 
+import android.app.NotificationManager;
 import android.content.Context;
 import android.content.SharedPreferences;
 
@@ -33,7 +34,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 
-public class MainActivity extends AppCompatActivity implements PurchasesUpdatedListener {
+public class MainActivity extends AppCompatActivity implements PurchasesUpdatedListener  {
 
     private static final String TAG = "MainActivity";
 
@@ -82,6 +83,15 @@ public class MainActivity extends AppCompatActivity implements PurchasesUpdatedL
 
         //Open default main fragment
         openFragment(ConnectFragment.newInstance(), false, "ConnectFragment");
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+
+        //Clear all alert notifications
+        NotificationManager notificationManager = (NotificationManager) getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
+        notificationManager.cancelAll();
     }
 
     @Override

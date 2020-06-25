@@ -51,6 +51,7 @@
     <string name="copyright" translatable="false">© Spod 2020</string>
 
     <string name="region">US</string>
+    <string name="language">English</string>
 
     <string name="not_available">N/A</string>
 
@@ -83,6 +84,7 @@
     <string name="preferences_lists_key" translatable="false">br.com.spod.spodvpnwebfilter.lists</string>
     <string name="preferences_block_trackers_list" translatable="false">block\-tracking</string>
     <string name="preferences_block_threats_list" translatable="false">malware\-phishing</string>
+    <string name="preferences_send_notification" translatable="false">br.com.spod.spodvpnwebfilter.send_notifications</string>
 
     <string name="bottom_sheet_title">Would you like to reset your usage data?</string>
     <string name="bottom_sheet_confirm">Reset download/upload</string>
@@ -123,6 +125,7 @@
 
     <string name="block_trackers_button">Block Trackers</string>
     <string name="block_threats_button">Block Threats</string>
+    <string name="send_notifications_button">Send Notifications</string>
 
     <string name="website_url">https://spod.com.br/en</string>
     <string name="default_vpn_gateway">us.vpn.spod.com.br</string>

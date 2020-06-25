@@ -79,7 +79,7 @@
 
     <TextView
         android:id="@+id/connect_block_trackers_button"
-        android:layout_width="wrap_content"
+        android:layout_width="150dp"
         android:layout_height="wrap_content"
         android:text="@string/block_trackers_button"
         android:textAlignment="textStart"
@@ -123,7 +123,7 @@
 
     <TextView
         android:id="@+id/connect_block_threats_button"
-        android:layout_width="0dp"
+        android:layout_width="150dp"
         android:layout_height="wrap_content"
         android:text="@string/block_threats_button"
         android:textAlignment="textStart"
@@ -150,13 +150,57 @@
         app:layout_constraintStart_toEndOf="@id/connect_block_threats_button"
         />
 
-    <!-- Third button: Always-on VPN -->
+    <!-- Third button: Send Notifications -->
+    <ImageButton
+        android:id="@+id/connect_send_notifications_image_button"
+        android:layout_width="34dp"
+        android:layout_height="34dp"
+        android:background="@null"
+        android:contentDescription="@string/send_notifications_button"
+        android:src="@drawable/send_notifications_icon"
+        android:tag="2"
+
+        app:layout_constraintTop_toTopOf="@id/connect_send_notifications_button"
+        app:layout_constraintBottom_toBottomOf="@id/connect_send_notifications_button"
+        app:layout_constraintEnd_toStartOf="@id/connect_send_notifications_button"
+        />
+
+    <TextView
+        android:id="@+id/connect_send_notifications_button"
+        android:layout_width="150dp"
+        android:layout_height="wrap_content"
+        android:text="@string/send_notifications_button"
+        android:textAlignment="textStart"
+        android:lines="1"
+        android:tag="2"
+        style="@style/Widget.AppCompat.Button.Borderless.Colored"
+        android:textAllCaps="false"
+        app:layout_constraintTop_toBottomOf="@id/connect_block_threats_button"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        />
+
+    <ImageButton
+        android:id="@+id/connect_send_notifications_checkmark_button"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:background="@null"
+        android:contentDescription="@string/send_notifications_button"
+        android:src="@drawable/checkmark"
+        android:tag="2"
+        android:visibility="gone"
+        app:layout_constraintTop_toTopOf="@id/connect_send_notifications_button"
+        app:layout_constraintBottom_toBottomOf="@id/connect_send_notifications_button"
+        app:layout_constraintStart_toEndOf="@id/connect_send_notifications_button"
+        />
+
+    <!-- Fourth button: Always-on VPN -->
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:layout_marginTop="20dp"
-        app:layout_constraintTop_toBottomOf="@id/connect_block_threats_button"
+        app:layout_constraintTop_toBottomOf="@id/connect_send_notifications_button"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
     <TextView
@@ -166,7 +210,7 @@
         android:text="@string/toggle_always_on_button"
         android:visibility="gone"
         android:layout_gravity="center_vertical"
-        android:tag="2"
+        android:tag="3"
         android:lines="1"
         style="@style/Widget.AppCompat.Button.Borderless.Colored"
         android:textAllCaps="false"
@@ -178,20 +222,20 @@
         android:layout_gravity="center_vertical"
         android:background="@null"
         android:visibility="gone"
-        android:tag="2"
+        android:tag="3"
         android:contentDescription="@string/toggle_always_on_button"
         android:src="@drawable/external_icon"
         />
     </LinearLayout>
 
-    <!-- Fourth button: website -->
+    <!-- Fifth button: website -->
     <TextView
         android:id="@+id/connect_website_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textAllCaps="false"
         android:text="@string/website_url"
-        android:tag="2"
+        android:tag="3"
         android:textSize="12sp"
         style="@style/Widget.AppCompat.Button.Borderless.Colored"
         android:layout_marginBottom="50dp"
