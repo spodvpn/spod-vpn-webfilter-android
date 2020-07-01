@@ -78,8 +78,12 @@
     <string name="one_profile_selected">Ein Profil ausgewählt</string>
     <string name="permanent_notification_description">Zeigt Informationen zum Verbindungsstatus der VPN Verbindung und dient als permanente Notification dazu, den VPN Dienst im Hintergrund am Laufen zu halten.</string>
     <string name="permanent_notification_name">VPN Verbindungsstatus</string>
+    <string name="power_whitelist_text">Bitte den nächsten Dialog bestätigen, um die App auf die weisse Liste für Akku-Optimierung zu setzen, so dass sie NAT keepalives und Rekeyings zeitlich korrekt planen kann, um konstant erreichbar zu bleiben während die VPN-Verbindung besteht.</string>
+    <string name="power_whitelist_title">Akku-Optimierung deaktivieren</string>
     <string name="pref_default_vpn_profile">Voreingestelltes VPN Profil</string>
     <string name="pref_default_vpn_profile_mru">Verbinden mit zuletzt verwendetem Profil</string>
+    <string name="pref_power_whitelist_summary">Keine Warnung anzeigen, falls die App nicht auf der weissen Liste für Akku-Optimierung ist</string>
+    <string name="pref_power_whitelist_title">Akku-Optimierung ignorieren</string>
     <string name="pref_title">Einstellungen</string>
     <string name="profile_advanced_label">Erweiterte Einstellungen</string>
     <string name="profile_ca_auto_label">Automatisch wählen</string>

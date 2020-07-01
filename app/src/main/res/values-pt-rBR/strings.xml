@@ -111,4 +111,7 @@
     <string name="disconnect_question">Desconectar VPN?</string>
     <string name="disconnect_active_connection">Isso vai desconectar a conexão de VPN atual!</string>
 
+    <string name="power_whitelist_title">Desabilitar otimização da bateria</string>
+    <string name="power_whitelist_text">Para que a VPN consiga rodar em segundo plano e manter a conexão ativa, favor confirmar a mensagem que vai aparecer em seguida.</string>
+
 </resources>

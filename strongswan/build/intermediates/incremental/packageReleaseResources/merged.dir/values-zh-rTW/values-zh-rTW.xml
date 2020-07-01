@@ -78,8 +78,12 @@
     <string name="one_profile_selected">已選擇1個設定檔</string>
     <string name="permanent_notification_description">Provides information about the VPN connection state and serves as permanent notification to keep the VPN service running in the background.</string>
     <string name="permanent_notification_name">VPN connection state</string>
+    <string name="power_whitelist_text">Please confirm the next dialog to add the app to the device\'s power whitelist so it can ignore battery optimizations and schedule NAT keep-alives and rekeyings accurately in order to constantly keep reachable while the VPN is established.</string>
+    <string name="power_whitelist_title">Disable battery optimizations</string>
     <string name="pref_default_vpn_profile">Default VPN profile</string>
     <string name="pref_default_vpn_profile_mru">Connect to most recently used profile</string>
+    <string name="pref_power_whitelist_summary">Don\'t show a warning if the app is not on the device\'s power whitelist</string>
+    <string name="pref_power_whitelist_title">Ignore battery optimizations</string>
     <string name="pref_title">Settings</string>
     <string name="profile_advanced_label">進階設定</string>
     <string name="profile_ca_auto_label">自動選擇</string>

@@ -129,7 +129,8 @@
   /Users/rafael/SpodVPNWebFilter/strongswan/src/main/jni/../../../../strongswan-src/strongswan/src/libstrongswan/plugins/openssl/openssl_aead.h \
   /Users/rafael/SpodVPNWebFilter/strongswan/src/main/jni/../../../../strongswan-src/strongswan/src/libstrongswan/plugins/openssl/openssl_x_diffie_hellman.h \
   /Users/rafael/SpodVPNWebFilter/strongswan/src/main/jni/../../../../strongswan-src/strongswan/src/libstrongswan/plugins/openssl/openssl_ed_public_key.h \
-  /Users/rafael/SpodVPNWebFilter/strongswan/src/main/jni/../../../../strongswan-src/strongswan/src/libstrongswan/plugins/openssl/openssl_ed_private_key.h
+  /Users/rafael/SpodVPNWebFilter/strongswan/src/main/jni/../../../../strongswan-src/strongswan/src/libstrongswan/plugins/openssl/openssl_ed_private_key.h \
+  /Users/rafael/SpodVPNWebFilter/strongswan/src/main/jni/../../../../strongswan-src/strongswan/src/libstrongswan/plugins/openssl/openssl_xof.h
 
 /Users/rafael/SpodVPNWebFilter/strongswan/src/main/jni/../../../../strongswan-src/strongswan/src/libstrongswan/library.h:
 
@@ -390,3 +391,5 @@
 /Users/rafael/SpodVPNWebFilter/strongswan/src/main/jni/../../../../strongswan-src/strongswan/src/libstrongswan/plugins/openssl/openssl_ed_public_key.h:
 
 /Users/rafael/SpodVPNWebFilter/strongswan/src/main/jni/../../../../strongswan-src/strongswan/src/libstrongswan/plugins/openssl/openssl_ed_private_key.h:
+
+/Users/rafael/SpodVPNWebFilter/strongswan/src/main/jni/../../../../strongswan-src/strongswan/src/libstrongswan/plugins/openssl/openssl_xof.h:

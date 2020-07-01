@@ -116,6 +116,7 @@
   /Users/rafael/SpodVPNWebFilter/strongswan/src/main/jni/libandroidbridge/backend/android_creds.h \
   /Users/rafael/SpodVPNWebFilter/strongswan/src/main/jni/libandroidbridge/backend/android_fetcher.h \
   /Users/rafael/SpodVPNWebFilter/strongswan/src/main/jni/libandroidbridge/backend/android_private_key.h \
+  /Users/rafael/SpodVPNWebFilter/strongswan/src/main/jni/libandroidbridge/backend/android_scheduler.h \
   /Users/rafael/SpodVPNWebFilter/strongswan/src/main/jni/libandroidbridge/backend/android_service.h \
   /Users/rafael/SpodVPNWebFilter/strongswan/src/main/jni/../../../../strongswan-src/strongswan/src/libcharon/bus/listeners/listener.h \
   /Users/rafael/SpodVPNWebFilter/strongswan/src/main/jni/../../../../strongswan-src/strongswan/src/libcharon/bus/bus.h \
@@ -390,6 +391,8 @@
 /Users/rafael/SpodVPNWebFilter/strongswan/src/main/jni/libandroidbridge/backend/android_fetcher.h:
 
 /Users/rafael/SpodVPNWebFilter/strongswan/src/main/jni/libandroidbridge/backend/android_private_key.h:
+
+/Users/rafael/SpodVPNWebFilter/strongswan/src/main/jni/libandroidbridge/backend/android_scheduler.h:
 
 /Users/rafael/SpodVPNWebFilter/strongswan/src/main/jni/libandroidbridge/backend/android_service.h:
 
