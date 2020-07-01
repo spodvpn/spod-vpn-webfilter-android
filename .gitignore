@@ -10,5 +10,6 @@
 .externalNativeBuild
 /app/debug
 /app/release
+/app/build
 /strongswan/build/outputs/logs
 /app/google-services.json 
