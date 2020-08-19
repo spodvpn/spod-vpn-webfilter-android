@@ -2,10 +2,14 @@ package br.com.spod.spodvpnwebfilter;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.graphics.Color;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
+import android.widget.TextView;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -64,6 +68,7 @@ public class AlertsFragment extends Fragment
             adapterViewPager = new AlertsPagerAdapter(getChildFragmentManager());
         }
         viewPager.setAdapter(adapterViewPager);
+        viewPager.setOffscreenPageLimit(3);
 
         //Set activity's title
         Objects.requireNonNull(getActivity()).setTitle(getString(R.string.title_alerts));
@@ -71,13 +76,13 @@ public class AlertsFragment extends Fragment
         return view;
     }
 
-
     public static class AlertsPagerAdapter extends FragmentPagerAdapter
     {
-        private static final int NUM_ITEMS = 3;
+        private static final int NUM_ITEMS = 4;
         private GlobalMethods globalMethods;
+        boolean fullAlertsList = false;
 
-        //Array to hold all 3 adapters (Trackers, Threats and Sites)
+        //Array to hold all 4 adapters (Summary, Trackers, Threats and Sites)
         ArrayList<AlertsGenericRecyclerAdapter> adapters = new ArrayList<>();
 
         AlertsPagerAdapter(FragmentManager fragmentManager) {
@@ -93,14 +98,17 @@ public class AlertsFragment extends Fragment
         {
             switch (position) {
                 case 0:
-                    //Fragment #0 - this will show Trackers
+                    //Fragment #0 - this will show Web Filter's Activity Summary
                     return AlertsGenericFragment.newInstance(0, 0, this);
                 case 1:
-                    //Fragment #1 - this will show Threats
+                    //Fragment #1 - this will show Trackers
                     return AlertsGenericFragment.newInstance(0, 1, this);
                 case 2:
-                    //Fragment #3 - this will show Sites
+                    //Fragment #2 - this will show Threats
                     return AlertsGenericFragment.newInstance(0, 2, this);
+                case 3:
+                    //Fragment #3 - this will show Sites
+                    return AlertsGenericFragment.newInstance(0, 3, this);
                 default:
                     return null;
             }
@@ -144,27 +152,38 @@ public class AlertsFragment extends Fragment
             mDataSource.close();
 
             if(profile == null || profile.getUsername().isEmpty() || profile.getPassword().isEmpty()) {
-                globalMethods.showAlertWithMessage(fragmentActivity.getString(R.string.alerts_no_credentials_message), true);
-                if(mSwipeRefresh.isRefreshing()) mSwipeRefresh.setRefreshing(false);
+                showMessageNoAlerts(fragmentActivity);
+                if(mSwipeRefresh != null && mSwipeRefresh.isRefreshing()) mSwipeRefresh.setRefreshing(false);
                 return;
             }
 
             //Create POST parameters JSONObject
             JSONObject postData = new JSONObject();
+            try {
+                postData.put("ListaCompleta", this.fullAlertsList);
+            } catch (JSONException exception) {
+                Log.v(TAG, "JSONException while trying to fetch alerts: " + exception.getLocalizedMessage());
+                exception.printStackTrace();
+            }
 
             //Actually make the request
-            globalMethods.APIRequest("https://spod.com.br/services/vpn/pegarAlertas", postData, response -> {
+            globalMethods.APIRequest("https://spod.com.br/services/vpn/pegarAlertas2", postData, response -> {
                 //Handle response here
-                if(mSwipeRefresh.isRefreshing()) mSwipeRefresh.setRefreshing(false); //Stop refreshing
+                if(mSwipeRefresh != null && mSwipeRefresh.isRefreshing()) mSwipeRefresh.setRefreshing(false); //Stop refreshing
                 JSONObject jsonResponse;
                 try {
                     jsonResponse = new JSONObject(response);
 
                     if (jsonResponse.getString("Status").equals(fragmentActivity.getString(R.string.request_status_success)))
                     {
-                        JSONArray allAlerts = jsonResponse.getJSONArray("Alertas");
-                        if(allAlerts.length() == 0) {
-                            globalMethods.showAlertWithMessage(fragmentActivity.getString(R.string.alerts_empty), true);
+                        //JSONArray allAlerts = jsonResponse.getJSONArray("Alertas");
+                        JSONArray trackersAlerts = jsonResponse.getJSONArray("TrackersAlerts");
+                        JSONArray threatsArray = jsonResponse.getJSONArray("ThreatsAlerts");
+                        JSONArray blacklistArray = jsonResponse.getJSONArray("BlacklistAlerts");
+
+                        if(trackersAlerts.length() == 0 && threatsArray.length() == 0 && blacklistArray.length() == 0) {
+                            //globalMethods.showAlertWithMessage(fragmentActivity.getString(R.string.alerts_empty), true);
+                            showMessageNoAlerts(fragmentActivity);
                             return;
                         }
 
@@ -173,37 +192,110 @@ public class AlertsFragment extends Fragment
                         ArrayList<Object> blockThreatsArray = new ArrayList<>();
                         ArrayList<Object> blockSitesArray = new ArrayList<>();
 
-                        for(int i=0; i<allAlerts.length(); i=i+3)
-                        {
-                            //Add to the correct array
-                            if(allAlerts.getString(i).equals("block-tracking")) {
-                                blockTrackingArray.add(allAlerts.get(i));
-                                blockTrackingArray.add(allAlerts.get(i+1));
-                                blockTrackingArray.add(allAlerts.get(i+2));
+                        if(trackersAlerts.length() > 0) {
+                            for(int i=0; i<trackersAlerts.length(); i=i+2) {
+                                blockTrackingArray.add(trackersAlerts.get(i));
+                                blockTrackingArray.add(trackersAlerts.get(i+1));
                             }
-                            else if(allAlerts.getString(i).equals("malware-phishing")) {
-                                blockThreatsArray.add(allAlerts.get(i));
-                                blockThreatsArray.add(allAlerts.get(i+1));
-                                blockThreatsArray.add(allAlerts.get(i+2));
+                        }
+                        if(threatsArray.length() > 0) {
+                            for(int i=0; i<threatsArray.length(); i=i+2) {
+                                blockThreatsArray.add(threatsArray.get(i));
+                                blockThreatsArray.add(threatsArray.get(i+1));
                             }
-                            else if(allAlerts.getString(i).equals("blacklist")){
-                                blockSitesArray.add(allAlerts.get(i));
-                                blockSitesArray.add(allAlerts.get(i+1));
-                                blockSitesArray.add(allAlerts.get(i+2));
+                        }
+                        if(blacklistArray.length() > 0) {
+                            for(int i=0; i<blacklistArray.length(); i=i+2) {
+                                blockSitesArray.add(blacklistArray.get(i));
+                                blockSitesArray.add(blacklistArray.get(i+1));
                             }
                         }
 
+                        int totalTrackers = jsonResponse.getInt("TotalTrackers");
+                        int totalThreats = jsonResponse.getInt("TotalThreats");
+                        int totalBlacklist = jsonResponse.getInt("TotalBlacklist");
+                        int nTotal = totalTrackers + totalThreats + totalBlacklist;
+                        ArrayList<Object> totalsArray = new ArrayList<>();
+                        totalsArray.add(totalTrackers);
+                        totalsArray.add(totalThreats);
+                        totalsArray.add(totalBlacklist);
+
                         //Call reloadData in each adapter's class
-                        adapters.get(0).reloadData(blockTrackingArray);
-                        adapters.get(1).reloadData(blockThreatsArray);
-                        adapters.get(2).reloadData(blockSitesArray);
+                        adapters.get(0).reloadData(totalsArray, nTotal);
+                        adapters.get(1).reloadData(blockTrackingArray, jsonResponse.getInt("TotalTrackers"));
+                        adapters.get(2).reloadData(blockThreatsArray, jsonResponse.getInt("TotalThreats"));
+                        if(adapters.size()>3)
+                            adapters.get(3).reloadData(blockSitesArray, jsonResponse.getInt("TotalBlacklist"));
+
                     } else {
                         globalMethods.showAlertWithMessage(fragmentActivity.getString(R.string.error_from_server, jsonResponse.getString(fragmentActivity.getString(R.string.request_message))), true);
                     }
                 } catch (JSONException exception) {
                     globalMethods.showAlertWithMessage(fragmentActivity.getString(R.string.error_connecting_to_server), true);
+
+                    Log.v(TAG, "JSONException while fetching alerts:");
+                    exception.printStackTrace();
                 }
             });
+        }
+
+        private void showMessageNoAlerts(FragmentActivity fragmentActivity)
+        {
+            boolean isConnected = false;
+            boolean profileExists;
+
+            //Check if VPN profile already exists
+            SharedPreferences sharedPreferences = fragmentActivity.getSharedPreferences(fragmentActivity.getString(R.string.preferences_key), Context.MODE_PRIVATE);
+            String username = sharedPreferences.getString(fragmentActivity.getString(R.string.preferences_username), "");
+
+            UUID uuid = null;
+            if (username != null) {
+                uuid = UUID.nameUUIDFromBytes(username.getBytes());
+            }
+            VpnProfileDataSource mDataSource = new VpnProfileDataSource(fragmentActivity);
+            mDataSource.open();
+            VpnProfile profile = null;
+            if (uuid != null) {
+                profile = mDataSource.getVpnProfile(uuid);
+            }
+            mDataSource.close();
+
+            if(profile == null || profile.getUsername().isEmpty() || profile.getPassword().isEmpty())
+                profileExists = false;
+            else {
+                profileExists = true;
+                //Detect current connection status
+                MainActivity mainActivity = (MainActivity)fragmentActivity;
+                if(mainActivity.server_connected != null && mainActivity.server_connected.length() > 0) {
+                    isConnected = true;
+                }
+            }
+
+            try {
+                //Make container visible
+                FrameLayout frameLayout = fragmentActivity.findViewById(R.id.alerts_fragment_message);
+                frameLayout.setVisibility(View.VISIBLE);
+
+                View fixedMessageView = View.inflate(fragmentActivity, R.layout.fragment_fixed_message, frameLayout);
+                TextView titleTextView = fixedMessageView.findViewById(R.id.fragment_fixed_message_title);
+                TextView messageTextView = fixedMessageView.findViewById(R.id.fragment_fixed_message_text);
+
+                if (!profileExists || !isConnected) {
+                    //Unsubscribed and/or disconnected
+                    titleTextView.setTextColor(Color.RED);
+                    titleTextView.setText(fragmentActivity.getString(R.string.alerts_empty_disconnected_title));
+                    messageTextView.setText(fragmentActivity.getString(R.string.alerts_empty_disconnected_text));
+
+                } else {
+                    //Subscribed and connected
+                    titleTextView.setTextColor(fragmentActivity.getResources().getColorStateList(R.color.connected_green, null));
+                    titleTextView.setText(fragmentActivity.getString(R.string.alerts_empty_connected_title));
+                    messageTextView.setText(fragmentActivity.getString(R.string.alerts_empty_connected_text));
+                }
+            } catch (Exception e) {
+                Log.v(TAG, "showMessageNoAlerts: Got an exception: "+e.getLocalizedMessage());
+                e.printStackTrace();
+            }
         }
     }
 }

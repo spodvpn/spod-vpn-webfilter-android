@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="horizontal"
+    android:layout_width="match_parent"
+    android:layout_height="70dp"
+    android:layout_marginTop="5dp"
+    android:layout_marginBottom="5dp">
+
+    <ImageView
+        android:id="@+id/alerts_stats_double_primary_icon"
+        android:layout_width="18dp"
+        android:layout_height="18dp"
+        android:contentDescription="@string/alerts_generic_fragment_icon_description"
+        android:layout_weight="0.10"
+        android:layout_gravity="center_vertical"
+        />
+
+    <!-- First/Primary stat -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_weight="0.40"
+        android:layout_gravity="center_vertical">
+
+        <TextView
+            android:id="@+id/alerts_stats_double_primary_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="22sp"
+            android:layout_marginEnd="15dp"
+            android:textColor="#000000"
+            android:singleLine="true"
+            android:textAlignment="textEnd" />
+
+        <TextView
+            android:id="@+id/alerts_stats_double_primary_description"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="12sp"
+            android:layout_marginEnd="15dp"
+            android:textColor="#000000"
+            android:singleLine="true"
+            android:textAlignment="textEnd" />
+
+    </LinearLayout>
+
+    <!-- Second/Secondary stat -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_weight="0.40"
+        android:layout_gravity="center_vertical" >
+
+        <TextView
+            android:id="@+id/alerts_stats_double_secondary_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="15dp"
+            android:textSize="22sp"
+            android:textColor="#000000"
+            android:singleLine="true" />
+
+        <TextView
+            android:id="@+id/alerts_stats_double_secondary_description"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="12sp"
+            android:layout_marginStart="15dp"
+            android:textColor="#000000" />
+
+    </LinearLayout>
+
+    <ImageView
+        android:id="@+id/alerts_stats_double_secondary_icon"
+        android:layout_width="18dp"
+        android:layout_height="18dp"
+        android:contentDescription="@string/alerts_generic_fragment_icon_description"
+
+        android:layout_marginEnd="15dp"
+        android:layout_gravity="center_vertical" />
+
+</LinearLayout>

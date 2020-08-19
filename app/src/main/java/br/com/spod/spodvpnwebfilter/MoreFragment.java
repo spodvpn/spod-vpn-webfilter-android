@@ -223,8 +223,8 @@ public class MoreFragment extends Fragment implements MoreRecyclerViewAdapter.It
 
                     //Get values from JSON
                     adapter.subscriptionType = jsonResponse.optString("SubscriptionType", getString(R.string.not_available));
-                    adapter.totalDownload = globalMethods.formatBytes(jsonResponse.optDouble("TotalDownload", 0.00));
-                    adapter.totalUpload = globalMethods.formatBytes(jsonResponse.optDouble("TotalUpload", 0.00));
+                    adapter.totalDownload = globalMethods.formatBytes(jsonResponse.optLong("TotalDownload", 0));
+                    adapter.totalUpload = globalMethods.formatBytes(jsonResponse.optLong("TotalUpload", 0));
                     adapter.firewallVersion = jsonResponse.optString("FirewallRevision", getString(R.string.not_available));
                     adapter.changeLog = jsonResponse.optString("FirewallUpdateChangelog", getString(R.string.not_available));
 

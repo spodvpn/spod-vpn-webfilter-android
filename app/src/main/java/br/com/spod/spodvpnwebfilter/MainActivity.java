@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 
 import android.os.Bundle;
+import android.os.StrictMode;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -41,6 +42,8 @@ public class MainActivity extends AppCompatActivity implements PurchasesUpdatedL
     String server_connected = "";
     boolean shouldRedirectToStore = false;
     boolean billingSetupFinished;
+    String firebaseTokenId = "";
+    boolean subscribeToCustomFreeTrial = false;
 
     BillingClient billingClient;
     private List<SkuDetails> skuDetailsListGlobal;
@@ -56,7 +59,12 @@ public class MainActivity extends AppCompatActivity implements PurchasesUpdatedL
             switch (item.getItemId()) {
                 case R.id.navigation_connect:
                     openFragment(ConnectFragment.newInstance(), true, "ConnectFragment");
-                    actionBarMenu.getItem(0).setVisible(true);
+                    //Check if StoreFragment is visible
+                    Fragment storeFragment = getSupportFragmentManager().findFragmentByTag("StoreFragment");
+                    if(storeFragment == null)
+                        actionBarMenu.getItem(0).setVisible(true);
+                    else
+                        actionBarMenu.getItem(0).setVisible(!storeFragment.isVisible());
                     return true;
                 case R.id.navigation_alerts:
                     openFragment(AlertsFragment.newInstance(), true, "AlertsFragment");

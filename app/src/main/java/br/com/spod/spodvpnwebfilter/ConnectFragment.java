@@ -29,10 +29,7 @@ import android.widget.TextView;
 
 import com.android.billingclient.api.BillingClient;
 import com.android.billingclient.api.Purchase;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
 import com.google.firebase.iid.FirebaseInstanceId;
-import com.google.firebase.iid.InstanceIdResult;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -54,7 +51,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
-import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 
@@ -200,7 +196,7 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
 
         SharedPreferences sharedPreferences = getActivity().getSharedPreferences(getString(R.string.preferences_key), Context.MODE_PRIVATE);
         boolean sendNotifications = sharedPreferences.getBoolean(getString(R.string.preferences_send_notification), false);
-        if(sendNotifications) updateNotificationToken();
+        if(sendNotifications) updateNotificationToken(true);
 
         //Get display size to determine if settingsAppButton should be displayed
         DisplayMetrics metrics = getResources().getDisplayMetrics();
@@ -218,6 +214,31 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
     public void onStop() {
         super.onStop();
         if (mService != null) mService.unregisterListener(this);
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+
+        //Update VPN profile to disable cert_reqs (v1.3.1)
+        try {
+            SharedPreferences sharedPreferences = getActivity().getSharedPreferences(getActivity().getString(R.string.preferences_key), Context.MODE_PRIVATE);
+            String username = sharedPreferences.getString(getActivity().getString(R.string.preferences_username), "");
+            if (username != null && username.length() > 0) {
+                UUID uuid = UUID.nameUUIDFromBytes(username.getBytes());
+                VpnProfileDataSource mDataSource = new VpnProfileDataSource(getActivity());
+                mDataSource.open();
+                VpnProfile profile = mDataSource.getVpnProfile(uuid);
+                if (profile.getFlags() != VpnProfile.FLAGS_SUPPRESS_CERT_REQS) {
+                    profile.setFlags(VpnProfile.FLAGS_SUPPRESS_CERT_REQS);
+                    mDataSource.updateVpnProfile(profile);
+                }
+                mDataSource.close();
+            }
+        } catch (Exception e) {
+            Log.v(TAG, "onStart: Exception while updating VPN profile...");
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -398,7 +419,7 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
                 }
             }
 
-            if(purchase == null) {
+            if(purchase == null && ! mainActivity.subscribeToCustomFreeTrial) {
                 //User has not purchased yet, send to store
                 mService.disconnect();
                 redirectToStore();
@@ -564,7 +585,7 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
                 if(sendNotifications)
                     updateNotificationSettings(false, null); //sendNotifications is currently enabled and user clicked the button: disable!
                 else
-                    updateNotificationToken(); //sendNotifications is currently disabled and user clicked the button: enable!
+                    updateNotificationToken(true); //sendNotifications is currently disabled and user clicked the button: enable!
 
                 break;
         }
@@ -646,15 +667,25 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
         //Create POST request parameters JSONObject
         JSONObject postData = new JSONObject();
         try {
-            postData.put("Recibo", purchase.getOriginalJson());
+            if(purchase != null) postData.put("Recibo", purchase.getOriginalJson());
+            else {
+                postData.put("Recibo", "FreeTrial3dias");
+                final String deviceID = Settings.Secure.getString(getContext().getContentResolver(), Settings.Secure.ANDROID_ID);
+                postData.put("SSAID", deviceID);
+                MainActivity mainActivity = (MainActivity)getActivity();
+                if(mainActivity != null) postData.put("TokenID", mainActivity.firebaseTokenId);
+            }
             postData.put("SO", "G"); //'G'oogle
         } catch (JSONException exception) {
             Log.v(TAG, "JSONException while trying to request credentials : "+exception.getLocalizedMessage());
             exception.printStackTrace();
+        } catch (Exception exception) {
+            Log.v(TAG, "Exception while trying to request credentials: "+exception.getLocalizedMessage());
+            exception.printStackTrace();
         }
 
         //Actually make the request
-        globalMethods.APIRequest("https://spod.com.br/services/vpn/criarUsuario3", postData, response -> {
+        globalMethods.APIRequest("https://spod.com.br/services/vpn/criarUsuario4", postData, response -> {
             //Handle response here
             JSONObject jsonResponse;
             try {
@@ -717,7 +748,7 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
                             Certificate lets_encrypt_cert = cf.generateCertificate(cert_bin);
                             certificateStore.addCertificate(lets_encrypt_cert);
                         } catch (Exception e) {
-                            Log.v(TAG, "requestCredentials: opped at an exception:" + e.getLocalizedMessage());
+                            Log.v(TAG, "requestCredentials: Got at an exception:" + e.getLocalizedMessage());
                             e.printStackTrace();
                         }
                     }
@@ -742,6 +773,7 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
                     user_profile.setIkeProposal("aes256gcm16-sha256-modp2048");
                     user_profile.setMTU(MTU_MIN);
                     user_profile.setUUID(uuid);
+                    user_profile.setFlags(VpnProfile.FLAGS_SUPPRESS_CERT_REQS);
 
                     mDataSource.insertProfile(user_profile);
                     mDataSource.close();
@@ -774,6 +806,10 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
         JSONObject postData = new JSONObject();
         try {
             MainActivity mainActivity = (MainActivity)getActivity();
+            if (mainActivity != null && mainActivity.subscribeToCustomFreeTrial) {
+                requestCredentials(null);
+                return;
+            }
             if (mainActivity != null && (!mainActivity.billingSetupFinished || Objects.requireNonNull(Objects.requireNonNull(getContext()).getSharedPreferences(getString(R.string.preferences_key), Context.MODE_PRIVATE).getString(getString(R.string.preferences_username), "")).isEmpty())) {
                 Log.v(TAG, "verifyReceipt: Abort because billingClient is NOT ready yet or no username found!");
                 return;
@@ -792,12 +828,7 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
                     }
                 }
             }
-
-            if(! postData.has("Recibo")) {
-                Log.v(TAG, "verifyReceipt: Did NOT find valid purchase/receipt, redirecting to store...");
-                mService.disconnect();
-                redirectToStore();
-            }
+            if(! postData.has("Recibo")) postData.put("Recibo", "FreeTrial3dias");
         }
         catch (JSONException exception) {
             Log.v(TAG, "verifyReceipt: JSONException: " + exception.getLocalizedMessage());
@@ -805,7 +836,7 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
         }
 
         //Actually make the request
-        globalMethods.APIRequest("https://spod.com.br/services/vpn/validarRecibo3", postData, response -> {
+        globalMethods.APIRequest("https://spod.com.br/services/vpn/validarRecibo4", postData, response -> {
             //Handle response here
             JSONObject jsonResponse;
             try {
@@ -928,7 +959,7 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
         handler.postDelayed(this::stateChanged, 500);
     }
 
-    private void updateNotificationToken()
+    void updateNotificationToken(boolean shouldEnable)
     {
         FirebaseInstanceId.getInstance().getInstanceId()
                 .addOnCompleteListener(task -> {
@@ -940,12 +971,15 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
                     // Get new Instance ID token
                     try {
                         String token = task.getResult().getToken();
+                        MainActivity mainActivity = (MainActivity)getActivity();
+                        if(mainActivity != null) mainActivity.firebaseTokenId = token;
+
                         SharedPreferences sharedPreferences = getContext().getSharedPreferences(getString(R.string.preferences_key), Context.MODE_PRIVATE);
                         boolean sendNotifications = sharedPreferences.getBoolean(getString(R.string.preferences_send_notification), false);
-                        if(! sendNotifications)
-                            updateNotificationSettings(true, token);
-                        else
-                            updateNotificationTokenOnServer(token);
+                        if(shouldEnable) {
+                            if (!sendNotifications) updateNotificationSettings(true, token);
+                            else updateNotificationTokenOnServer(token);
+                        }
 
                     } catch (Exception e) {
                         Log.v(TAG, "updateNotificationToken: Exception!");

@@ -25,4 +25,14 @@
         android:layout_alignParentBottom="true">
     </FrameLayout>
 
+    <FrameLayout
+        android:id="@+id/alerts_fragment_message"
+        android:layout_width="260dp"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        android:layout_centerInParent="true"
+        >
+    </FrameLayout>
+
+
 </RelativeLayout>

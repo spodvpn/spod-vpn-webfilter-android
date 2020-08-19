@@ -2,7 +2,6 @@ package br.com.spod.spodvpnwebfilter;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.service.notification.NotificationListenerService;
 import android.util.Log;
 import android.view.View;
 import android.widget.FrameLayout;
@@ -42,14 +41,19 @@ class GlobalMethods
         //Hide any pre existing message
         this.closeAlert();
 
-        //Make container visible
-        FrameLayout frameLayout = mActivity.findViewById(R.id.message_container);
-        frameLayout.setVisibility(View.VISIBLE);
+        try {
+            //Make container visible
+            FrameLayout frameLayout = mActivity.findViewById(R.id.message_container);
+            frameLayout.setVisibility(View.VISIBLE);
 
-        //Add message fragment to container
-        FragmentTransaction transaction = mActivity.getSupportFragmentManager().beginTransaction();
-        transaction.add(R.id.message_container, MessageFragment.newInstance(message, (autoDismiss ? 5000L : 0L)), "MessageFragment");
-        transaction.commitAllowingStateLoss();
+            //Add message fragment to container
+            FragmentTransaction transaction = mActivity.getSupportFragmentManager().beginTransaction();
+            transaction.add(R.id.message_container, MessageFragment.newInstance(message, (autoDismiss ? 5000L : 0L)), "MessageFragment");
+            transaction.commitAllowingStateLoss();
+        } catch (Exception e) {
+            Log.v(TAG, "showAlertWithMessage: Exception!");
+            e.printStackTrace();
+        }
     }
 
     void closeAlert()
@@ -71,6 +75,7 @@ class GlobalMethods
     void APIRequest(String url, JSONObject postData, OnAPIResponseListener responseListener)
     {
         RequestQueue queue = Volley.newRequestQueue(this.mActivity);
+
         StringRequest request = new StringRequest(Request.Method.POST, url, responseListener::onRequestComplete,
         error -> showAlertWithMessage(mActivity.getString(R.string.error_connecting_to_server), true)
         ){
@@ -117,20 +122,21 @@ class GlobalMethods
         void onRequestComplete(String response);
     }
 
-    String formatBytes(double bytes)
+    String formatBytes(long bytes)
     {
         String medida = "bytes";
+        float n = 0.0f;
         if(bytes > 1000000000) {
-            bytes = bytes/1000000000;
+            n = (float)bytes/1000000000;
             medida = "GB";
         } else if(bytes > 1000000) {
-            bytes = bytes/1000000;
+            n = (float)bytes/1000000;
             medida = "MB";
         } else if(bytes > 1000) {
-            bytes = bytes/1000;
+            n = (float)bytes/1000;
             medida = "kB";
         }
 
-        return String.format(Locale.getDefault(),"%2.2f", bytes) + " " + medida;
+        return String.format(Locale.getDefault(),"%2.2f", n) + " " + medida;
     }
 }

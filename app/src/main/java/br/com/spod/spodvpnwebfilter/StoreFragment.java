@@ -1,6 +1,10 @@
 package br.com.spod.spodvpnwebfilter;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.Handler;
+import android.provider.Settings;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -16,6 +20,11 @@ import com.android.billingclient.api.PurchasesUpdatedListener;
 import com.android.billingclient.api.SkuDetails;
 import com.android.billingclient.api.SkuDetailsParams;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.strongswan.android.data.VpnProfileDataSource;
+
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
@@ -40,6 +49,9 @@ public class StoreFragment extends Fragment implements PurchasesUpdatedListener,
 
     private StoreRecyclerViewAdapter adapter;
 
+    private GlobalMethods globalMethods;
+    private int freeTrialTries = 0;
+
     private int selected_row;
 
     //Required public constructor
@@ -53,6 +65,7 @@ public class StoreFragment extends Fragment implements PurchasesUpdatedListener,
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setupBillingClient();
+        checkCustomFreeTrial();
     }
 
     @Override
@@ -89,7 +102,7 @@ public class StoreFragment extends Fragment implements PurchasesUpdatedListener,
         billingClient.startConnection(new BillingClientStateListener() {
             @Override
             public void onBillingSetupFinished(BillingResult result) {
-                mProgressBar.setVisibility(View.GONE);
+                if(mProgressBar != null) mProgressBar.setVisibility(View.GONE);
                 if (result.getResponseCode() == BillingClient.BillingResponseCode.OK) {
                     Log.v(TAG, "BILLING | startConnection | RESULT OK");
 
@@ -103,7 +116,7 @@ public class StoreFragment extends Fragment implements PurchasesUpdatedListener,
                             {
                                 Log.v(TAG, "setupBillingClient: querySkuDetailsAsync returned OK : "+list.toString());
                                 skuDetailsList = list; //save list
-                                adapter.reloadData(skuDetailsList); //reload recycler view
+                                adapter.reloadData(skuDetailsList, null); //reload recycler view
                             }
                             else
                                 {
@@ -130,6 +143,140 @@ public class StoreFragment extends Fragment implements PurchasesUpdatedListener,
         });
     }
 
+    private void checkCustomFreeTrial()
+    {
+        boolean hasProfile = false;
+        boolean hasReceipt = false;
+
+        MainActivity mainActivity = (MainActivity)getActivity();
+        Purchase.PurchasesResult purchasesResult = null;
+        if (mainActivity != null)
+        {
+            //Check receipt
+            purchasesResult = mainActivity.billingClient.queryPurchases(BillingClient.SkuType.SUBS);
+            if(purchasesResult.getPurchasesList() != null) {
+                for (int i = 0; i < purchasesResult.getPurchasesList().size(); i++) {
+                    if (purchasesResult.getPurchasesList().get(i).getPurchaseState() == Purchase.PurchaseState.PURCHASED)
+                        hasReceipt = true;
+                }
+            }
+
+            //Check profile
+            VpnProfileDataSource mDataSource = new VpnProfileDataSource(mainActivity);
+            SharedPreferences sharedPreferences = mainActivity.getSharedPreferences(getString(R.string.preferences_key), Context.MODE_PRIVATE);
+            String username = sharedPreferences.getString(getString(R.string.preferences_username), "");
+            mDataSource.open();
+            if (username != null && username.length() > 0) hasProfile = true;
+            mDataSource.close();
+
+            if(!hasProfile && !hasReceipt) {
+                //Eligible for custom free trial, get firebaseTokenId
+                if(mainActivity.firebaseTokenId.length() > 0) {
+                    //Already have firebaseTokenId, get SSAID and send to SPOD
+                    if(mProgressBar != null) mProgressBar.setVisibility(View.VISIBLE);
+                    getCustomFreeTrial();
+                }
+                else {
+                    //No firebaseTokenId yet!
+                    if(this.freeTrialTries == 0) {
+                        //First time, call connectFragment.updateNotificationToken(false) and try again in 1 second ?
+                        ConnectFragment connectFragment = (ConnectFragment) Objects.requireNonNull(getActivity()).getSupportFragmentManager().findFragmentByTag("ConnectFragment");
+                        if (connectFragment != null)
+                            connectFragment.updateNotificationToken(false);
+                    }
+
+                    this.freeTrialTries++;
+                    if(this.freeTrialTries < 5) { //5 is a hardcoded limit!
+                        final Handler handler = new Handler();
+                        handler.postDelayed(this::checkCustomFreeTrial, 1000);
+                    }
+                }
+            }
+        }
+    }
+
+    private void getCustomFreeTrial()
+    {
+        if(globalMethods == null) this.globalMethods = new GlobalMethods(getActivity()); //Init if not already initialized
+        MainActivity mainActivity = (MainActivity)getActivity();
+        if(mainActivity != null)
+        {
+            final String deviceID = Settings.Secure.getString(mainActivity.getContentResolver(), Settings.Secure.ANDROID_ID);
+
+            //Create POST parameters JSONObject
+            JSONObject postData = new JSONObject();
+            try {
+                postData.put("Regiao", getString(R.string.region)); //Region-specific
+                postData.put("TokenID", mainActivity.firebaseTokenId);
+                postData.put("SSAID", deviceID);
+                postData.put("SO", "G");
+            } catch (JSONException exception) {
+                Log.v(TAG, "JSONException while trying to load custom free trial info: " + exception.getLocalizedMessage());
+                exception.printStackTrace();
+            }
+
+            //Actually make the request
+            globalMethods.APIRequest("https://spod.com.br/services/vpn/freeTrialInfo", postData, response -> {
+                //Handle response here
+                if(mProgressBar != null) mProgressBar.setVisibility(View.GONE);
+                JSONObject jsonResponse;
+                try {
+                    jsonResponse = new JSONObject(response);
+
+                    if (jsonResponse.getString("Status").equals(getString(R.string.request_status_success)))
+                    {
+                        String title = jsonResponse.optString("FreeTrialTitle", getString(R.string.not_available));
+                        String subtitle = jsonResponse.optString("FreeTrialSubtitle", getString(R.string.not_available));
+                        String price = jsonResponse.optString("FreeTrialPrice", getString(R.string.not_available));
+                        String duration = jsonResponse.optString("FreeTrialDuration", getString(R.string.not_available));
+                        String description_text = jsonResponse.optString("FreeTrialDescription", getString(R.string.not_available));
+
+                        List<String> freeTrialInfo = new ArrayList<>();
+                        freeTrialInfo.add(title);
+                        freeTrialInfo.add(subtitle);
+                        freeTrialInfo.add(price);
+                        freeTrialInfo.add(duration);
+                        freeTrialInfo.add(description_text);
+
+                        adapter.reloadData(skuDetailsList, freeTrialInfo);
+
+                    }
+                } catch (JSONException exception) {
+                    //Fail silently
+                    Log.v(TAG, "getCustomFreeTrial: Error on request...");
+                    exception.printStackTrace();
+                } catch (IllegalStateException exception) {
+                    Log.v(TAG, "IllegalStateException from Volley: This happens when the request is interrupted...");
+                }
+            });
+        }
+
+    }
+
+    private void returnToMainFragment(boolean subscribeToCustomFreeTrial)
+    {
+        try {
+            ConnectFragment connectFragment = (ConnectFragment) Objects.requireNonNull(getActivity()).getSupportFragmentManager().findFragmentByTag("ConnectFragment");
+            MainActivity mainActivity = (MainActivity)getActivity();
+            mainActivity.shouldRedirectToStore = false;
+            mainActivity.subscribeToCustomFreeTrial = subscribeToCustomFreeTrial;
+
+            if (connectFragment != null) {
+                connectFragment.verifyReceipt();
+            }
+
+            //Set activity's title and show switch country button
+            getActivity().setTitle(getString(R.string.app_name));
+            mainActivity.actionBarMenu.getItem(0).setVisible(true);
+
+            //Close this fragment
+            getActivity().getSupportFragmentManager().popBackStackImmediate();
+        } catch (Exception exception) {
+            Log.v(TAG, "returnToMainFragment: Got exception");
+            exception.printStackTrace();
+        }
+    }
+
     @Override
     public void onPurchasesUpdated(BillingResult result, @Nullable List<Purchase> purchases)
     {
@@ -145,42 +292,41 @@ public class StoreFragment extends Fragment implements PurchasesUpdatedListener,
                 return;
             }
 
-            ConnectFragment connectFragment = (ConnectFragment) Objects.requireNonNull(getActivity()).getSupportFragmentManager().findFragmentByTag("ConnectFragment");
-            if (connectFragment != null) {
-                connectFragment.verifyReceipt();
-            }
-
-            MainActivity mainActivity = (MainActivity)getActivity();
-            mainActivity.shouldRedirectToStore = false;
-
-            //Set activity's title and show switch country button
-            getActivity().setTitle(getString(R.string.app_name));
-            mainActivity.actionBarMenu.getItem(0).setVisible(true);
-
-            //Close this fragment
-            getActivity().getSupportFragmentManager().popBackStackImmediate();
+            returnToMainFragment(false);
         }
     }
 
     @Override
     public void onItemClick(View view, int position)
     {
-        SkuDetails skuDetails = adapter.getItem(position);
+        Object productData = adapter.getItem(position);
         selected_row = position;
 
-        String productTitle = skuDetails.getTitle().split("(?> \\(.+?\\))$")[0]; //Remove redundant app name from subscription's name
+        String productTitle = "";
+        String htmlString = "";
+        String duration = "";
         String[] help_urls = getResources().getStringArray(R.array.help_urls); //2=terms of use, 3=privacy policy
 
-        String htmlString, duration;
-        if(skuDetails.getSku().equals(skuList.get(0))) {
-            //Monthly
-            duration = getString(R.string.monthly_duration);
-            htmlString = String.format(Locale.getDefault(), getString(R.string.terms_monthly_sub_text), duration, skuDetails.getPrice(), productTitle, help_urls[2], help_urls[3]);
+        if(productData.getClass().equals(SkuDetails.class))
+        {
+            SkuDetails skuDetails = (SkuDetails)productData;
+            productTitle = skuDetails.getTitle().split("(?> \\(.+?\\))$")[0]; //Remove redundant app name from subscription's name
 
+            if (skuDetails.getSku().equals(skuList.get(0))) {
+                //Monthly
+                duration = getString(R.string.monthly_duration);
+                htmlString = String.format(Locale.getDefault(), getString(R.string.terms_monthly_sub_text), duration, skuDetails.getPrice(), productTitle, help_urls[2], help_urls[3]);
+            } else {
+                //Annual
+                duration = getString(R.string.annual_duration);
+                htmlString = String.format(Locale.getDefault(), getString(R.string.terms_annual_sub_text), duration, skuDetails.getPrice(), getString(R.string.terms_annual_discount), productTitle, help_urls[2], help_urls[3]);
+            }
         } else {
-            //Annual
-            duration = getString(R.string.annual_duration);
-            htmlString = String.format(Locale.getDefault(), getString(R.string.terms_annual_sub_text), duration, skuDetails.getPrice(), getString(R.string.terms_annual_discount), productTitle, help_urls[2], help_urls[3]);
+            List<String> freeTrialInfo = (List<String>) productData;
+            productTitle = freeTrialInfo.get(0);
+            String price = freeTrialInfo.get(2);
+            duration = freeTrialInfo.get(3);
+            htmlString = String.format(Locale.getDefault(), getString(R.string.terms_free_trial_text), duration, price, help_urls[2], help_urls[3]);
         }
 
         FragmentTransaction transaction = Objects.requireNonNull(getActivity()).getSupportFragmentManager().beginTransaction();
@@ -192,11 +338,19 @@ public class StoreFragment extends Fragment implements PurchasesUpdatedListener,
     //Method for confirming purchase and launching billing flow
     void confirm_purchase()
     {
-        BillingFlowParams billingFlowParams = BillingFlowParams
-                .newBuilder()
-                .setSkuDetails(adapter.getItem(selected_row))
-                .build();
+        Object productData = adapter.getItem(selected_row);
+        if(productData.getClass().equals(SkuDetails.class)) {
+            BillingFlowParams billingFlowParams = BillingFlowParams
+                    .newBuilder()
+                    .setSkuDetails((SkuDetails)adapter.getItem(selected_row))
+                    .build();
 
-        billingClient.launchBillingFlow(getActivity(), billingFlowParams);
+            billingClient.launchBillingFlow(getActivity(), billingFlowParams);
+        }
+        else {
+            //Subscribe to FreeTrial (3 days)
+            final Handler handler = new Handler();
+            handler.postDelayed(() -> returnToMainFragment(true), 600);
+        }
     }
 }

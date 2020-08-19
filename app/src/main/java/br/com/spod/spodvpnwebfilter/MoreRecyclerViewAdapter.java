@@ -191,7 +191,7 @@ public class MoreRecyclerViewAdapter extends RecyclerView.Adapter<RecyclerView.V
 
         @Override
         public void onClick(View view) {
-            if (mClickListener != null) mClickListener.onItemClick(view, getAdapterPosition());
+            if (mClickListener != null) mClickListener.onItemClick(view, getBindingAdapterPosition());
         }
     }
 
@@ -217,7 +217,7 @@ public class MoreRecyclerViewAdapter extends RecyclerView.Adapter<RecyclerView.V
 
         @Override
         public void onClick(View view) {
-            if (mClickListener != null) mClickListener.onItemClick(view, getAdapterPosition());
+            if (mClickListener != null) mClickListener.onItemClick(view, getBindingAdapterPosition());
         }
     }
 

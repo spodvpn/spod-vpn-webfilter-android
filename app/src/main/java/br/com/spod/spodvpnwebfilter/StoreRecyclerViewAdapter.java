@@ -18,6 +18,7 @@ public class StoreRecyclerViewAdapter extends RecyclerView.Adapter<RecyclerView.
 {
     private LayoutInflater mInflater;
     private List<SkuDetails> mData;
+    private List<String> mFreeTrialData;
     private ProductClickListener mClickListener;
 
     StoreRecyclerViewAdapter(Context context, List<SkuDetails> data) {
@@ -36,16 +37,23 @@ public class StoreRecyclerViewAdapter extends RecyclerView.Adapter<RecyclerView.
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, final int position)
     {
         ProductViewHolder productViewHolder = (ProductViewHolder)holder;
-        SkuDetails skuDetails = mData.get(position);
-        productViewHolder.titleTextView.setText(skuDetails.getTitle().split("(?> \\(.+?\\))$")[0]); //remove redundant app name in product's title
-        productViewHolder.subtitleTextView.setText(skuDetails.getDescription());
-        productViewHolder.buyButton.setText(skuDetails.getPrice());
+        if(mFreeTrialData != null && position == 0) {
+            productViewHolder.titleTextView.setText(mFreeTrialData.get(0));
+            productViewHolder.subtitleTextView.setText(mFreeTrialData.get(1));
+            productViewHolder.buyButton.setText(mFreeTrialData.get(2));
+        } else {
+            SkuDetails skuDetails = (mFreeTrialData != null) ? mData.get(position-1) : mData.get(position);
+            productViewHolder.titleTextView.setText(skuDetails.getTitle().split("(?> \\(.+?\\))$")[0]); //remove redundant app name in product's title
+            productViewHolder.subtitleTextView.setText(skuDetails.getDescription());
+            productViewHolder.buyButton.setText(skuDetails.getPrice());
+        }
     }
 
     //Number of rows
     @Override
     public int getItemCount() {
-        return (mData != null ? mData.size() : 0);
+        if(mData == null) return 0;
+        return (mFreeTrialData != null ? mData.size() + 1 : mData.size());
     }
 
     public class ProductViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener
@@ -64,13 +72,16 @@ public class StoreRecyclerViewAdapter extends RecyclerView.Adapter<RecyclerView.
 
         @Override
         public void onClick(View view) {
-            if (mClickListener != null) mClickListener.onItemClick(view, getAdapterPosition());
+            if (mClickListener != null) mClickListener.onItemClick(view, getBindingAdapterPosition());
         }
     }
 
     //Get data at position
-    SkuDetails getItem(int id) {
-        return mData.get(id);
+    Object getItem(int id) {
+        if(mFreeTrialData == null) {
+            return mData.get(id);
+        }
+        return id == 0 ? mFreeTrialData : mData.get(id-1);
     }
 
     //Setup click listener
@@ -84,8 +95,9 @@ public class StoreRecyclerViewAdapter extends RecyclerView.Adapter<RecyclerView.
     }
 
     //Method for reloading list data
-    void reloadData(List<SkuDetails> data) {
+    void reloadData(List<SkuDetails> data, List<String> freeTrialInfo) {
         mData = data;
+        mFreeTrialData = freeTrialInfo;
         notifyDataSetChanged();
     }
 }

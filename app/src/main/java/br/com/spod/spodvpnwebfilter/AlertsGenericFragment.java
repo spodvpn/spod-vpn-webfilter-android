@@ -1,6 +1,7 @@
 package br.com.spod.spodvpnwebfilter;
 
 import android.os.Bundle;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -21,9 +22,12 @@ public class AlertsGenericFragment extends Fragment implements AlertsGenericRecy
 {
     private static final String TAG = "AlertsGenericFragment";
 
-    private static final int TRACKERS_PAGE = 0;
-    private static final int THREATS_PAGE = 1;
-    private static final int SITES_PAGE = 2;
+    private static final int SUMMARY_PAGE = 0;
+    private static final int TRACKERS_PAGE = 1;
+    private static final int THREATS_PAGE = 2;
+    private static final int SITES_PAGE = 3;
+
+    private boolean hasRefreshed = false;
 
     private int counter;
     private int page;
@@ -80,14 +84,21 @@ public class AlertsGenericFragment extends Fragment implements AlertsGenericRecy
             adapter.notifyDataSetChanged();
         } else {
             //Create adapter
-            adapter = new AlertsGenericRecyclerAdapter(getActivity(), null);
+            adapter = new AlertsGenericRecyclerAdapter(getActivity(), null, page, pagerAdapter);
             adapter.setClickListener(this);
             if(pagerAdapter != null) pagerAdapter.adapters.add(adapter);
         }
         recyclerView.setAdapter(adapter);
 
         //Setup banner and icon
-        if(page == TRACKERS_PAGE) {
+        if(page == SUMMARY_PAGE) {
+            titleView.setText(R.string.more_tab_second_section);
+            titleView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 23);
+            bannerView.setBackground(ContextCompat.getDrawable(Objects.requireNonNull(getContext()), R.drawable.banner_web_filter_summary));
+            iconView.setImageDrawable(ContextCompat.getDrawable(getContext(), R.drawable.web_filter_icon));
+            counterView.setVisibility(View.GONE);
+        }
+        else if(page == TRACKERS_PAGE) {
             titleView.setText(R.string.alerts_blocked_trackers_title);
             bannerView.setBackground(ContextCompat.getDrawable(Objects.requireNonNull(getContext()), R.drawable.banner_blocked_trackers));
             iconView.setImageDrawable(ContextCompat.getDrawable(getContext(), R.drawable.block_trackers_icon));
@@ -108,12 +119,13 @@ public class AlertsGenericFragment extends Fragment implements AlertsGenericRecy
         mSwipeRefresh.setOnRefreshListener(this);
         mSwipeRefresh.setNestedScrollingEnabled(true);
 
-        //Refresh adapter's data once we get to the last (third) adapter
-        if(page == 2) {
+        //Refresh adapter's data only once
+        if(page == SUMMARY_PAGE && ! this.hasRefreshed) {
             mSwipeRefresh.post(() -> {
                 mSwipeRefresh.setRefreshing(true);
                 onRefresh();
             });
+            this.hasRefreshed = true;
         }
 
         return view;
@@ -124,12 +136,14 @@ public class AlertsGenericFragment extends Fragment implements AlertsGenericRecy
     @Override
     public void onItemClick(View view, int position)
     {
-        //Show detail view
-        String[] blockTypes = {getString(R.string.tracker), getString(R.string.threat), getString(R.string.site)};
-        int index = position * 3;
-        String hostname = (String)adapter.getItem(index+1);
-        long timestamp = ((Number)adapter.getItem(index+2)).longValue() * 1000L;
-        pagerAdapter.showDetail(Objects.requireNonNull(getActivity()), blockTypes[page], hostname, timestamp);
+        if(page != SUMMARY_PAGE) {
+            //Show detail view
+            String[] blockTypes = {getString(R.string.tracker), getString(R.string.threat), getString(R.string.site)};
+            int index = position * 2;
+            String hostname = (String) adapter.getItem(index + 1);
+            long timestamp = ((Number) adapter.getItem(index)).longValue() * 1000L;
+            pagerAdapter.showDetail(Objects.requireNonNull(getActivity()), blockTypes[page-1], hostname, timestamp);
+        }
     }
 
     //Method for updating counter label

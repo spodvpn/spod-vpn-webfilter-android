@@ -13,9 +13,13 @@
     <string name="alerts_blocked_threats_title">Ameaças Bloqueadas</string>
     <string name="alerts_blocked_tracker">Rastreador bloqueado\nOrigem: %1$s</string>
     <string name="alerts_blocked_trackers_title">Rastreadores \nBloqueados</string>
-    <string name="alerts_empty">Mensagem: Nenhum alerta por enquanto, continue navegando para ver os bloqueios aqui!</string>
+
+    <string name="alerts_empty_disconnected_title">Você está desconectado</string>
+    <string name="alerts_empty_connected_title">Você está conectado</string>
+    <string name="alerts_empty_disconnected_text">Conecte-se à VPN primeiro e volte aqui mais tarde para encontrar seu resumo de atividades.</string>
+    <string name="alerts_empty_connected_text">Volte aqui mais tarde para encontrar um resumo de atividades.</string>
+
     <string name="alerts_generic_fragment_icon_description">Logo</string>
-    <string name="alerts_no_credentials_message">Nenhum alerta por enquanto, conecte na VPN e comece a usar para ver os bloqueios aqui!</string>
     <string name="annual_duration">1 ano</string>
     <string name="block_list_title">Sites Bloqueados</string>
     <string name="block_threats_button">Bloquear Ameaças</string>
@@ -103,6 +107,14 @@
 
     <string name="billing_not_available">Erro: Loja In-App não disponível (verifique sua conexão de internet e conta Google Play configurada).</string>
     <string name="toggle_always_on_button">VPN sempre ativa</string>
+
+    <string name="trackers">rastreadores</string>
+    <string name="threats">ameaças</string>
+    <string name="battery">bateria</string>
+    <string name="saved">economizado</string>
+    <string name="time_saved">tempo ganho</string>
+    <string name="blocked_requests">bloqueios</string>
+    <string name="terms_free_trial_text">"<![CDATA[<p>• Duração: %1$s<br>• Preço: %2$s<br>• Sem compromisso: Teste o serviço de VPN e Filtro Web sem se comprometer com um plano (Mensal ou Anual), não exige pagamento nem cancelamento.<br>• Acesso ilimitado: Aproveite para testar todas as funcionalidades sem restrições.<br>• Planos de assinatura: Quando o teste gratuito terminar, você poderá escolher entre um plano mensal ou anual e ainda terá 30 dias para cancelamento sem cobrança.<br><br>Para mais informações visite nossos <a href="%3$s">Termos de Uso</a> e <a href="%4$s">Política de Privacidade</a></p>]]> "</string>
 
     <!-- strongSwan-specific strings -->
     <string name="state_connected">Conectado</string>

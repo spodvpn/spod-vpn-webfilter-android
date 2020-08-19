@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -150,7 +151,7 @@ public class AlertDetailRecyclerViewAdapter extends RecyclerView.Adapter<Recycle
 
         @Override
         public void onClick(View view) {
-            if(mClickListener != null) mClickListener.onItemClick(view, getAdapterPosition());
+            if (mClickListener != null) mClickListener.onItemClick(view, getBindingAdapterPosition());
         }
     }
 

@@ -1,6 +1,7 @@
 *.iml
 .gradle
 /local.properties
+/.idea
 /.idea/libraries
 /.idea/modules.xml
 /.idea/workspace.xml
@@ -12,4 +13,8 @@
 /app/release
 /app/build
 /strongswan/build
+/strongswan/build
+strongswan/src/main/libs
+strongswan/src/main/obj
+strongswan/app.iml
 /app/google-services.json 
