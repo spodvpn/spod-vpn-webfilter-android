@@ -5,7 +5,6 @@ import android.content.Context;
 import android.content.SharedPreferences;
 
 import android.os.Bundle;
-import android.os.StrictMode;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -16,7 +15,6 @@ import com.android.billingclient.api.BillingClientStateListener;
 import com.android.billingclient.api.BillingResult;
 import com.android.billingclient.api.Purchase;
 import com.android.billingclient.api.PurchasesUpdatedListener;
-import com.android.billingclient.api.SkuDetails;
 import com.android.billingclient.api.SkuDetailsParams;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
@@ -26,7 +24,6 @@ import org.strongswan.android.data.VpnProfileDataSource;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 import java.util.UUID;
 
 import androidx.annotation.NonNull;
@@ -46,7 +43,6 @@ public class MainActivity extends AppCompatActivity implements PurchasesUpdatedL
     boolean subscribeToCustomFreeTrial = false;
 
     BillingClient billingClient;
-    private List<SkuDetails> skuDetailsListGlobal;
     private List<String> skuList = Arrays.asList("spod_vpn_monthly_subscription", "spod_vpn_yearly_subscription");
 
     private BottomNavigationView bottomNavigation;
@@ -99,7 +95,7 @@ public class MainActivity extends AppCompatActivity implements PurchasesUpdatedL
 
         //Clear all alert notifications
         NotificationManager notificationManager = (NotificationManager) getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
-        notificationManager.cancelAll();
+        if (notificationManager != null) notificationManager.cancelAll();
     }
 
     @Override
@@ -118,7 +114,7 @@ public class MainActivity extends AppCompatActivity implements PurchasesUpdatedL
         VpnProfile user_profile = null;
         UUID uuid;
         mDataSource.open();
-        if (username != null) {
+        if (username.getBytes().length > 0) {
             uuid = UUID.nameUUIDFromBytes(username.getBytes());
             user_profile = mDataSource.getVpnProfile(uuid);
 
@@ -138,7 +134,7 @@ public class MainActivity extends AppCompatActivity implements PurchasesUpdatedL
     }
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item)
+    public boolean onOptionsItemSelected(@NonNull MenuItem item)
     {
         ConnectFragment fragment = (ConnectFragment) getSupportFragmentManager().findFragmentByTag("ConnectFragment");
         if (fragment != null && fragment.isVisible()) fragment.changeServerLocation();
@@ -180,9 +176,9 @@ public class MainActivity extends AppCompatActivity implements PurchasesUpdatedL
 
                 //Special case for an alert's detail view and/or StoreFragment
                 if(tags[i].equals("AlertsFragment")) {
-                    Objects.requireNonNull(currentFragment.getView()).findViewById(R.id.alerts_generic_fragment_detail_container).setVisibility(View.GONE);
+                    currentFragment.requireView().findViewById(R.id.alerts_generic_fragment_detail_container).setVisibility(View.GONE);
                 } else if(tags[i].equals("StoreFragment")) {
-                    Objects.requireNonNull(currentFragment.getView()).findViewById(R.id.store_fragment_container).setVisibility(View.GONE);
+                    currentFragment.requireView().findViewById(R.id.store_fragment_container).setVisibility(View.GONE);
                 }
             }
         }
@@ -205,7 +201,7 @@ public class MainActivity extends AppCompatActivity implements PurchasesUpdatedL
         billingClient = BillingClient.newBuilder(this).setListener(this).enablePendingPurchases().build();
         billingClient.startConnection(new BillingClientStateListener() {
             @Override
-            public void onBillingSetupFinished(BillingResult result) {
+            public void onBillingSetupFinished(@NonNull BillingResult result) {
                 billingSetupFinished = true;
                 if (result.getResponseCode() == BillingClient.BillingResponseCode.OK)
                 {
@@ -215,7 +211,6 @@ public class MainActivity extends AppCompatActivity implements PurchasesUpdatedL
                         SkuDetailsParams params = SkuDetailsParams.newBuilder().setSkusList(skuList).setType(BillingClient.SkuType.SUBS).build();
                         billingClient.querySkuDetailsAsync(params, (result1, skuDetailsList) -> {
                             if (result1.getResponseCode() == BillingClient.BillingResponseCode.OK) {
-                                skuDetailsListGlobal = skuDetailsList;
                                 Log.v(TAG, "setupBillingClient: querySkuDetailsAsync, responseCode: "+ result1.getResponseCode());
                                 ConnectFragment connectFragment = (ConnectFragment)getSupportFragmentManager().findFragmentByTag("ConnectFragment");
                                 if(connectFragment != null) connectFragment.verifyReceipt(); //Everything ready, call verifyReceipt

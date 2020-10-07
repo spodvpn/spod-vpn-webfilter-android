@@ -1,11 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimary">#3F51B5</color>
-    <color name="colorPrimaryDark">#303F9F</color>
+    <!--<color name="colorPrimary">#3F51B5</color>-->
+    <!--<color name="colorPrimary">#eeeeee</color>-->
+    <!--<color name="colorPrimaryDark">#303F9F</color>-->
+    <!--<color name="colorPrimaryDark">#121212</color>-->
+
     <color name="colorAccent">#FF4081</color>
+
+    <color name="colorPrimaryDark">#ff757575</color>
+    <color name="colorPrimary">#fff5f5f5</color>
 
     <color name="disconnected_red">#b2c80000</color>
     <color name="connected_green">#cc00c800</color>
     <color name="connecting_orange">#ccf39804</color>
+
+    <color name="default_background">#eeeeee</color>
+    <color name="row_subtitle">#666666</color>
+    <color name="terms_title">#404040</color>
+    <color name="rounded_corners_bg">#cccccc</color>
+    <color name="rounded_corners_stroke">#4d4d4d</color>
+
+    <color name="buy_button_bg">#008577</color>
+    <color name="buy_button_text">#ffffff</color>
+
+    <color name="default_text_color">#000000</color>
+    <color name="default_text_button_color">#008577</color>
 
 </resources>

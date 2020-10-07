@@ -1,5 +1,6 @@
 package br.com.spod.spodvpnwebfilter;
 
+import android.annotation.SuppressLint;
 import android.app.Service;
 import android.content.ComponentName;
 import android.content.Context;
@@ -13,7 +14,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.provider.Settings;
-import android.util.Base64;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.TypedValue;
@@ -41,9 +41,6 @@ import org.strongswan.android.logic.VpnStateService;
 import org.strongswan.android.security.LocalCertificateStore;
 import org.strongswan.android.ui.VpnProfileControlActivity;
 
-import java.io.ByteArrayInputStream;
-import java.security.cert.Certificate;
-import java.security.cert.CertificateFactory;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -112,25 +109,23 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
         super.onCreate(savedInstanceState);
 
         //Bind service and open profile's DataSource (database)
-        Objects.requireNonNull(getActivity()).getApplicationContext().bindService(new Intent(getActivity().getApplicationContext(), VpnStateService.class), mServiceConnection, Service.BIND_AUTO_CREATE);
+        requireActivity().getApplicationContext().bindService(new Intent(requireActivity().getApplicationContext(), VpnStateService.class), mServiceConnection, Service.BIND_AUTO_CREATE);
         mDataSource = new VpnProfileDataSource(getActivity());
 
-        SharedPreferences sharedPreferences = Objects.requireNonNull(getContext()).getSharedPreferences(getString(R.string.preferences_key), Context.MODE_PRIVATE);
+        SharedPreferences sharedPreferences = requireContext().getSharedPreferences(getString(R.string.preferences_key), Context.MODE_PRIVATE);
         String username = sharedPreferences.getString(getString(R.string.preferences_username), "");
 
         //Try to open profile with UUID based on username
         UUID user_uuid;
-        if (username != null) {
-            user_uuid = UUID.nameUUIDFromBytes(username.getBytes());
-            mDataSource.open();
-            VpnProfile profile = mDataSource.getVpnProfile(user_uuid);
-            if(username.length() == 0 || profile.getGateway() == null || profile.getGateway().length() == 0) {
-                //VPN has not been configured yet, show initial message
-                if(globalMethods == null) this.globalMethods = new GlobalMethods(getActivity());
-                globalMethods.showAlertWithMessage(getString(R.string.new_user_message), false);
-            }
-            mDataSource.close();
+        user_uuid = UUID.nameUUIDFromBytes(username.getBytes());
+        mDataSource.open();
+        VpnProfile profile = mDataSource.getVpnProfile(user_uuid);
+        if(username.length() == 0 || profile.getGateway() == null || profile.getGateway().length() == 0) {
+            //VPN has not been configured yet, show initial message
+            if(globalMethods == null) this.globalMethods = new GlobalMethods(getActivity());
+            globalMethods.showAlertWithMessage(getString(R.string.new_user_message), false);
         }
+        mDataSource.close();
 
         connectErrorArray = new ArrayList<>(); //Initialize array
     }
@@ -142,6 +137,7 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
         View view = inflater.inflate(R.layout.fragment_connect, container, false);
         statusButton = view.findViewById(R.id.statusButton);
         statusButton.setOnClickListener(this::statusButtonClicked);
+        statusButton.setBackgroundTintList(getResources().getColorStateList(R.color.disconnected_red, null)); //Always start disconnected
 
         statusImageButton = view.findViewById(R.id.statusImageButton);
         statusImageButton.setOnClickListener(this::statusButtonClicked);
@@ -185,7 +181,7 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
         statusImageButton.setAlpha(0.5f);
 
         enableButtons(false);
-        Objects.requireNonNull(getActivity()).setTitle(getString(R.string.app_name));
+        requireActivity().setTitle(getString(R.string.app_name));
 
         //Make buttons wider for pt-BR
         if(! getString(R.string.region).equals("US")) {
@@ -194,13 +190,13 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
             sendNotificationsButton.getLayoutParams().width = (int)TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 170, getResources().getDisplayMetrics());
         }
 
-        SharedPreferences sharedPreferences = getActivity().getSharedPreferences(getString(R.string.preferences_key), Context.MODE_PRIVATE);
+        SharedPreferences sharedPreferences = requireActivity().getSharedPreferences(getString(R.string.preferences_key), Context.MODE_PRIVATE);
         boolean sendNotifications = sharedPreferences.getBoolean(getString(R.string.preferences_send_notification), false);
         if(sendNotifications) updateNotificationToken(true);
 
         //Get display size to determine if settingsAppButton should be displayed
         DisplayMetrics metrics = getResources().getDisplayMetrics();
-        Display d = getActivity().getWindowManager().getDefaultDisplay();
+        Display d = requireActivity().getWindowManager().getDefaultDisplay();
         Point size = new Point();
         d.getSize(size);
         int height = size.y;
@@ -222,9 +218,9 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
 
         //Update VPN profile to disable cert_reqs (v1.3.1)
         try {
-            SharedPreferences sharedPreferences = getActivity().getSharedPreferences(getActivity().getString(R.string.preferences_key), Context.MODE_PRIVATE);
-            String username = sharedPreferences.getString(getActivity().getString(R.string.preferences_username), "");
-            if (username != null && username.length() > 0) {
+            SharedPreferences sharedPreferences = requireActivity().getSharedPreferences(requireActivity().getString(R.string.preferences_key), Context.MODE_PRIVATE);
+            String username = sharedPreferences.getString(requireActivity().getString(R.string.preferences_username), "");
+            if (username.length() > 0) {
                 UUID uuid = UUID.nameUUIDFromBytes(username.getBytes());
                 VpnProfileDataSource mDataSource = new VpnProfileDataSource(getActivity());
                 mDataSource.open();
@@ -233,11 +229,18 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
                     profile.setFlags(VpnProfile.FLAGS_SUPPRESS_CERT_REQS);
                     mDataSource.updateVpnProfile(profile);
                 }
+
+                //Remove hardcoded certificate from local store (no longer needed - v1.3.2)
+                LocalCertificateStore certificateStore = new LocalCertificateStore();
+                if (certificateStore.containsAlias("local:da9b52a8771169d31318a567e1dc9b1f44b5b35c")) {
+                    certificateStore.deleteCertificate("local:da9b52a8771169d31318a567e1dc9b1f44b5b35c");
+                }
+
                 mDataSource.close();
             }
         } catch (Exception e) {
             Log.v(TAG, "onStart: Exception while updating VPN profile...");
-            e.printStackTrace();
+            //e.printStackTrace();
         }
     }
 
@@ -250,9 +253,10 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
     @Override
     public void onDestroy() {
         super.onDestroy();
-        Objects.requireNonNull(getActivity()).getApplicationContext().unbindService(mServiceConnection);
+        requireActivity().getApplicationContext().unbindService(mServiceConnection);
     }
 
+    @SuppressLint("UseCompatLoadingForDrawables")
     @Override
     public void stateChanged()
     {
@@ -301,7 +305,7 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
         else if((mService.getState() == VpnStateService.State.DISABLED || mService.getState() == VpnStateService.State.DISCONNECTING) && (statusImageButton.getAlpha() == 1.0f || ! statusButton.getText().equals(getString(R.string.disconnected))))
         {
             statusButton.setText(R.string.disconnected);
-            statusButton.setBackgroundTintList(Objects.requireNonNull(getActivity()).getResources().getColorStateList(R.color.disconnected_red, null));
+            statusButton.setBackgroundTintList(requireActivity().getResources().getColorStateList(R.color.disconnected_red, null));
             try {
                 statusButton.setWidth((int)TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 150, getResources().getDisplayMetrics()));
             } catch (IllegalStateException exception) {
@@ -353,7 +357,7 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
             this.tryingToConnect = true;
             statusButton.setText(R.string.connecting___);
             try {
-                statusButton.setBackgroundTintList(Objects.requireNonNull(getActivity()).getResources().getColorStateList(R.color.connecting_orange, null));
+                statusButton.setBackgroundTintList(requireActivity().getResources().getColorStateList(R.color.connecting_orange, null));
                 statusButton.setWidth((int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 150, getResources().getDisplayMetrics()));
             } catch (IllegalStateException exception) {
                 Log.v(TAG, "Got an IllegalStateException, probably running in the background...");
@@ -363,7 +367,7 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
         else if(mService.getState() == VpnStateService.State.DISCONNECTING) {
             statusButton.setText(R.string.disconnecting___);
             try {
-                statusButton.setBackgroundTintList(Objects.requireNonNull(getActivity()).getResources().getColorStateList(R.color.connecting_orange, null));
+                statusButton.setBackgroundTintList(requireActivity().getResources().getColorStateList(R.color.connecting_orange, null));
                 statusButton.setWidth((int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 160, getResources().getDisplayMetrics()));
             } catch (IllegalStateException exception) {
                 Log.v(TAG, "Got an IllegalStateException, probably running in the background...");
@@ -371,7 +375,7 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
         }
     }
 
-    void statusButtonClicked(View v)
+    private void statusButtonClicked(View v)
     {
         Log.v(TAG, "statusButtonClicked!");
         //Close any visible alert
@@ -385,14 +389,14 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
             return;
         }
 
-        SharedPreferences sharedPreferences = Objects.requireNonNull(getContext()).getSharedPreferences(getString(R.string.preferences_key), Context.MODE_PRIVATE);
+        SharedPreferences sharedPreferences = requireContext().getSharedPreferences(getString(R.string.preferences_key), Context.MODE_PRIVATE);
         String username = sharedPreferences.getString(getString(R.string.preferences_username), "");
 
         //Try to open profile with UUID based on username
         mDataSource.open();
         UUID user_uuid;
         VpnProfile profile = null;
-        if (username != null) {
+        if (username.getBytes().length > 0) {
             user_uuid = UUID.nameUUIDFromBytes(username.getBytes());
             profile = mDataSource.getVpnProfile(user_uuid);
         }
@@ -403,7 +407,7 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
             final Handler handler = new Handler();
             handler.postDelayed(this::stateChanged, 500);
         }
-        else if(profile == null) {
+        else if(profile == null && mainActivity != null) {
             //No VPN profile found: will setup
             Purchase purchase = null;
 
@@ -486,66 +490,76 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
             3) Disconnected + ListWhatever = Visible, Disabled, Alpha=0.3f
          */
 
-        //Common
-        blockTrackersButton.setEnabled(enabled);
-        blockThreatsButton.setEnabled(enabled);
-        blockTrackersImageButton.setClickable(enabled);
-        blockTrackersCheckmarkButton.setClickable(enabled);
-        blockThreatsImageButton.setClickable(enabled);
-        blockThreatsCheckmarkButton.setClickable(enabled);
-        sendNotificationsButton.setEnabled(enabled);
-        sendNotificationsImageButton.setClickable(enabled);
-        sendNotificationsCheckmarkButton.setClickable(enabled);
+        try {
+            //Common
+            blockTrackersButton.setEnabled(enabled);
+            blockThreatsButton.setEnabled(enabled);
+            blockTrackersImageButton.setClickable(enabled);
+            blockTrackersCheckmarkButton.setClickable(enabled);
+            blockThreatsImageButton.setClickable(enabled);
+            blockThreatsCheckmarkButton.setClickable(enabled);
+            sendNotificationsButton.setEnabled(enabled);
+            sendNotificationsImageButton.setClickable(enabled);
+            sendNotificationsCheckmarkButton.setClickable(enabled);
 
-        if(enabled) {
-            blockTrackersButton.setAlpha(0.5f);
-            blockTrackersImageButton.setAlpha(0.5f);
-            blockThreatsButton.setAlpha(0.5f);
-            blockThreatsImageButton.setAlpha(0.5f);
-            blockTrackersCheckmarkButton.setVisibility(View.GONE);
-            blockThreatsCheckmarkButton.setVisibility(View.GONE);
-            if(this.shouldShouldSettingsAppButton) settingsAppButton.setVisibility(View.VISIBLE);
-            if(this.shouldShouldSettingsAppButton) settingsAppImageButton.setVisibility(View.VISIBLE);
-            sendNotificationsButton.setAlpha(0.5f);
-            sendNotificationsImageButton.setAlpha(0.5f);
-            sendNotificationsCheckmarkButton.setVisibility(View.GONE);
+            if (enabled) {
+                blockTrackersButton.setAlpha(0.5f);
+                blockTrackersImageButton.setAlpha(0.5f);
+                blockThreatsButton.setAlpha(0.5f);
+                blockThreatsImageButton.setAlpha(0.5f);
+                blockTrackersCheckmarkButton.setVisibility(View.GONE);
+                blockThreatsCheckmarkButton.setVisibility(View.GONE);
+                if (this.shouldShouldSettingsAppButton)
+                    settingsAppButton.setVisibility(View.VISIBLE);
+                if (this.shouldShouldSettingsAppButton)
+                    settingsAppImageButton.setVisibility(View.VISIBLE);
+                sendNotificationsButton.setAlpha(0.5f);
+                sendNotificationsImageButton.setAlpha(0.5f);
+                sendNotificationsCheckmarkButton.setVisibility(View.GONE);
 
-            //Turn on depending on user config (if enabled, Alpha will be set to 1.0f)!
-            SharedPreferences sharedPreferences = Objects.requireNonNull(getContext()).getSharedPreferences(getString(R.string.preferences_key), Context.MODE_PRIVATE);
-            Set<String> enabled_lists = sharedPreferences.getStringSet(getString(R.string.preferences_lists_key), null);
-            if (enabled_lists != null && enabled_lists.size() > 0) {
-                if (enabled_lists.contains(getString(R.string.preferences_block_trackers_list))) {
-                    blockTrackersButton.setAlpha(1.0f);
-                    blockTrackersImageButton.setAlpha(1.0f);
-                    blockTrackersCheckmarkButton.setAlpha(1.0f);
-                    blockTrackersCheckmarkButton.setVisibility(View.VISIBLE);
+                //Turn on depending on user config (if enabled, Alpha will be set to 1.0f)!
+                SharedPreferences sharedPreferences = requireContext().getSharedPreferences(getString(R.string.preferences_key), Context.MODE_PRIVATE);
+                Set<String> enabled_lists = sharedPreferences.getStringSet(getString(R.string.preferences_lists_key), null);
+                if (enabled_lists != null && enabled_lists.size() > 0) {
+                    if (enabled_lists.contains(getString(R.string.preferences_block_trackers_list))) {
+                        blockTrackersButton.setAlpha(1.0f);
+                        blockTrackersImageButton.setAlpha(1.0f);
+                        blockTrackersCheckmarkButton.setAlpha(1.0f);
+                        blockTrackersCheckmarkButton.setVisibility(View.VISIBLE);
+                    }
+                    if (enabled_lists.contains(getString(R.string.preferences_block_threats_list))) {
+                        blockThreatsButton.setAlpha(1.0f);
+                        blockThreatsImageButton.setAlpha(1.0f);
+                        blockThreatsCheckmarkButton.setAlpha(1.0f);
+                        blockThreatsCheckmarkButton.setVisibility(View.VISIBLE);
+                    }
+                    if (sharedPreferences.getBoolean(getString(R.string.preferences_send_notification), false)) {
+                        sendNotificationsButton.setAlpha(1.0f);
+                        sendNotificationsImageButton.setAlpha(1.0f);
+                        sendNotificationsCheckmarkButton.setAlpha(1.0f);
+                        sendNotificationsCheckmarkButton.setVisibility(View.VISIBLE);
+                    }
                 }
-                if (enabled_lists.contains(getString(R.string.preferences_block_threats_list))) {
-                    blockThreatsButton.setAlpha(1.0f);
-                    blockThreatsImageButton.setAlpha(1.0f);
-                    blockThreatsCheckmarkButton.setAlpha(1.0f);
-                    blockThreatsCheckmarkButton.setVisibility(View.VISIBLE);
-                }
-                if(sharedPreferences.getBoolean(getString(R.string.preferences_send_notification), false)) {
-                    sendNotificationsButton.setAlpha(1.0f);
-                    sendNotificationsImageButton.setAlpha(1.0f);
-                    sendNotificationsCheckmarkButton.setAlpha(1.0f);
-                    sendNotificationsCheckmarkButton.setVisibility(View.VISIBLE);
-                }
+            } else {
+                //NOT enabled, probably not even connected, set everyone to Alpha=0.3f and hide checkmarks;
+                blockTrackersButton.setAlpha(0.3f);
+                blockTrackersImageButton.setAlpha(0.3f);
+                blockTrackersCheckmarkButton.setAlpha(0.3f);
+                blockTrackersCheckmarkButton.setVisibility(View.GONE);
+                blockThreatsButton.setAlpha(0.3f);
+                blockThreatsImageButton.setAlpha(0.3f);
+                blockThreatsCheckmarkButton.setAlpha(0.3f);
+                blockThreatsCheckmarkButton.setVisibility(View.GONE);
+                if (this.shouldShouldSettingsAppButton) settingsAppButton.setVisibility(View.GONE);
+                if (this.shouldShouldSettingsAppButton)
+                    settingsAppImageButton.setVisibility(View.GONE);
+                sendNotificationsButton.setAlpha(0.3f);
+                sendNotificationsImageButton.setAlpha(0.3f);
+                sendNotificationsCheckmarkButton.setAlpha(0.3f);
+                sendNotificationsCheckmarkButton.setVisibility(View.GONE);
             }
-        } else {
-            //NOT enabled, probably not even connected, set everyone to Alpha=0.3f and hide checkmarks;
-            blockTrackersImageButton.setAlpha(0.3f);
-            blockTrackersCheckmarkButton.setAlpha(0.3f);
-            blockTrackersCheckmarkButton.setVisibility(View.GONE);
-            blockThreatsImageButton.setAlpha(0.3f);
-            blockThreatsCheckmarkButton.setAlpha(0.3f);
-            blockThreatsCheckmarkButton.setVisibility(View.GONE);
-            if(this.shouldShouldSettingsAppButton) settingsAppButton.setVisibility(View.GONE);
-            if(this.shouldShouldSettingsAppButton) settingsAppImageButton.setVisibility(View.GONE);
-            sendNotificationsImageButton.setAlpha(0.3f);
-            sendNotificationsCheckmarkButton.setAlpha(0.3f);
-            sendNotificationsCheckmarkButton.setVisibility(View.GONE);
+        } catch (NullPointerException | IllegalStateException ex) {
+            Log.v(TAG, "enableButtons: Got an exception, probably running in the background...");
         }
     }
 
@@ -580,7 +594,7 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
             case R.id.connect_send_notifications_button:
             case R.id.connect_send_notifications_image_button:
             case R.id.connect_send_notifications_checkmark_button:
-                SharedPreferences sharedPreferences = getContext().getSharedPreferences(getString(R.string.preferences_key), Context.MODE_PRIVATE);
+                SharedPreferences sharedPreferences = requireContext().getSharedPreferences(getString(R.string.preferences_key), Context.MODE_PRIVATE);
                 boolean sendNotifications = sharedPreferences.getBoolean(getString(R.string.preferences_send_notification), false);
                 if(sendNotifications)
                     updateNotificationSettings(false, null); //sendNotifications is currently enabled and user clicked the button: disable!
@@ -604,7 +618,7 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
         if(this.shouldShouldSettingsAppButton) settingsAppButton.setVisibility(View.GONE);
         if(this.shouldShouldSettingsAppButton) settingsAppImageButton.setVisibility(View.GONE);
 
-        SharedPreferences sharedPreferences = Objects.requireNonNull(getContext()).getSharedPreferences(getString(R.string.preferences_key), Context.MODE_PRIVATE);
+        SharedPreferences sharedPreferences = requireContext().getSharedPreferences(getString(R.string.preferences_key), Context.MODE_PRIVATE);
 
         if(globalMethods == null) this.globalMethods = new GlobalMethods(getActivity());
 
@@ -670,7 +684,7 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
             if(purchase != null) postData.put("Recibo", purchase.getOriginalJson());
             else {
                 postData.put("Recibo", "FreeTrial3dias");
-                final String deviceID = Settings.Secure.getString(getContext().getContentResolver(), Settings.Secure.ANDROID_ID);
+                @SuppressLint("HardwareIds") final String deviceID = Settings.Secure.getString(requireContext().getContentResolver(), Settings.Secure.ANDROID_ID);
                 postData.put("SSAID", deviceID);
                 MainActivity mainActivity = (MainActivity)getActivity();
                 if(mainActivity != null) postData.put("TokenID", mainActivity.firebaseTokenId);
@@ -695,63 +709,22 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
 
                     //Everything is good, store username and password!
                     String username = jsonResponse.getString("Usuario");
-                    if(username == null || username.length() != 16) {
+                    if(username.length() != 16) {
                         globalMethods.showAlertWithMessage(getString(R.string.error_request_1), true);
                         return;
                     }
 
                     String password = jsonResponse.getString("Senha");
-                    if(password == null || password.length() != 16) {
+                    if(password.length() != 16) {
                         globalMethods.showAlertWithMessage(getString(R.string.error_request_2), true);
                         return;
                     }
 
                     //Store credentials in SharedPreferences
-                    SharedPreferences sharedPreferences = Objects.requireNonNull(getContext()).getSharedPreferences(getString(R.string.preferences_key), Context.MODE_PRIVATE);
+                    SharedPreferences sharedPreferences = requireContext().getSharedPreferences(getString(R.string.preferences_key), Context.MODE_PRIVATE);
                     SharedPreferences.Editor sharedPreferencesEditor = sharedPreferences.edit();
                     sharedPreferencesEditor.putString(getString(R.string.preferences_username), username);
                     sharedPreferencesEditor.apply();
-
-                    //Create VPN profile with uuid based on username and add let's encrypt CA if necessary
-                    Log.v(TAG, "requestCredentials: Start by adding the let's encrypt cert if necessary!");
-                    LocalCertificateStore certificateStore = new LocalCertificateStore();
-                    if (certificateStore.containsAlias("local:da9b52a8771169d31318a567e1dc9b1f44b5b35c")) {
-                        Log.v(TAG, "requestCredentials: Certificate is already trusted, didn't need to import!");
-                    } else {
-                        ByteArrayInputStream cert_bin = new ByteArrayInputStream((Base64.decode("MIIEkjCCA3qgAwIBAgIQCgFBQgAAAVOFc2oLheynCDANBgkqhkiG9w0BAQsFADA/\n" +
-                                "MSQwIgYDVQQKExtEaWdpdGFsIFNpZ25hdHVyZSBUcnVzdCBDby4xFzAVBgNVBAMT\n" +
-                                "DkRTVCBSb290IENBIFgzMB4XDTE2MDMxNzE2NDA0NloXDTIxMDMxNzE2NDA0Nlow\n" +
-                                "SjELMAkGA1UEBhMCVVMxFjAUBgNVBAoTDUxldCdzIEVuY3J5cHQxIzAhBgNVBAMT\n" +
-                                "GkxldCdzIEVuY3J5cHQgQXV0aG9yaXR5IFgzMIIBIjANBgkqhkiG9w0BAQEFAAOC\n" +
-                                "AQ8AMIIBCgKCAQEAnNMM8FrlLke3cl03g7NoYzDq1zUmGSXhvb418XCSL7e4S0EF\n" +
-                                "q6meNQhY7LEqxGiHC6PjdeTm86dicbp5gWAf15Gan/PQeGdxyGkOlZHP/uaZ6WA8\n" +
-                                "SMx+yk13EiSdRxta67nsHjcAHJyse6cF6s5K671B5TaYucv9bTyWaN8jKkKQDIZ0\n" +
-                                "Z8h/pZq4UmEUEz9l6YKHy9v6Dlb2honzhT+Xhq+w3Brvaw2VFn3EK6BlspkENnWA\n" +
-                                "a6xK8xuQSXgvopZPKiAlKQTGdMDQMc2PMTiVFrqoM7hD8bEfwzB/onkxEz0tNvjj\n" +
-                                "/PIzark5McWvxI0NHWQWM6r6hCm21AvA2H3DkwIDAQABo4IBfTCCAXkwEgYDVR0T\n" +
-                                "AQH/BAgwBgEB/wIBADAOBgNVHQ8BAf8EBAMCAYYwfwYIKwYBBQUHAQEEczBxMDIG\n" +
-                                "CCsGAQUFBzABhiZodHRwOi8vaXNyZy50cnVzdGlkLm9jc3AuaWRlbnRydXN0LmNv\n" +
-                                "bTA7BggrBgEFBQcwAoYvaHR0cDovL2FwcHMuaWRlbnRydXN0LmNvbS9yb290cy9k\n" +
-                                "c3Ryb290Y2F4My5wN2MwHwYDVR0jBBgwFoAUxKexpHsscfrb4UuQdf/EFWCFiRAw\n" +
-                                "VAYDVR0gBE0wSzAIBgZngQwBAgEwPwYLKwYBBAGC3xMBAQEwMDAuBggrBgEFBQcC\n" +
-                                "ARYiaHR0cDovL2Nwcy5yb290LXgxLmxldHNlbmNyeXB0Lm9yZzA8BgNVHR8ENTAz\n" +
-                                "MDGgL6AthitodHRwOi8vY3JsLmlkZW50cnVzdC5jb20vRFNUUk9PVENBWDNDUkwu\n" +
-                                "Y3JsMB0GA1UdDgQWBBSoSmpjBH3duubRObemRWXv86jsoTANBgkqhkiG9w0BAQsF\n" +
-                                "AAOCAQEA3TPXEfNjWDjdGBX7CVW+dla5cEilaUcne8IkCJLxWh9KEik3JHRRHGJo\n" +
-                                "uM2VcGfl96S8TihRzZvoroed6ti6WqEBmtzw3Wodatg+VyOeph4EYpr/1wXKtx8/\n" +
-                                "wApIvJSwtmVi4MFU5aMqrSDE6ea73Mj2tcMyo5jMd6jmeWUHK8so/joWUoHOUgwu\n" +
-                                "X4Po1QYz+3dszkDqMp4fklxBwXRsW10KXzPMTZ+sOPAveyxindmjkW8lGy+QsRlG\n" +
-                                "PfZ+G6Z6h7mjem0Y+iWlkYcV4PIWL1iwBi8saCbGS5jN2p8M+X+Q7UNKEkROb3N6\n" +
-                                "KOqkqm57TH2H3eDJAkSnh6/DNFu0Qg==", 0)));
-                        try {
-                            CertificateFactory cf = CertificateFactory.getInstance("X.509");
-                            Certificate lets_encrypt_cert = cf.generateCertificate(cert_bin);
-                            certificateStore.addCertificate(lets_encrypt_cert);
-                        } catch (Exception e) {
-                            Log.v(TAG, "requestCredentials: Got at an exception:" + e.getLocalizedMessage());
-                            e.printStackTrace();
-                        }
-                    }
 
                     UUID uuid = UUID.nameUUIDFromBytes(username.getBytes());
                     mDataSource.open();
@@ -810,12 +783,12 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
                 requestCredentials(null);
                 return;
             }
-            if (mainActivity != null && (!mainActivity.billingSetupFinished || Objects.requireNonNull(Objects.requireNonNull(getContext()).getSharedPreferences(getString(R.string.preferences_key), Context.MODE_PRIVATE).getString(getString(R.string.preferences_username), "")).isEmpty())) {
+            if (mainActivity != null && (!mainActivity.billingSetupFinished || Objects.requireNonNull(requireContext().getSharedPreferences(getString(R.string.preferences_key), Context.MODE_PRIVATE).getString(getString(R.string.preferences_username), "")).isEmpty())) {
                 Log.v(TAG, "verifyReceipt: Abort because billingClient is NOT ready yet or no username found!");
                 return;
             }
 
-            Purchase.PurchasesResult purchasesResult = null;
+            Purchase.PurchasesResult purchasesResult;
             if (mainActivity != null) {
                 purchasesResult = mainActivity.billingClient.queryPurchases(BillingClient.SkuType.SUBS);
                 if(purchasesResult.getPurchasesList() != null) {
@@ -876,27 +849,29 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
         if (mService != null) mService.disconnect();
 
         //Send to store
-        Fragment storeFragment = Objects.requireNonNull(getActivity()).getSupportFragmentManager().findFragmentByTag("StoreFragment");
+        Fragment storeFragment = requireActivity().getSupportFragmentManager().findFragmentByTag("StoreFragment");
         if (storeFragment != null && storeFragment.isVisible()) {
             Log.v(TAG, "redirectToStore: Tried to open StoreFragment while it was already opened, ignoring!");
             return;
         }
 
         MainActivity mainActivity = (MainActivity) getActivity();
-        mainActivity.runOnUiThread(() -> {
-            //Should open store fragment!
-            FrameLayout frameLayout = Objects.requireNonNull(getView()).findViewById(R.id.store_fragment_container);
-            frameLayout.setVisibility(View.VISIBLE); //make container visible
+        if(mainActivity != null) {
+            mainActivity.runOnUiThread(() -> {
+                //Should open store fragment!
+                FrameLayout frameLayout = requireView().findViewById(R.id.store_fragment_container);
+                frameLayout.setVisibility(View.VISIBLE); //make container visible
 
-            MainActivity mainActivity1 = (MainActivity) getActivity();
-            mainActivity1.actionBarMenu.getItem(0).setVisible(false); //hide country flag in action bar
+                MainActivity mainActivity1 = (MainActivity) getActivity();
+                mainActivity1.actionBarMenu.getItem(0).setVisible(false); //hide country flag in action bar
 
-            //actually open the fragment
-            FragmentTransaction transaction = getActivity().getSupportFragmentManager().beginTransaction();
-            transaction.add(R.id.store_fragment_container, StoreFragment.newInstance(), "StoreFragment");
-            transaction.addToBackStack(null);
-            transaction.commit();
-        });
+                //actually open the fragment
+                FragmentTransaction transaction = getActivity().getSupportFragmentManager().beginTransaction();
+                transaction.add(R.id.store_fragment_container, StoreFragment.newInstance(), "StoreFragment");
+                transaction.addToBackStack(null);
+                transaction.commit();
+            });
+        }
     }
 
     void changeServerLocation()
@@ -906,10 +881,10 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
         }
 
         //Open VPN profile
-        SharedPreferences sharedPreferences = Objects.requireNonNull(getContext()).getSharedPreferences(getString(R.string.preferences_key), Context.MODE_PRIVATE);
+        SharedPreferences sharedPreferences = requireContext().getSharedPreferences(getString(R.string.preferences_key), Context.MODE_PRIVATE);
         String username = sharedPreferences.getString(getString(R.string.preferences_username), "");
         UUID uuid = null;
-        if (username != null) {
+        if (username.getBytes().length > 0) {
             uuid = UUID.nameUUIDFromBytes(username.getBytes());
         }
         mDataSource.open();
@@ -970,11 +945,11 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
 
                     // Get new Instance ID token
                     try {
-                        String token = task.getResult().getToken();
+                        String token = Objects.requireNonNull(task.getResult()).getToken();
                         MainActivity mainActivity = (MainActivity)getActivity();
                         if(mainActivity != null) mainActivity.firebaseTokenId = token;
 
-                        SharedPreferences sharedPreferences = getContext().getSharedPreferences(getString(R.string.preferences_key), Context.MODE_PRIVATE);
+                        SharedPreferences sharedPreferences = requireContext().getSharedPreferences(getString(R.string.preferences_key), Context.MODE_PRIVATE);
                         boolean sendNotifications = sharedPreferences.getBoolean(getString(R.string.preferences_send_notification), false);
                         if(shouldEnable) {
                             if (!sendNotifications) updateNotificationSettings(true, token);
@@ -982,7 +957,7 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
                         }
 
                     } catch (Exception e) {
-                        Log.v(TAG, "updateNotificationToken: Exception!");
+                        Log.v(TAG, "updateNotificationToken: Got Exception: "+e.getLocalizedMessage());
                         e.printStackTrace();
                     }
                 });
@@ -992,13 +967,13 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
     {
         if(globalMethods == null) this.globalMethods = new GlobalMethods(getActivity());
         try {
-            SharedPreferences sharedPreferences = getContext().getSharedPreferences(getString(R.string.preferences_key), Context.MODE_PRIVATE);
+            SharedPreferences sharedPreferences = requireContext().getSharedPreferences(getString(R.string.preferences_key), Context.MODE_PRIVATE);
             String username = sharedPreferences.getString(getString(R.string.preferences_username), "");
             boolean sendNotifications = sharedPreferences.getBoolean(getString(R.string.preferences_send_notification), false);
             if(! sendNotifications) return;
 
             UUID uuid = null;
-            if (username != null) {
+            if (username.getBytes().length > 0) {
                 uuid = UUID.nameUUIDFromBytes(username.getBytes());
             }
             VpnProfileDataSource mDataSource = new VpnProfileDataSource(getContext());
@@ -1063,7 +1038,7 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
         sendNotificationsImageButton.setVisibility(View.GONE);
         sendNotificationsCheckmarkButton.setVisibility(View.GONE);
 
-        SharedPreferences sharedPreferences = Objects.requireNonNull(getContext()).getSharedPreferences(getString(R.string.preferences_key), Context.MODE_PRIVATE);
+        SharedPreferences sharedPreferences = requireContext().getSharedPreferences(getString(R.string.preferences_key), Context.MODE_PRIVATE);
 
         if(globalMethods == null) this.globalMethods = new GlobalMethods(getActivity());
 

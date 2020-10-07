@@ -10,7 +10,7 @@
         android:layout_width="0dp"
         android:layout_height="50dp"
         android:textSize="16sp"
-        android:textColor="#666666"
+        android:textColor="@color/row_subtitle"
         android:layout_weight="1"
         android:gravity="center_vertical"
         />

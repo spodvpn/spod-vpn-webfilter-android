@@ -18,7 +18,6 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Set;
 
 import androidx.fragment.app.Fragment;
@@ -33,7 +32,7 @@ public class ListFragment extends Fragment implements ListRecyclerViewAdapter.It
     private static final String ARG_PARAM1 = "param1";
 
     private static final int UNBLOCK_LIST_TYPE = 0; //Whitelist
-    private static final int BLOCK_LIST_TYPE = 1; //Blacklist
+    //private static final int BLOCK_LIST_TYPE = 1; //Blacklist
 
     private EditText addHostnameText;
     private ProgressBar mProgressBar;
@@ -43,7 +42,7 @@ public class ListFragment extends Fragment implements ListRecyclerViewAdapter.It
 
     private int listType;
 
-    ListRecyclerViewAdapter adapter;
+    private ListRecyclerViewAdapter adapter;
 
     //Required empty public constructor
     public ListFragment() { }
@@ -72,7 +71,7 @@ public class ListFragment extends Fragment implements ListRecyclerViewAdapter.It
         View view = inflater.inflate(R.layout.fragment_list, container, false);
 
         //Set title accordingly
-        Objects.requireNonNull(getActivity()).setTitle(listType == UNBLOCK_LIST_TYPE ? getString(R.string.unblock_list_title) : getString(R.string.block_list_title));
+        requireActivity().setTitle(listType == UNBLOCK_LIST_TYPE ? getString(R.string.unblock_list_title) : getString(R.string.block_list_title));
 
         //Setup button
         addButton = view.findViewById(R.id.custom_list_add_button);
@@ -88,7 +87,7 @@ public class ListFragment extends Fragment implements ListRecyclerViewAdapter.It
         //Data to populate RecyclerView
         ArrayList<String> rowsList = new ArrayList<>();
         String list = (listType == 0 ? getString(R.string.preferences_whitelist_key) : getString(R.string.preferences_blacklist_key));
-        SharedPreferences preferences = Objects.requireNonNull(getContext()).getSharedPreferences(getString(R.string.preferences_key), Context.MODE_PRIVATE);
+        SharedPreferences preferences = requireContext().getSharedPreferences(getString(R.string.preferences_key), Context.MODE_PRIVATE);
         Set<String> listSet = preferences.getStringSet(list, null);
         if(listSet != null && listSet.size() > 0) {
             ArrayList<String> listArray = new ArrayList<>(listSet);
@@ -104,7 +103,7 @@ public class ListFragment extends Fragment implements ListRecyclerViewAdapter.It
         adapter = new ListRecyclerViewAdapter(getActivity(), rowsList, listType);
         adapter.setClickListener(this);
         recyclerView.setAdapter(adapter);
-        recyclerView.addItemDecoration(new DividerItemDecoration(getContext(), DividerItemDecoration.VERTICAL));
+        recyclerView.addItemDecoration(new DividerItemDecoration(requireContext(), DividerItemDecoration.VERTICAL));
 
         loadCustomList(); //populate list
         return view;
@@ -161,7 +160,7 @@ public class ListFragment extends Fragment implements ListRecyclerViewAdapter.It
                     Set<String> listSet = new HashSet<>();
                     for(int i=0; i<jsonArray.length(); i++) listSet.add(jsonArray.getString(i));
 
-                    SharedPreferences preferences = Objects.requireNonNull(getContext()).getSharedPreferences(getString(R.string.preferences_key), Context.MODE_PRIVATE);
+                    SharedPreferences preferences = requireContext().getSharedPreferences(getString(R.string.preferences_key), Context.MODE_PRIVATE);
                     SharedPreferences.Editor preferencesEditor = preferences.edit();
                     preferencesEditor.putStringSet(list, listSet);
                     preferencesEditor.apply();
@@ -213,7 +212,7 @@ public class ListFragment extends Fragment implements ListRecyclerViewAdapter.It
                 {
                     //Add hostname to local list (SharedPreferences)
                     String list = (listType == 0 ? getString(R.string.preferences_whitelist_key) : getString(R.string.preferences_blacklist_key));
-                    SharedPreferences preferences = Objects.requireNonNull(getContext()).getSharedPreferences(getString(R.string.preferences_key), Context.MODE_PRIVATE);
+                    SharedPreferences preferences = requireContext().getSharedPreferences(getString(R.string.preferences_key), Context.MODE_PRIVATE);
                     Set<String> listSet = preferences.getStringSet(list, null);
                     if(listSet == null) {
                         //Currently empty list, create a new one
@@ -271,7 +270,7 @@ public class ListFragment extends Fragment implements ListRecyclerViewAdapter.It
                 {
                     //Remove hostname from local list (SharedPreferences)
                     String list = (listType == 0 ? getString(R.string.preferences_whitelist_key) : getString(R.string.preferences_blacklist_key));
-                    SharedPreferences preferences = Objects.requireNonNull(getContext()).getSharedPreferences(getString(R.string.preferences_key), Context.MODE_PRIVATE);
+                    SharedPreferences preferences = requireContext().getSharedPreferences(getString(R.string.preferences_key), Context.MODE_PRIVATE);
                     Set<String> listSet = preferences.getStringSet(list, null);
                     if (listSet != null) {
                         listSet.remove(adapter.getItem(position));

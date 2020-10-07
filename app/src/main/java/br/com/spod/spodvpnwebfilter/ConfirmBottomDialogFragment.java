@@ -7,17 +7,12 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
-
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
-
-import java.util.Objects;
 
 import androidx.annotation.Nullable;
 
 public class ConfirmBottomDialogFragment extends BottomSheetDialogFragment
 {
-    private static String TAG = "ConfirmBottomDialog";
-
     static final int TYPE_RESET = 0;
     static final int TYPE_UNBLOCK = 1;
 
@@ -58,7 +53,7 @@ public class ConfirmBottomDialogFragment extends BottomSheetDialogFragment
             {
                 //Get current timestamp and store in sharedPreferences
                 long timestamp = System.currentTimeMillis();
-                SharedPreferences sharedPreferences = Objects.requireNonNull(getContext()).getSharedPreferences(getString(R.string.preferences_key), Context.MODE_PRIVATE);
+                SharedPreferences sharedPreferences = requireContext().getSharedPreferences(getString(R.string.preferences_key), Context.MODE_PRIVATE);
                 SharedPreferences.Editor editor = sharedPreferences.edit();
                 editor.putLong(getString(R.string.preferences_reset_download_upload), timestamp);
                 editor.apply();

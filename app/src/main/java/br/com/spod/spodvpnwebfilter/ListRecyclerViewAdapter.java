@@ -17,7 +17,7 @@ import androidx.recyclerview.widget.RecyclerView;
 public class ListRecyclerViewAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
 {
     private static final int UNBLOCK_LIST_TYPE = 0; //Whitelist
-    private static final int BLOCK_LIST_TYPE = 1; //Blacklist
+    //private static final int BLOCK_LIST_TYPE = 1; //Blacklist
 
     private static final int TYPE_ITEM = 0;
     private static final int TYPE_FOOTER = 1;
@@ -101,7 +101,7 @@ public class ListRecyclerViewAdapter extends RecyclerView.Adapter<RecyclerView.V
         }
     }
 
-    public class FooterViewHolder extends RecyclerView.ViewHolder
+    public static class FooterViewHolder extends RecyclerView.ViewHolder
     {
         TextView footerText;
 

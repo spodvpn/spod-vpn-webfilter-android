@@ -12,14 +12,12 @@ import android.view.ViewGroup;
 
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.strongswan.android.data.VpnProfile;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Locale;
-import java.util.Objects;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
@@ -41,7 +39,6 @@ public class MoreFragment extends Fragment implements MoreRecyclerViewAdapter.It
     private static final int COPYRIGHT_ROW = 20;
     private static final int SUB_INFO_ROW = 3;
 
-    private VpnProfile profile;
     private GlobalMethods globalMethods;
 
     private SwipeRefreshLayout mSwipeRefresh;
@@ -100,12 +97,10 @@ public class MoreFragment extends Fragment implements MoreRecyclerViewAdapter.It
         adapter = new MoreRecyclerViewAdapter(getActivity(), rowsList);
         adapter.setClickListener(this);
         recyclerView.setAdapter(adapter);
-
-        recyclerView.addItemDecoration(new DividerItemDecoration(getContext(),
-                DividerItemDecoration.VERTICAL));
+        recyclerView.addItemDecoration(new DividerItemDecoration(requireContext(), DividerItemDecoration.VERTICAL));
 
         //Set activity's title
-        Objects.requireNonNull(getActivity()).setTitle(getString(R.string.title_more_info));
+        requireActivity().setTitle(getString(R.string.title_more_info));
 
         //Setup SwipeRefresh
         mSwipeRefresh = view.findViewById(R.id.more_fragment_refresh);
@@ -134,7 +129,7 @@ public class MoreFragment extends Fragment implements MoreRecyclerViewAdapter.It
 
             //Read last reset from SharedPreferences
             String subtitle;
-            SharedPreferences sharedPreferences = Objects.requireNonNull(getContext()).getSharedPreferences(getString(R.string.preferences_key), Context.MODE_PRIVATE);
+            SharedPreferences sharedPreferences = requireContext().getSharedPreferences(getString(R.string.preferences_key), Context.MODE_PRIVATE);
             long last_reset_timestamp = sharedPreferences.getLong(getString(R.string.preferences_reset_download_upload), 0L);
             if (last_reset_timestamp == 0) subtitle = getString(R.string.bottom_sheet_last_reset, getString(R.string.never));
             else {
@@ -157,7 +152,7 @@ public class MoreFragment extends Fragment implements MoreRecyclerViewAdapter.It
         else if(position == CHANGE_LOG_ROW)
         {
             //Open change log fragment
-            FragmentTransaction transaction = Objects.requireNonNull(getActivity()).getSupportFragmentManager().beginTransaction();
+            FragmentTransaction transaction = requireActivity().getSupportFragmentManager().beginTransaction();
             String title = String.format("%s: %s", getString(R.string.more_tab_eleventh_item), adapter.firewallVersion);
             transaction.replace(R.id.more_fragment_container, TermsFragment.newInstance(title, adapter.changeLog, TermsFragment.CHANGELOG_TYPE), "ChangelogFragment");
             transaction.addToBackStack(null);
@@ -166,7 +161,7 @@ public class MoreFragment extends Fragment implements MoreRecyclerViewAdapter.It
         else if(position == UNBLOCK_LIST_ROW || position == BLOCK_LIST_ROW)
         {
             //Open Unblocked/Blocked Sites
-            FragmentTransaction transaction = Objects.requireNonNull(getActivity()).getSupportFragmentManager().beginTransaction();
+            FragmentTransaction transaction = requireActivity().getSupportFragmentManager().beginTransaction();
             transaction.replace(R.id.more_fragment_container, ListFragment.newInstance(position-UNBLOCK_LIST_ROW), "ListFragment");
             transaction.addToBackStack(null);
             transaction.commit();
@@ -198,7 +193,7 @@ public class MoreFragment extends Fragment implements MoreRecyclerViewAdapter.It
         JSONObject postData = new JSONObject();
         try {
             postData.put("Regiao", getString(R.string.region)); //Region-specific
-            Long last_reset_timestamp = Objects.requireNonNull(getActivity()).getSharedPreferences(getActivity().getString(R.string.preferences_key), Context.MODE_PRIVATE).getLong(getString(R.string.preferences_reset_download_upload), 0L);
+            Long last_reset_timestamp = requireActivity().getSharedPreferences(requireActivity().getString(R.string.preferences_key), Context.MODE_PRIVATE).getLong(getString(R.string.preferences_reset_download_upload), 0L);
             postData.put("ResetDownloadUpload", last_reset_timestamp); //Reset download/upload option
 
         } catch (JSONException exception) {

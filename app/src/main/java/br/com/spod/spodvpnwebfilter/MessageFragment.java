@@ -9,8 +9,6 @@ import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 
-import java.util.Objects;
-
 import androidx.fragment.app.Fragment;
 
 public class MessageFragment extends Fragment
@@ -60,8 +58,8 @@ public class MessageFragment extends Fragment
         closeButton.setOnClickListener(view1 -> {
             try {
                 //close fragment and hide container
-                Objects.requireNonNull(getActivity()).getSupportFragmentManager().beginTransaction().remove(fragment).commit();
-                FrameLayout frameLayout = getActivity().findViewById(R.id.message_container);
+                requireActivity().getSupportFragmentManager().beginTransaction().remove(fragment).commit();
+                FrameLayout frameLayout = requireActivity().findViewById(R.id.message_container);
                 frameLayout.setVisibility(View.GONE);
             } catch (NullPointerException exception) {
                 Log.v(TAG, "Got an exception while trying to close MessageFragment, most likely it was already closed, ignore!");

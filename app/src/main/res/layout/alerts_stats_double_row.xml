@@ -29,7 +29,7 @@
             android:layout_height="wrap_content"
             android:textSize="22sp"
             android:layout_marginEnd="15dp"
-            android:textColor="#000000"
+            android:textColor="@color/default_text_color"
             android:singleLine="true"
             android:textAlignment="textEnd" />
 
@@ -39,7 +39,7 @@
             android:layout_height="wrap_content"
             android:textSize="12sp"
             android:layout_marginEnd="15dp"
-            android:textColor="#000000"
+            android:textColor="@color/default_text_color"
             android:singleLine="true"
             android:textAlignment="textEnd" />
 
@@ -59,7 +59,7 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="15dp"
             android:textSize="22sp"
-            android:textColor="#000000"
+            android:textColor="@color/default_text_color"
             android:singleLine="true" />
 
         <TextView
@@ -68,7 +68,7 @@
             android:layout_height="wrap_content"
             android:textSize="12sp"
             android:layout_marginStart="15dp"
-            android:textColor="#000000" />
+            android:textColor="@color/default_text_color"/>
 
     </LinearLayout>
 

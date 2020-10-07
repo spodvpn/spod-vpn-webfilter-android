@@ -13,6 +13,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Locale;
+import java.util.Objects;
 
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
@@ -22,12 +23,10 @@ import androidx.viewpager.widget.ViewPager;
 
 public class AlertsGenericRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
 {
-    private static final String TAG = "AlertsAdapter";
-
     private static final int SUMMARY_PAGE = 0;
     private static final int TRACKERS_PAGE = 1;
     private static final int THREATS_PAGE = 2;
-    private static final int SITES_PAGE = 3;
+    //private static final int SITES_PAGE = 3;
 
     private static final int ALERT_TYPE = 0;
     private static final int STAT_SINGLE_TYPE = 1;
@@ -232,7 +231,7 @@ public class AlertsGenericRecyclerAdapter extends RecyclerView.Adapter<RecyclerV
         }
     }
 
-    public class SingleStatViewHolder extends RecyclerView.ViewHolder {
+    public static class SingleStatViewHolder extends RecyclerView.ViewHolder {
         TextView titleView;
         TextView descriptionView;
         ImageView iconView;
@@ -272,7 +271,7 @@ public class AlertsGenericRecyclerAdapter extends RecyclerView.Adapter<RecyclerV
         {
             if(getBindingAdapterPosition() != 3) return; //Only last row should be clickable
             int viewId = view.getId();
-            int pageNumber = 0;
+            int pageNumber;
             if (viewId == R.id.alerts_stats_double_primary_title || viewId == R.id.alerts_stats_double_primary_description || viewId == R.id.alerts_stats_double_primary_icon)
                 pageNumber = 1; //Trackers page
             else
@@ -281,7 +280,7 @@ public class AlertsGenericRecyclerAdapter extends RecyclerView.Adapter<RecyclerV
             try {
                 FragmentActivity context = (FragmentActivity) fragmentContext;
                 AlertsFragment alertsFragment = (AlertsFragment) context.getSupportFragmentManager().findFragmentByTag("AlertsFragment");
-                ViewPager viewPager = alertsFragment.getView().findViewById(R.id.alerts_fragment_view_pager);
+                ViewPager viewPager = Objects.requireNonNull(alertsFragment).requireView().findViewById(R.id.alerts_fragment_view_pager);
                 viewPager.setCurrentItem(pageNumber);
             } catch (Exception exception) {
                 exception.printStackTrace();

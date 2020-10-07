@@ -20,12 +20,10 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 public class AlertsGenericFragment extends Fragment implements AlertsGenericRecyclerAdapter.ItemClickListener, SwipeRefreshLayout.OnRefreshListener
 {
-    private static final String TAG = "AlertsGenericFragment";
-
     private static final int SUMMARY_PAGE = 0;
     private static final int TRACKERS_PAGE = 1;
     private static final int THREATS_PAGE = 2;
-    private static final int SITES_PAGE = 3;
+    //private static final int SITES_PAGE = 3;
 
     private boolean hasRefreshed = false;
 
@@ -77,7 +75,7 @@ public class AlertsGenericFragment extends Fragment implements AlertsGenericRecy
         RecyclerView recyclerView = view.findViewById(R.id.alerts_generic_fragment_recycler_view);
         LinearLayoutManager mLayoutManager = new LinearLayoutManager(getActivity());
         recyclerView.setLayoutManager(mLayoutManager);
-        recyclerView.addItemDecoration(new DividerItemDecoration(getContext(), DividerItemDecoration.VERTICAL));
+        recyclerView.addItemDecoration(new DividerItemDecoration(requireContext(), DividerItemDecoration.VERTICAL));
 
         if(adapter != null) {
             //Adapter is already initialized, simply reload
@@ -94,23 +92,23 @@ public class AlertsGenericFragment extends Fragment implements AlertsGenericRecy
         if(page == SUMMARY_PAGE) {
             titleView.setText(R.string.more_tab_second_section);
             titleView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 23);
-            bannerView.setBackground(ContextCompat.getDrawable(Objects.requireNonNull(getContext()), R.drawable.banner_web_filter_summary));
+            bannerView.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.banner_web_filter_summary));
             iconView.setImageDrawable(ContextCompat.getDrawable(getContext(), R.drawable.web_filter_icon));
             counterView.setVisibility(View.GONE);
         }
         else if(page == TRACKERS_PAGE) {
             titleView.setText(R.string.alerts_blocked_trackers_title);
-            bannerView.setBackground(ContextCompat.getDrawable(Objects.requireNonNull(getContext()), R.drawable.banner_blocked_trackers));
+            bannerView.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.banner_blocked_trackers));
             iconView.setImageDrawable(ContextCompat.getDrawable(getContext(), R.drawable.block_trackers_icon));
         }
         else if(page == THREATS_PAGE) {
             titleView.setText(R.string.alerts_blocked_threats_title);
-            bannerView.setBackground(ContextCompat.getDrawable(Objects.requireNonNull(getContext()), R.drawable.banner_blocked_threats));
+            bannerView.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.banner_blocked_threats));
             iconView.setImageDrawable(ContextCompat.getDrawable(getContext(), R.drawable.block_threats_icon_bw));
         } else {
             //SITES_PAGE
             titleView.setText(R.string.alerts_blocked_sites_title);
-            bannerView.setBackground(ContextCompat.getDrawable(Objects.requireNonNull(getContext()), R.drawable.banner_blocked_sites));
+            bannerView.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.banner_blocked_sites));
             iconView.setImageDrawable(ContextCompat.getDrawable(getContext(), R.drawable.block_sites_icon));
         }
 
@@ -142,7 +140,7 @@ public class AlertsGenericFragment extends Fragment implements AlertsGenericRecy
             int index = position * 2;
             String hostname = (String) adapter.getItem(index + 1);
             long timestamp = ((Number) adapter.getItem(index)).longValue() * 1000L;
-            pagerAdapter.showDetail(Objects.requireNonNull(getActivity()), blockTypes[page-1], hostname, timestamp);
+            pagerAdapter.showDetail(requireActivity(), blockTypes[page-1], hostname, timestamp);
         }
     }
 

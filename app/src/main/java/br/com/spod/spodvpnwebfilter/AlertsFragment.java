@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.Objects;
 import java.util.UUID;
 
+import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.fragment.app.FragmentManager;
@@ -28,7 +29,6 @@ import androidx.fragment.app.FragmentPagerAdapter;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import androidx.viewpager.widget.ViewPager;
-
 
 public class AlertsFragment extends Fragment
 {
@@ -71,7 +71,7 @@ public class AlertsFragment extends Fragment
         viewPager.setOffscreenPageLimit(3);
 
         //Set activity's title
-        Objects.requireNonNull(getActivity()).setTitle(getString(R.string.title_alerts));
+        requireActivity().setTitle(getString(R.string.title_alerts));
 
         return view;
     }
@@ -93,10 +93,11 @@ public class AlertsFragment extends Fragment
         @Override
         public int getCount() { return NUM_ITEMS; }
 
-        @Override
+        @NonNull @Override
         public Fragment getItem(int position)
         {
             switch (position) {
+                default:
                 case 0:
                     //Fragment #0 - this will show Web Filter's Activity Summary
                     return AlertsGenericFragment.newInstance(0, 0, this);
@@ -109,8 +110,6 @@ public class AlertsFragment extends Fragment
                 case 3:
                     //Fragment #3 - this will show Sites
                     return AlertsGenericFragment.newInstance(0, 3, this);
-                default:
-                    return null;
             }
         }
 
@@ -122,7 +121,7 @@ public class AlertsFragment extends Fragment
         void showDetail(FragmentActivity context, String blockType, String hostname, Long timestamp)
         {
             //Make fragment container visible
-            Objects.requireNonNull(Objects.requireNonNull(context.getSupportFragmentManager().findFragmentByTag(TAG)).getView()).findViewById(R.id.alerts_generic_fragment_detail_container).setVisibility(View.VISIBLE);
+            Objects.requireNonNull(context.getSupportFragmentManager().findFragmentByTag(TAG)).requireView().findViewById(R.id.alerts_generic_fragment_detail_container).setVisibility(View.VISIBLE);
 
             //Add alerts details fragment
             FragmentTransaction transaction = context.getSupportFragmentManager().beginTransaction();
@@ -140,7 +139,7 @@ public class AlertsFragment extends Fragment
             String username = sharedPreferences.getString(fragmentActivity.getString(R.string.preferences_username), "");
 
             UUID uuid = null;
-            if (username != null) {
+            if (username.getBytes().length > 0) {
                 uuid = UUID.nameUUIDFromBytes(username.getBytes());
             }
             VpnProfileDataSource mDataSource = new VpnProfileDataSource(fragmentActivity);
@@ -249,7 +248,7 @@ public class AlertsFragment extends Fragment
             String username = sharedPreferences.getString(fragmentActivity.getString(R.string.preferences_username), "");
 
             UUID uuid = null;
-            if (username != null) {
+            if (username.getBytes().length > 0) {
                 uuid = UUID.nameUUIDFromBytes(username.getBytes());
             }
             VpnProfileDataSource mDataSource = new VpnProfileDataSource(fragmentActivity);

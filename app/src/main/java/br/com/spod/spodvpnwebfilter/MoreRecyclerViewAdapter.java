@@ -34,7 +34,7 @@ public class MoreRecyclerViewAdapter extends RecyclerView.Adapter<RecyclerView.V
     private static final int HELP_SECTION = 14;
     private static final int COPYRIGHT_ROW = 20;
     private static final int CHANGE_LOG_ROW = 11;
-    private static final int SUB_INFO_ROW = 3;
+    //private static final int SUB_INFO_ROW = 3;
 
     String subscriptionType, totalDownload, totalUpload, firewallVersion, firewallReleaseDate, changeLog, connectedServer;
     private String appVersion, username;
@@ -195,7 +195,7 @@ public class MoreRecyclerViewAdapter extends RecyclerView.Adapter<RecyclerView.V
         }
     }
 
-    public class SectionViewHolder extends RecyclerView.ViewHolder
+    public static class SectionViewHolder extends RecyclerView.ViewHolder
     {
         TextView sectionTitle;
 
@@ -219,11 +219,6 @@ public class MoreRecyclerViewAdapter extends RecyclerView.Adapter<RecyclerView.V
         public void onClick(View view) {
             if (mClickListener != null) mClickListener.onItemClick(view, getBindingAdapterPosition());
         }
-    }
-
-    //Get data at position
-    String getItem(int id) {
-        return mData.get(id);
     }
 
     //Setup click listener

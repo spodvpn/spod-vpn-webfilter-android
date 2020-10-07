@@ -1,5 +1,6 @@
 package br.com.spod.spodvpnwebfilter;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -30,6 +31,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
@@ -84,7 +86,7 @@ public class StoreFragment extends Fragment implements PurchasesUpdatedListener,
 
         mProgressBar = view.findViewById(R.id.store_fragment_progress);
 
-        recyclerView.addItemDecoration(new DividerItemDecoration(getContext(), DividerItemDecoration.VERTICAL));
+        recyclerView.addItemDecoration(new DividerItemDecoration(requireContext(), DividerItemDecoration.VERTICAL));
 
         MainActivity mainActivity = (MainActivity) getActivity();
         if (mainActivity != null) {
@@ -97,11 +99,11 @@ public class StoreFragment extends Fragment implements PurchasesUpdatedListener,
 
     private void setupBillingClient()
     {
-        billingClient = BillingClient.newBuilder(Objects.requireNonNull(getActivity())).setListener(this).enablePendingPurchases().build();
+        billingClient = BillingClient.newBuilder(requireActivity()).setListener(this).enablePendingPurchases().build();
 
         billingClient.startConnection(new BillingClientStateListener() {
             @Override
-            public void onBillingSetupFinished(BillingResult result) {
+            public void onBillingSetupFinished(@NonNull BillingResult result) {
                 if(mProgressBar != null) mProgressBar.setVisibility(View.GONE);
                 if (result.getResponseCode() == BillingClient.BillingResponseCode.OK) {
                     Log.v(TAG, "BILLING | startConnection | RESULT OK");
@@ -114,7 +116,7 @@ public class StoreFragment extends Fragment implements PurchasesUpdatedListener,
                         billingClient.querySkuDetailsAsync(params, (billingResult, list) -> {
                             if(result.getResponseCode() == BillingClient.BillingResponseCode.OK)
                             {
-                                Log.v(TAG, "setupBillingClient: querySkuDetailsAsync returned OK : "+list.toString());
+                                //Log.v(TAG, "setupBillingClient: querySkuDetailsAsync returned OK : "+list.toString());
                                 skuDetailsList = list; //save list
                                 adapter.reloadData(skuDetailsList, null); //reload recycler view
                             }
@@ -149,7 +151,7 @@ public class StoreFragment extends Fragment implements PurchasesUpdatedListener,
         boolean hasReceipt = false;
 
         MainActivity mainActivity = (MainActivity)getActivity();
-        Purchase.PurchasesResult purchasesResult = null;
+        Purchase.PurchasesResult purchasesResult;
         if (mainActivity != null)
         {
             //Check receipt
@@ -166,7 +168,7 @@ public class StoreFragment extends Fragment implements PurchasesUpdatedListener,
             SharedPreferences sharedPreferences = mainActivity.getSharedPreferences(getString(R.string.preferences_key), Context.MODE_PRIVATE);
             String username = sharedPreferences.getString(getString(R.string.preferences_username), "");
             mDataSource.open();
-            if (username != null && username.length() > 0) hasProfile = true;
+            if (username.length() > 0) hasProfile = true;
             mDataSource.close();
 
             if(!hasProfile && !hasReceipt) {
@@ -180,7 +182,7 @@ public class StoreFragment extends Fragment implements PurchasesUpdatedListener,
                     //No firebaseTokenId yet!
                     if(this.freeTrialTries == 0) {
                         //First time, call connectFragment.updateNotificationToken(false) and try again in 1 second ?
-                        ConnectFragment connectFragment = (ConnectFragment) Objects.requireNonNull(getActivity()).getSupportFragmentManager().findFragmentByTag("ConnectFragment");
+                        ConnectFragment connectFragment = (ConnectFragment) requireActivity().getSupportFragmentManager().findFragmentByTag("ConnectFragment");
                         if (connectFragment != null)
                             connectFragment.updateNotificationToken(false);
                     }
@@ -201,7 +203,7 @@ public class StoreFragment extends Fragment implements PurchasesUpdatedListener,
         MainActivity mainActivity = (MainActivity)getActivity();
         if(mainActivity != null)
         {
-            final String deviceID = Settings.Secure.getString(mainActivity.getContentResolver(), Settings.Secure.ANDROID_ID);
+            @SuppressLint("HardwareIds") final String deviceID = Settings.Secure.getString(mainActivity.getContentResolver(), Settings.Secure.ANDROID_ID);
 
             //Create POST parameters JSONObject
             JSONObject postData = new JSONObject();
@@ -256,7 +258,7 @@ public class StoreFragment extends Fragment implements PurchasesUpdatedListener,
     private void returnToMainFragment(boolean subscribeToCustomFreeTrial)
     {
         try {
-            ConnectFragment connectFragment = (ConnectFragment) Objects.requireNonNull(getActivity()).getSupportFragmentManager().findFragmentByTag("ConnectFragment");
+            ConnectFragment connectFragment = (ConnectFragment) requireActivity().getSupportFragmentManager().findFragmentByTag("ConnectFragment");
             MainActivity mainActivity = (MainActivity)getActivity();
             mainActivity.shouldRedirectToStore = false;
             mainActivity.subscribeToCustomFreeTrial = subscribeToCustomFreeTrial;
@@ -281,18 +283,12 @@ public class StoreFragment extends Fragment implements PurchasesUpdatedListener,
     public void onPurchasesUpdated(BillingResult result, @Nullable List<Purchase> purchases)
     {
         Log.v(TAG, "onPurchaseUpdated: "+result.getResponseCode());
-
-        Purchase purchase;
-
         if(purchases != null) {
-            if(result.getResponseCode() == BillingClient.BillingResponseCode.ITEM_ALREADY_OWNED) purchase = billingClient.queryPurchases(BillingClient.SkuType.SUBS).getPurchasesList().get(0);
-            else if(result.getResponseCode() == BillingClient.BillingResponseCode.OK) purchase = purchases.get(0);
-            else {
+            if(result.getResponseCode() == BillingClient.BillingResponseCode.ITEM_ALREADY_OWNED || result.getResponseCode() == BillingClient.BillingResponseCode.OK) {
+                returnToMainFragment(false);
+            } else {
                 Log.v(TAG, "onPurchasesUpdated error: Response code ("+result.getResponseCode()+")");
-                return;
             }
-
-            returnToMainFragment(false);
         }
     }
 
@@ -302,9 +298,9 @@ public class StoreFragment extends Fragment implements PurchasesUpdatedListener,
         Object productData = adapter.getItem(position);
         selected_row = position;
 
-        String productTitle = "";
-        String htmlString = "";
-        String duration = "";
+        String productTitle;
+        String htmlString;
+        String duration;
         String[] help_urls = getResources().getStringArray(R.array.help_urls); //2=terms of use, 3=privacy policy
 
         if(productData.getClass().equals(SkuDetails.class))
@@ -329,7 +325,7 @@ public class StoreFragment extends Fragment implements PurchasesUpdatedListener,
             htmlString = String.format(Locale.getDefault(), getString(R.string.terms_free_trial_text), duration, price, help_urls[2], help_urls[3]);
         }
 
-        FragmentTransaction transaction = Objects.requireNonNull(getActivity()).getSupportFragmentManager().beginTransaction();
+        FragmentTransaction transaction = requireActivity().getSupportFragmentManager().beginTransaction();
         transaction.add(R.id.store_fragment_terms_container, TermsFragment.newInstance(productTitle, htmlString, TermsFragment.SUB_INFO_TYPE), "TermsFragment");
         transaction.addToBackStack(null);
         transaction.commit();
@@ -345,7 +341,7 @@ public class StoreFragment extends Fragment implements PurchasesUpdatedListener,
                     .setSkuDetails((SkuDetails)adapter.getItem(selected_row))
                     .build();
 
-            billingClient.launchBillingFlow(getActivity(), billingFlowParams);
+            billingClient.launchBillingFlow(requireActivity(), billingFlowParams);
         }
         else {
             //Subscribe to FreeTrial (3 days)

@@ -14,7 +14,6 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Set;
 
 import androidx.fragment.app.Fragment;
@@ -39,8 +38,6 @@ public class AlertDetailFragment extends Fragment implements AlertDetailRecycler
 
     private ProgressBar mProgressBar;
     private RecyclerView recyclerView;
-
-    AlertDetailRecyclerViewAdapter adapter;
 
     public AlertDetailFragment() {}
 
@@ -82,14 +79,13 @@ public class AlertDetailFragment extends Fragment implements AlertDetailRecycler
         LinearLayoutManager mLayoutManager = new LinearLayoutManager(getActivity());
         recyclerView.setLayoutManager(mLayoutManager);
 
-        //adapter = new AlertDetailRecyclerViewAdapter(getActivity(), rowsList);
-        adapter = new AlertDetailRecyclerViewAdapter(getActivity(), rowsList, blockType, blockedHostname, blockedHostnameTimestamp);
+        AlertDetailRecyclerViewAdapter adapter = new AlertDetailRecyclerViewAdapter(getActivity(), rowsList, blockType, blockedHostname, blockedHostnameTimestamp);
         adapter.setClickListener(this);
         recyclerView.setAdapter(adapter);
 
         mProgressBar = view.findViewById(R.id.alert_detail_recycler_view_progress);
-        recyclerView.addItemDecoration(new DividerItemDecoration(Objects.requireNonNull(getContext()), DividerItemDecoration.VERTICAL));
-        Objects.requireNonNull(getActivity()).setTitle(String.format(getString(R.string.alert_detail_title), blockType));
+        recyclerView.addItemDecoration(new DividerItemDecoration(requireContext(), DividerItemDecoration.VERTICAL));
+        requireActivity().setTitle(String.format(getString(R.string.alert_detail_title), blockType));
 
         return view;
     }
@@ -100,7 +96,7 @@ public class AlertDetailFragment extends Fragment implements AlertDetailRecycler
         if(position == UNBLOCK_HOSTNAME_ROW)
         {
             //Unblock hostname: Check if it's already in the 'Unblocked sites' list first
-            SharedPreferences preferences = Objects.requireNonNull(getContext()).getSharedPreferences(getString(R.string.preferences_key), Context.MODE_PRIVATE);
+            SharedPreferences preferences = requireContext().getSharedPreferences(getString(R.string.preferences_key), Context.MODE_PRIVATE);
             Set<String> unblocked_list_set = preferences.getStringSet(getString(R.string.preferences_whitelist_key), null);
             Set<String> blocked_list_set = preferences.getStringSet(getString(R.string.preferences_blacklist_key), null);
 
@@ -158,7 +154,7 @@ public class AlertDetailFragment extends Fragment implements AlertDetailRecycler
                 jsonResponse = new JSONObject(response);
                 if(jsonResponse.getString("Status").equals(getString(R.string.request_status_success)))
                 {
-                    SharedPreferences preferences = Objects.requireNonNull(getContext()).getSharedPreferences(getString(R.string.preferences_key), Context.MODE_PRIVATE);
+                    SharedPreferences preferences = requireContext().getSharedPreferences(getString(R.string.preferences_key), Context.MODE_PRIVATE);
                     SharedPreferences.Editor preferencesEditor = preferences.edit();
                     String list = getString(R.string.preferences_blacklist_key);
 

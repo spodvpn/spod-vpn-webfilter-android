@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:background="#eeeeee"
+    android:background="@color/default_background"
     android:clickable="true"
     android:focusable="true">
 
@@ -23,7 +23,7 @@
         android:layout_height="wrap_content"
         android:textAlignment="center"
         android:textAppearance="@android:style/TextAppearance.Material.Title"
-        android:textColor="#404040"
+        android:textColor="@color/terms_title"
         app:layout_constraintTop_toBottomOf="@id/terms_image"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
@@ -39,7 +39,7 @@
         android:layout_marginEnd="20dp"
         android:layout_marginBottom="70dp"
         android:background="@drawable/rounded_corners"
-        android:textColor="#4d4d4d"
+        android:textColor="@color/rounded_corners_stroke"
         android:textSize="16sp"
         app:layout_constraintTop_toBottomOf="@id/terms_title"
         app:layout_constraintLeft_toLeftOf="parent"

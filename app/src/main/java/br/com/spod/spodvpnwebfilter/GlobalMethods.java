@@ -87,7 +87,7 @@ class GlobalMethods
                 String username = sharedPreferences.getString(mActivity.getString(R.string.preferences_username), "");
                 VpnProfile profile = null;
                 UUID uuid;
-                if (username != null) {
+                if (username.getBytes().length > 0) {
                     uuid = UUID.nameUUIDFromBytes(username.getBytes());
                     VpnProfileDataSource mDataSource = new VpnProfileDataSource(mActivity);
                     mDataSource.open();

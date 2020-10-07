@@ -20,7 +20,7 @@
         android:layout_height="wrap_content"
         android:textSize="13sp"
         android:textAppearance="@android:style/TextAppearance.Material.Body1"
-        android:textColor="#666666"
+        android:textColor="@color/row_subtitle"
         />
 
 </LinearLayout>

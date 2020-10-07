@@ -18,6 +18,7 @@
         android:text="@string/disconnected"
         android:backgroundTint="@color/disconnected_red"
         android:textColor="@android:color/white"
+        style="@style/Widget.AppCompat.Button.Colored"
         app:layout_constraintTop_toBottomOf="@id/connect_fragment_first_guideline"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
@@ -47,6 +48,9 @@
         android:layout_height="wrap_content"
         android:layout_width="wrap_content"
         android:visibility="gone"
+
+        android:theme="@style/AppTheme"
+
         android:layout_gravity="center_vertical|center_horizontal"
         android:gravity="center_vertical|center_horizontal"
         app:layout_constraintTop_toBottomOf="@id/statusImageButton"
@@ -85,7 +89,11 @@
         android:textAlignment="textStart"
         android:lines="1"
         android:tag="0"
+
         style="@style/Widget.AppCompat.Button.Borderless.Colored"
+
+        android:textColor="@color/default_text_button_color"
+
         android:textAllCaps="false"
         app:layout_constraintTop_toBottomOf="@id/connect_fragment_third_guideline"
         app:layout_constraintStart_toStartOf="parent"
@@ -130,6 +138,8 @@
         android:lines="1"
         android:tag="1"
         style="@style/Widget.AppCompat.Button.Borderless.Colored"
+        android:textColor="@color/default_text_button_color"
+        android:textAppearance="@style/TextAppearance.AppCompat.Widget.Button.Colored"
         android:textAllCaps="false"
         app:layout_constraintTop_toBottomOf="@id/connect_block_trackers_button"
         app:layout_constraintStart_toStartOf="parent"
@@ -174,6 +184,8 @@
         android:lines="1"
         android:tag="2"
         style="@style/Widget.AppCompat.Button.Borderless.Colored"
+        android:textColor="@color/default_text_button_color"
+        android:textAppearance="@style/TextAppearance.AppCompat.Widget.Button.Colored"
         android:textAllCaps="false"
         app:layout_constraintTop_toBottomOf="@id/connect_block_threats_button"
         app:layout_constraintStart_toStartOf="parent"
@@ -213,6 +225,8 @@
         android:tag="3"
         android:lines="1"
         style="@style/Widget.AppCompat.Button.Borderless.Colored"
+        android:textColor="@color/default_text_button_color"
+        android:textAppearance="@style/TextAppearance.AppCompat.Widget.Button.Colored"
         android:textAllCaps="false"
         />
     <ImageButton
@@ -238,6 +252,8 @@
         android:tag="3"
         android:textSize="12sp"
         style="@style/Widget.AppCompat.Button.Borderless.Colored"
+        android:textColor="@color/buy_button_bg"
+        android:textAppearance="@style/TextAppearance.AppCompat.Widget.Button.Colored"
         android:layout_marginBottom="50dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"

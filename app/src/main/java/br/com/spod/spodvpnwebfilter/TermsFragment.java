@@ -1,6 +1,5 @@
 package br.com.spod.spodvpnwebfilter;
 
-import android.graphics.Color;
 import android.os.Bundle;
 import android.text.Html;
 import android.text.Spanned;
@@ -13,14 +12,10 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
 
-import java.util.Objects;
-
 import androidx.fragment.app.Fragment;
 
 public class TermsFragment extends Fragment
 {
-    private static final String TAG = "TermsFragment";
-
     //private static final int TERMS_TYPE = 1; //Reserved for future
     static final int SUB_INFO_TYPE = 2;
     static final int CHANGELOG_TYPE = 3;
@@ -71,13 +66,14 @@ public class TermsFragment extends Fragment
 
         if(type == SUB_INFO_TYPE)
         {
-            textView.setBackgroundColor(Color.argb(255, 238, 238, 238)); //#eeeeee
+            //textView.setBackgroundColor(Color.argb(255, 238, 238, 238)); //#eeeeee
+            textView.setBackgroundColor(getResources().getColor(R.color.default_background, requireContext().getTheme()));
+
             Spanned str = Html.fromHtml(text, 0);
             textView.setText(str);
             textView.setMovementMethod(LinkMovementMethod.getInstance()); //enable links?
 
             //modify textView's bottom constraint and also show 'Continue' button
-            int val20dp = (int)TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 20, getResources().getDisplayMetrics());
             int val105dp = (int)TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 105, getResources().getDisplayMetrics());
 
             ViewGroup.MarginLayoutParams newParams = (ViewGroup.MarginLayoutParams) textView.getLayoutParams();
@@ -89,14 +85,14 @@ public class TermsFragment extends Fragment
             agreeButton.setVisibility(View.VISIBLE);
             agreeButton.setOnClickListener(view1 -> {
                 //Close this fragment, set flag in parent and start purchase method
-                StoreFragment storeFragment = (StoreFragment) Objects.requireNonNull(getActivity()).getSupportFragmentManager().findFragmentByTag("StoreFragment");
+                StoreFragment storeFragment = (StoreFragment) requireActivity().getSupportFragmentManager().findFragmentByTag("StoreFragment");
                 if (storeFragment != null) {
                     storeFragment.confirm_purchase();
                 }
-                getActivity().getSupportFragmentManager().popBackStackImmediate(); //close this fragment
+                requireActivity().getSupportFragmentManager().popBackStackImmediate(); //close this fragment
             });
         }
-        else if(type == CHANGELOG_TYPE) Objects.requireNonNull(getActivity()).setTitle(getString(R.string.more_tab_eleventh_item));
+        else if(type == CHANGELOG_TYPE) requireActivity().setTitle(getString(R.string.more_tab_eleventh_item));
 
         return view;
     }

@@ -4,7 +4,6 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.Typeface;
-import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -129,7 +128,7 @@ public class AlertDetailRecyclerViewAdapter extends RecyclerView.Adapter<Recycle
         return mData.size();
     }
 
-    public class DetailViewHolder extends RecyclerView.ViewHolder
+    public static class DetailViewHolder extends RecyclerView.ViewHolder
     {
         TextView nameTextView, valueTextView;
 
@@ -153,11 +152,6 @@ public class AlertDetailRecyclerViewAdapter extends RecyclerView.Adapter<Recycle
         public void onClick(View view) {
             if (mClickListener != null) mClickListener.onItemClick(view, getBindingAdapterPosition());
         }
-    }
-
-    //Get data at position
-    String getItem(int id) {
-        return mData.get(id);
     }
 
     //Setup click listener
