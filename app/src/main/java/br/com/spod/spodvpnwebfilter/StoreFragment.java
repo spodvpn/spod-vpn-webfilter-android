@@ -150,50 +150,52 @@ public class StoreFragment extends Fragment implements PurchasesUpdatedListener,
         boolean hasProfile = false;
         boolean hasReceipt = false;
 
-        MainActivity mainActivity = (MainActivity)getActivity();
-        Purchase.PurchasesResult purchasesResult;
-        if (mainActivity != null)
-        {
-            //Check receipt
-            purchasesResult = mainActivity.billingClient.queryPurchases(BillingClient.SkuType.SUBS);
-            if(purchasesResult.getPurchasesList() != null) {
-                for (int i = 0; i < purchasesResult.getPurchasesList().size(); i++) {
-                    if (purchasesResult.getPurchasesList().get(i).getPurchaseState() == Purchase.PurchaseState.PURCHASED)
-                        hasReceipt = true;
-                }
-            }
-
-            //Check profile
-            VpnProfileDataSource mDataSource = new VpnProfileDataSource(mainActivity);
-            SharedPreferences sharedPreferences = mainActivity.getSharedPreferences(getString(R.string.preferences_key), Context.MODE_PRIVATE);
-            String username = sharedPreferences.getString(getString(R.string.preferences_username), "");
-            mDataSource.open();
-            if (username.length() > 0) hasProfile = true;
-            mDataSource.close();
-
-            if(!hasProfile && !hasReceipt) {
-                //Eligible for custom free trial, get firebaseTokenId
-                if(mainActivity.firebaseTokenId.length() > 0) {
-                    //Already have firebaseTokenId, get SSAID and send to SPOD
-                    if(mProgressBar != null) mProgressBar.setVisibility(View.VISIBLE);
-                    getCustomFreeTrial();
-                }
-                else {
-                    //No firebaseTokenId yet!
-                    if(this.freeTrialTries == 0) {
-                        //First time, call connectFragment.updateNotificationToken(false) and try again in 1 second ?
-                        ConnectFragment connectFragment = (ConnectFragment) requireActivity().getSupportFragmentManager().findFragmentByTag("ConnectFragment");
-                        if (connectFragment != null)
-                            connectFragment.updateNotificationToken(false);
-                    }
-
-                    this.freeTrialTries++;
-                    if(this.freeTrialTries < 5) { //5 is a hardcoded limit!
-                        final Handler handler = new Handler();
-                        handler.postDelayed(this::checkCustomFreeTrial, 1000);
+        try {
+            MainActivity mainActivity = (MainActivity) getActivity();
+            Purchase.PurchasesResult purchasesResult;
+            if (mainActivity != null) {
+                //Check receipt
+                purchasesResult = mainActivity.billingClient.queryPurchases(BillingClient.SkuType.SUBS);
+                if (purchasesResult.getPurchasesList() != null) {
+                    for (int i = 0; i < purchasesResult.getPurchasesList().size(); i++) {
+                        if (purchasesResult.getPurchasesList().get(i).getPurchaseState() == Purchase.PurchaseState.PURCHASED)
+                            hasReceipt = true;
                     }
                 }
+
+                //Check profile
+                VpnProfileDataSource mDataSource = new VpnProfileDataSource(mainActivity);
+                SharedPreferences sharedPreferences = mainActivity.getSharedPreferences(getString(R.string.preferences_key), Context.MODE_PRIVATE);
+                String username = sharedPreferences.getString(getString(R.string.preferences_username), "");
+                mDataSource.open();
+                if (username.length() > 0) hasProfile = true;
+                mDataSource.close();
+
+                if (!hasProfile && !hasReceipt) {
+                    //Eligible for custom free trial, get firebaseTokenId
+                    if (mainActivity.firebaseTokenId.length() > 0) {
+                        //Already have firebaseTokenId, get SSAID and send to SPOD
+                        if (mProgressBar != null) mProgressBar.setVisibility(View.VISIBLE);
+                        getCustomFreeTrial();
+                    } else {
+                        //No firebaseTokenId yet!
+                        if (this.freeTrialTries == 0) {
+                            //First time, call connectFragment.updateNotificationToken(false) and try again in 1 second ?
+                            ConnectFragment connectFragment = (ConnectFragment) requireActivity().getSupportFragmentManager().findFragmentByTag("ConnectFragment");
+                            if (connectFragment != null)
+                                connectFragment.updateNotificationToken(false);
+                        }
+
+                        this.freeTrialTries++;
+                        if (this.freeTrialTries < 5) { //5 is a hardcoded limit!
+                            final Handler handler = new Handler();
+                            handler.postDelayed(this::checkCustomFreeTrial, 1000);
+                        }
+                    }
+                }
             }
+        } catch (NullPointerException exception) {
+            Log.v(TAG, "Got a NullPointerException at checkCustomFreeTrial, probably running in the background...");
         }
     }
 

@@ -52,7 +52,7 @@ class GlobalMethods
             transaction.commitAllowingStateLoss();
         } catch (Exception e) {
             Log.v(TAG, "showAlertWithMessage: Exception!");
-            e.printStackTrace();
+            //e.printStackTrace();
         }
     }
 
@@ -102,7 +102,7 @@ class GlobalMethods
                         postData.put("Senha", profile.getPassword());
                     } catch (JSONException exception) {
                         Log.v(TAG, "JSONException while trying create POST params: " + exception.getLocalizedMessage());
-                        exception.printStackTrace();
+                        //exception.printStackTrace();
                     }
                 }
 

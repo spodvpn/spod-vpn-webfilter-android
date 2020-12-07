@@ -262,116 +262,115 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
     {
         Log.v(TAG, "stateChanged: "+mService.getState().toString());
 
-        //Identify current state
-        if(mService.getState() == VpnStateService.State.CONNECTED && (this.tryingToConnect || statusImageButton.getAlpha() == 0.5f || ! statusButton.getText().equals(getString(R.string.connected))))
-        {
-            //Set connectedServer string
-            MainActivity mainActivity = (MainActivity)getActivity();
-            if (mainActivity != null) {
-                mainActivity.server_connected = mService.getProfile().getGateway();
+        try {
+            //Identify current state
+            if (mService.getState() == VpnStateService.State.CONNECTED && (this.tryingToConnect || statusImageButton.getAlpha() == 0.5f || !statusButton.getText().equals(getString(R.string.connected)))) {
+                //Set connectedServer string
+                MainActivity mainActivity = (MainActivity) getActivity();
+                if (mainActivity != null) {
+                    mainActivity.server_connected = mService.getProfile().getGateway();
 
-                //Set button color
-                statusButton.setBackgroundTintList(mainActivity.getResources().getColorStateList(R.color.connected_green, null));
+                    //Set button color
+                    statusButton.setBackgroundTintList(mainActivity.getResources().getColorStateList(R.color.connected_green, null));
 
-                //Change images (only if we were disconnected before)
-                if(statusImageButton.getDrawable() != mainActivity.getResources().getDrawable(R.drawable.status_image_animation_off_on, null))
-                    statusImageButton.setImageResource(R.drawable.status_image_animation_off_on);
-            }
-
-            //Set status text button
-            statusButton.setText(R.string.connected);
-            try {
-                statusButton.setWidth((int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 120, getResources().getDisplayMetrics()));
-            } catch (IllegalStateException exception) {
-                Log.v(TAG, "Got an IllegalStateException, probably running in the background...");
-            }
-
-            this.tryingToConnect = false;
-
-            //Animation: Off -> On
-            Log.v(TAG, "Animation: Off -> On");
-
-            //Step 1: Fade in
-            statusImageButton.animate().alpha(1.0f).setDuration(700).setListener(null);
-
-            //Step 2: Animation
-            AnimationDrawable turnOnAnimation = (AnimationDrawable) statusImageButton.getDrawable();
-            turnOnAnimation.start();
-
-            //Step 3: Enable buttons
-            enableButtons(true);
-
-        }
-        else if((mService.getState() == VpnStateService.State.DISABLED || mService.getState() == VpnStateService.State.DISCONNECTING) && (statusImageButton.getAlpha() == 1.0f || ! statusButton.getText().equals(getString(R.string.disconnected))))
-        {
-            statusButton.setText(R.string.disconnected);
-            statusButton.setBackgroundTintList(requireActivity().getResources().getColorStateList(R.color.disconnected_red, null));
-            try {
-                statusButton.setWidth((int)TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 150, getResources().getDisplayMetrics()));
-            } catch (IllegalStateException exception) {
-                Log.v(TAG, "Got an IllegalStateException, probably running in the background...");
-            }
-
-            //Set connectedServer string
-            MainActivity mainActivity = (MainActivity)getActivity();
-            if(mainActivity != null) {
-                mainActivity.server_connected = "";
-            }
-
-            //Animation: On -> Off
-            Log.v(TAG, "Animation: On -> Off");
-
-            //Step 1: Fade out
-            statusImageButton.animate().alpha(0.5f).setDuration(700).setListener(null);
-
-            //Step 2: Change images
-            statusImageButton.setImageResource(R.drawable.status_image_animation_on_off);
-            AnimationDrawable turnOffAnimation = (AnimationDrawable)statusImageButton.getDrawable();
-            turnOffAnimation.start();
-
-            //Step 3: Disable buttons
-            enableButtons(false);
-
-            if(this.tryingToConnect) {
-                //Was trying to connect but wasn't successful
-                if(this.connectErrorArray.size() < 3) {
-                    //Lower than 3, save timestamp
-                    this.connectErrorArray.add(System.currentTimeMillis());
-                } else {
-                    //Greater than 3, verify if it's stuck!
-                    Long firstErrorTimestamp = this.connectErrorArray.get(0);
-                    Long lastErrorTimestamp = this.connectErrorArray.get(this.connectErrorArray.size()-1);
-                    if(lastErrorTimestamp - firstErrorTimestamp < 30) {
-                        //3 connect errors in less than 30 seconds, cancel connection (most likely due to expired subscription)
-                        Log.v(TAG, "3 failed connect attempts is less than 30s, cancel connection!");
-                        //Disconnect and call verifyReceipt()!
-                        mService.disconnect();
-                        verifyReceipt();
-                    }
+                    //Change images (only if we were disconnected before)
+                    if (statusImageButton.getDrawable() != mainActivity.getResources().getDrawable(R.drawable.status_image_animation_off_on, null))
+                        statusImageButton.setImageResource(R.drawable.status_image_animation_off_on);
                 }
-                this.tryingToConnect = false;
-            }
 
-        }
-        else if(mService.getState() == VpnStateService.State.CONNECTING) {
-            this.tryingToConnect = true;
-            statusButton.setText(R.string.connecting___);
-            try {
-                statusButton.setBackgroundTintList(requireActivity().getResources().getColorStateList(R.color.connecting_orange, null));
-                statusButton.setWidth((int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 150, getResources().getDisplayMetrics()));
-            } catch (IllegalStateException exception) {
-                Log.v(TAG, "Got an IllegalStateException, probably running in the background...");
+                //Set status text button
+                statusButton.setText(R.string.connected);
+                try {
+                    statusButton.setWidth((int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 120, getResources().getDisplayMetrics()));
+                } catch (IllegalStateException exception) {
+                    Log.v(TAG, "Got an IllegalStateException, probably running in the background...");
+                }
+
+                this.tryingToConnect = false;
+
+                //Animation: Off -> On
+                Log.v(TAG, "Animation: Off -> On");
+
+                //Step 1: Fade in
+                statusImageButton.animate().alpha(1.0f).setDuration(700).setListener(null);
+
+                //Step 2: Animation
+                AnimationDrawable turnOnAnimation = (AnimationDrawable) statusImageButton.getDrawable();
+                turnOnAnimation.start();
+
+                //Step 3: Enable buttons
+                enableButtons(true);
+
+            } else if ((mService.getState() == VpnStateService.State.DISABLED || mService.getState() == VpnStateService.State.DISCONNECTING) && (statusImageButton.getAlpha() == 1.0f || !statusButton.getText().equals(getString(R.string.disconnected)))) {
+                statusButton.setText(R.string.disconnected);
+                statusButton.setBackgroundTintList(requireActivity().getResources().getColorStateList(R.color.disconnected_red, null));
+                try {
+                    statusButton.setWidth((int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 150, getResources().getDisplayMetrics()));
+                } catch (IllegalStateException exception) {
+                    Log.v(TAG, "Got an IllegalStateException, probably running in the background...");
+                }
+
+                //Set connectedServer string
+                MainActivity mainActivity = (MainActivity) getActivity();
+                if (mainActivity != null) {
+                    mainActivity.server_connected = "";
+                }
+
+                //Animation: On -> Off
+                Log.v(TAG, "Animation: On -> Off");
+
+                //Step 1: Fade out
+                statusImageButton.animate().alpha(0.5f).setDuration(700).setListener(null);
+
+                //Step 2: Change images
+                statusImageButton.setImageResource(R.drawable.status_image_animation_on_off);
+                AnimationDrawable turnOffAnimation = (AnimationDrawable) statusImageButton.getDrawable();
+                turnOffAnimation.start();
+
+                //Step 3: Disable buttons
+                enableButtons(false);
+
+                if (this.tryingToConnect) {
+                    //Was trying to connect but wasn't successful
+                    if (this.connectErrorArray.size() < 3) {
+                        //Lower than 3, save timestamp
+                        this.connectErrorArray.add(System.currentTimeMillis());
+                    } else {
+                        //Greater than 3, verify if it's stuck!
+                        Long firstErrorTimestamp = this.connectErrorArray.get(0);
+                        Long lastErrorTimestamp = this.connectErrorArray.get(this.connectErrorArray.size() - 1);
+                        if (lastErrorTimestamp - firstErrorTimestamp < 30) {
+                            //3 connect errors in less than 30 seconds, cancel connection (most likely due to expired subscription)
+                            Log.v(TAG, "3 failed connect attempts is less than 30s, cancel connection!");
+                            //Disconnect and call verifyReceipt()!
+                            mService.disconnect();
+                            verifyReceipt();
+                        }
+                    }
+                    this.tryingToConnect = false;
+                }
+
+            } else if (mService.getState() == VpnStateService.State.CONNECTING) {
+                this.tryingToConnect = true;
+                statusButton.setText(R.string.connecting___);
+                try {
+                    statusButton.setBackgroundTintList(requireActivity().getResources().getColorStateList(R.color.connecting_orange, null));
+                    statusButton.setWidth((int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 150, getResources().getDisplayMetrics()));
+                } catch (IllegalStateException exception) {
+                    Log.v(TAG, "Got an IllegalStateException, probably running in the background...");
+                }
+                animateStatusButton(); //Kickstart the status button animation
+            } else if (mService.getState() == VpnStateService.State.DISCONNECTING) {
+                statusButton.setText(R.string.disconnecting___);
+                try {
+                    statusButton.setBackgroundTintList(requireActivity().getResources().getColorStateList(R.color.connecting_orange, null));
+                    statusButton.setWidth((int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 160, getResources().getDisplayMetrics()));
+                } catch (IllegalStateException exception) {
+                    Log.v(TAG, "Got an IllegalStateException, probably running in the background...");
+                }
             }
-            animateStatusButton(); //Kickstart the status button animation
-        }
-        else if(mService.getState() == VpnStateService.State.DISCONNECTING) {
-            statusButton.setText(R.string.disconnecting___);
-            try {
-                statusButton.setBackgroundTintList(requireActivity().getResources().getColorStateList(R.color.connecting_orange, null));
-                statusButton.setWidth((int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 160, getResources().getDisplayMetrics()));
-            } catch (IllegalStateException exception) {
-                Log.v(TAG, "Got an IllegalStateException, probably running in the background...");
-            }
+        } catch (IllegalStateException exception) {
+            Log.v(TAG, "Got an IllegalStateException, probably running in the background...");
         }
     }
 

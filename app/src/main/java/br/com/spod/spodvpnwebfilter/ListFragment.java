@@ -140,7 +140,7 @@ public class ListFragment extends Fragment implements ListRecyclerViewAdapter.It
             postData.put("Lista", (listType == 0 ? "Whitelist" : "Blacklist"));
         } catch (JSONException exception) {
             Log.v(TAG, "JSONException while trying to load custom list: " + exception.getLocalizedMessage());
-            exception.printStackTrace();
+            //exception.printStackTrace();
         }
 
         //Actually make the request
@@ -171,6 +171,8 @@ public class ListFragment extends Fragment implements ListRecyclerViewAdapter.It
                 }
             } catch (JSONException exception) {
                 globalMethods.showAlertWithMessage(getString(R.string.error_connecting_to_server), true);
+            } catch (IllegalStateException exception) {
+                Log.v(TAG, "Got an IllegalStateException, probably running in the background...");
             }
         });
     }
