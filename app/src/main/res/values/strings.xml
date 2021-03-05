@@ -48,7 +48,7 @@
     <string name="more_tab_seventeenth_item">Privacy Policy</string>
     <string name="more_tab_eighteenth_item">Contact Us</string>
 
-    <string name="copyright" translatable="false">© Spod 2020</string>
+    <string name="copyright" translatable="false">© Spod 2021</string>
 
     <string name="region">US</string>
     <string name="language">English</string>
@@ -149,8 +149,9 @@
     <string name="error_request_1">Request error, please try again (0001)</string>
     <string name="error_request_2">Request error, please try again (0002)</string>
 
-    <string name="switch_country_usa">Switching to servers in the USA!</string>
-    <string name="switch_country_brazil">Switching to servers in Brazil!</string>
+    <!--REMOVER<string name="switch_country_usa">Switching to servers in the USA!</string>
+    <string name="switch_country_brazil">Switching to servers in Brazil!</string>-->
+    <string name="change_region">Connecting to new region…</string>
 
     <string name="billing_not_available">Error: In-App Purchase store is not available (check you internet connection and Google Play account configured).</string>
     <string name="toggle_always_on_button">Always-on VPN</string>

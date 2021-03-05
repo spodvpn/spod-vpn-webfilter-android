@@ -2,6 +2,7 @@ package br.com.spod.spodvpnwebfilter;
 
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -71,7 +72,7 @@ public class MessageFragment extends Fragment
         //AutoDestruct to hide/close the message
         if(autoDestruct > 0)
         {
-            final Handler handler = new Handler();
+            final Handler handler = new Handler(Looper.getMainLooper());
             handler.postDelayed(() -> {
                 Log.v(TAG, "Auto-destruct: Closing message fragment!");
                 closeButton.callOnClick();

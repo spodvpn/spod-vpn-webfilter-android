@@ -17,6 +17,7 @@ import org.json.JSONObject;
 import org.strongswan.android.data.VpnProfile;
 import org.strongswan.android.data.VpnProfileDataSource;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -30,7 +31,7 @@ class GlobalMethods
 {
     private static final String TAG = "GlobalMethods";
 
-    private FragmentActivity mActivity;
+    private final FragmentActivity mActivity;
 
     GlobalMethods(FragmentActivity fragmentActivity) {
         this.mActivity = fragmentActivity;
@@ -138,5 +139,21 @@ class GlobalMethods
         }
 
         return String.format(Locale.getDefault(),"%2.2f", n) + " " + medida;
+    }
+
+    String getRegionForCountry(String countryCode)
+    {
+        String[] southAmericaCountries = {"AR", "BO", "BR", "CL", "CO", "EC", "GY", "PY", "PE", "SR", "UY", "VE"};
+        String[] northAmericaCountries = {"AG", "BS", "BB", "BZ", "CA", "CR", "CU", "DM", "DO", "SV", "GD", "GT", "HT", "HN", "JM", "MX", "NI", "PA", "KN", "LC", "VC", "TT", "US"};
+        String[] europeCountries = {"AL", "AD", "AM", "AT", "AZ", "BY", "BE", "BA", "BG", "HR", "CY", "CZ", "DK", "EE", "FI", "FR", "GE", "DE", "GR", "HU", "IS", "IE", "IT", "LV", "LI", "LT", "LU", "MK", "MT", "MD", "MC", "ME", "NL", "NO", "PL", "PT", "RO", "SM", "RS", "SK", "SI", "ES", "SE", "CH", "UA", "GB"};
+        String[] asiaCountries = {"AF", "BH", "BD", "BT", "BN", "MM", "KH", "CN", "TL", "IN", "ID", "IR", "IQ", "IL", "JP", "JO", "KZ", "KP", "KR", "KW", "KG", "LA", "LB", "MY", "MV", "MN", "NP", "OM", "PK", "PH", "QA", "RU", "SA", "SG", "LK", "SY", "TJ", "TH", "TR", "TM", "AE", "UZ", "VN", "YE"};
+        String[] africaCountries = {"DZ", "AO", "BJ", "BW", "BF", "BI", "CM", "CV", "CF", "TD", "KM", "CD", "CG", "DJ", "EG", "GQ", "ER", "ET", "GA", "GM", "GH", "GN", "GW", "CI", "KE", "LS", "LR", "LY", "MG", "MW", "ML", "MR", "MU", "MA", "MZ", "NA", "NE", "NG", "RW", "ST", "SN", "SC", "SL", "SO", "ZA", "SS", "SD", "SZ", "TZ", "TG", "TN", "UG", "ZM", "ZW"};
+        String[] oceaniaCountries = {"AU", "FJ", "KI", "MH", "FM", "NR", "NZ", "PW", "PG", "WS", "SB", "TO", "TV", "VU"};
+
+        if(Arrays.asList(southAmericaCountries).contains(countryCode)) return "vpn.spod.com.br"; //SA (South America)
+        else if(Arrays.asList(northAmericaCountries).contains(countryCode)) return "us.vpn.spod.com.br"; //NA (North America)
+        else if(Arrays.asList(europeCountries).contains(countryCode) || Arrays.asList(africaCountries).contains(countryCode)) return "eu.vpn.spod.com.br"; //EU (Europe + Africa)
+        else if(Arrays.asList(asiaCountries).contains(countryCode) || Arrays.asList(oceaniaCountries).contains(countryCode)) return "in.vpn.spod.com.br"; //IN (Asia + Oceania)
+        else return "vpn.spod.com.br"; //South America (default)
     }
 }

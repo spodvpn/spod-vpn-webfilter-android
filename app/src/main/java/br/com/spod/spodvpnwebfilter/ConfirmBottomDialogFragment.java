@@ -16,8 +16,8 @@ public class ConfirmBottomDialogFragment extends BottomSheetDialogFragment
     static final int TYPE_RESET = 0;
     static final int TYPE_UNBLOCK = 1;
 
-    private String title, subtitle, confirm_button, deny_button;
-    private int type;
+    private final String title, subtitle, confirm_button, deny_button;
+    private final int type;
 
     private ConfirmBottomDialogFragment(int type, String title, String subtitle, String confirm_button, String deny_button) {
         this.type = type;

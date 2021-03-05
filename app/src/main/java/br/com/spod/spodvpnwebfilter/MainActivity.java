@@ -9,6 +9,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AdapterView;
 
 import com.android.billingclient.api.BillingClient;
 import com.android.billingclient.api.BillingClientStateListener;
@@ -24,6 +25,7 @@ import org.strongswan.android.data.VpnProfileDataSource;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 
 import androidx.annotation.NonNull;
@@ -43,33 +45,35 @@ public class MainActivity extends AppCompatActivity implements PurchasesUpdatedL
     boolean subscribeToCustomFreeTrial = false;
 
     BillingClient billingClient;
-    private List<String> skuList = Arrays.asList("spod_vpn_monthly_subscription", "spod_vpn_yearly_subscription");
+    private final List<String> skuList = Arrays.asList("spod_vpn_monthly_subscription", "spod_vpn_yearly_subscription");
 
     private BottomNavigationView bottomNavigation;
     Menu actionBarMenu;
 
-    private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
+    private CustomSpinner regionSpinner;
+
+    private final BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
             = new BottomNavigationView.OnNavigationItemSelectedListener() {
         @Override
-        public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-            switch (item.getItemId()) {
-                case R.id.navigation_connect:
-                    openFragment(ConnectFragment.newInstance(), true, "ConnectFragment");
-                    //Check if StoreFragment is visible
-                    Fragment storeFragment = getSupportFragmentManager().findFragmentByTag("StoreFragment");
-                    if(storeFragment == null)
-                        actionBarMenu.getItem(0).setVisible(true);
-                    else
-                        actionBarMenu.getItem(0).setVisible(!storeFragment.isVisible());
-                    return true;
-                case R.id.navigation_alerts:
-                    openFragment(AlertsFragment.newInstance(), true, "AlertsFragment");
-                    actionBarMenu.getItem(0).setVisible(false);
-                    return true;
-                case R.id.navigation_more:
-                    openFragment(MoreFragment.newInstance(), true, "MoreFragment");
-                    actionBarMenu.getItem(0).setVisible(false);
-                    return true;
+        public boolean onNavigationItemSelected(@NonNull MenuItem item)
+        {
+            if(item.getItemId() == R.id.navigation_connect) {
+                openFragment(ConnectFragment.newInstance(), true, "ConnectFragment");
+                //Check if StoreFragment is visible
+                Fragment storeFragment = getSupportFragmentManager().findFragmentByTag("StoreFragment");
+                if(storeFragment == null)
+                    actionBarMenu.getItem(0).setVisible(true);
+                else
+                    actionBarMenu.getItem(0).setVisible(!storeFragment.isVisible());
+                return true;
+            } else if(item.getItemId() == R.id.navigation_alerts) {
+                openFragment(AlertsFragment.newInstance(), true, "AlertsFragment");
+                actionBarMenu.getItem(0).setVisible(false);
+                return true;
+            } else if(item.getItemId() == R.id.navigation_more) {
+                openFragment(MoreFragment.newInstance(), true, "MoreFragment");
+                actionBarMenu.getItem(0).setVisible(false);
+                return true;
             }
             return false;
         }
@@ -105,44 +109,92 @@ public class MainActivity extends AppCompatActivity implements PurchasesUpdatedL
         getMenuInflater().inflate(R.menu.action_bar_menu, menu);
 
         actionBarMenu = menu;
-        MenuItem countryButton = menu.getItem(0);
+        MenuItem item = menu.findItem(R.id.region_spinner);
 
-        //If there's a VPN profile installed, use it to determine the correct country
-        VpnProfileDataSource mDataSource = new VpnProfileDataSource(this);
-        SharedPreferences sharedPreferences = getSharedPreferences(getString(R.string.preferences_key), Context.MODE_PRIVATE);
-        String username = sharedPreferences.getString(getString(R.string.preferences_username), "");
-        VpnProfile user_profile = null;
-        UUID uuid;
-        mDataSource.open();
-        if (username.getBytes().length > 0) {
-            uuid = UUID.nameUUIDFromBytes(username.getBytes());
-            user_profile = mDataSource.getVpnProfile(uuid);
+        if(regionSpinner == null) {
+            //Create regionSpinner
+            regionSpinner = (CustomSpinner)item.getActionView();
+            regionSpinner.removeSpinnerArrow();
 
+            String[] serversHostnames = {"vpn.spod.com.br", "us.vpn.spod.com.br", "eu.vpn.spod.com.br", "in.vpn.spod.com.br"};
+            String[] regionsArray = {"", "", "", ""};
+            Integer[] flagsArray = {R.drawable.brazil_flag, R.drawable.usa_flag, R.drawable.europe_flag, R.drawable.india_flag};
+            RegionSpinnerAdapter spinnerAdapter = new RegionSpinnerAdapter(this, R.layout.region_spinner_layout, regionsArray, flagsArray);
+            regionSpinner.setAdapter(spinnerAdapter);
+
+            //ItemSelected listener
+            int initialSelectedPosition=regionSpinner.getSelectedItemPosition();
+            regionSpinner.setSelection(initialSelectedPosition, false); //clear selection
+            regionSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                @Override
+                public void onItemSelected(AdapterView<?> parent, View view, int position, long id)
+                {
+                    Log.v(TAG, "onItemSelected: Connect to server: "+serversHostnames[position]);
+                    ConnectFragment fragment = (ConnectFragment) getSupportFragmentManager().findFragmentByTag("ConnectFragment");
+                    if (fragment != null && fragment.isVisible()) fragment.changeRegion(serversHostnames[position]);
+
+                    /*
+                    if(mService.getState() == VpnStateService.State.CONNECTING) {
+                            return; //Ignore because we're currently connecting!
+                    }
+                     */
+                }
+
+                @Override public void onNothingSelected(AdapterView<?> parent) { }
+            });
+
+            //Custom listeners
+            regionSpinner.setSpinnerEventsListener(new CustomSpinner.OnSpinnerEventsListener()
+            {
+                //Add region name next to flag
+                @Override public void onSpinnerOpened() {
+                    String[] regionsArray = {"South America", "North America", "Central Europe", "Asia Pacific"};
+                    spinnerAdapter.setTextArray(regionsArray);
+                }
+
+                //Remove region name next to flag
+                @Override public void onSpinnerClosed() {
+                    String[] regionsArray = {"", "", "", ""};
+                    spinnerAdapter.setTextArray(regionsArray);
+                }
+            });
+
+            //If there's a VPN profile installed, use it to determine the correct country
+            VpnProfileDataSource mDataSource = new VpnProfileDataSource(this);
+            SharedPreferences sharedPreferences = getSharedPreferences(getString(R.string.preferences_key), Context.MODE_PRIVATE);
+            String username = sharedPreferences.getString(getString(R.string.preferences_username), "");
+            VpnProfile user_profile = null;
+            UUID uuid;
+            mDataSource.open();
+            if (username.getBytes().length > 0) {
+                uuid = UUID.nameUUIDFromBytes(username.getBytes());
+                user_profile = mDataSource.getVpnProfile(uuid);
+
+            }
+
+            String serverHostname;
+            if(user_profile == null) {
+                //No profile found, set region based on user's locale
+                Locale locale = getResources().getConfiguration().getLocales().get(0);
+                GlobalMethods globalMethods = new GlobalMethods(this);
+                serverHostname = globalMethods.getRegionForCountry(locale.getCountry());
+            } else {
+                //Profile exists, set region based on gateway
+                serverHostname = user_profile.getGateway();
+            }
+
+            if(serverHostname.startsWith("us.vpn")) regionSpinner.setSelection(1); //North America
+            else if(serverHostname.startsWith("eu.vpn")) regionSpinner.setSelection(2); //Central Europe
+            else if(serverHostname.startsWith("in.vpn")) regionSpinner.setSelection(3); //Asia Pacific
+            else regionSpinner.setSelection(0); //South America (default)
+
+            mDataSource.close();
         }
-        if(user_profile == null) {
-            //No profile found, use language to set the country
-            if(getString(R.string.region).equals("BR")) countryButton.setIcon(R.drawable.brazil_flag);
-            else countryButton.setIcon(R.drawable.usa_flag);
-        }
-        else if(user_profile.getGateway().startsWith("us"))
-            countryButton.setIcon(R.drawable.usa_flag);
-        else
-            countryButton.setIcon((R.drawable.brazil_flag));
-        mDataSource.close();
 
         return true;
     }
 
-    @Override
-    public boolean onOptionsItemSelected(@NonNull MenuItem item)
-    {
-        ConnectFragment fragment = (ConnectFragment) getSupportFragmentManager().findFragmentByTag("ConnectFragment");
-        if (fragment != null && fragment.isVisible()) fragment.changeServerLocation();
-        return super.onOptionsItemSelected(item);
-    }
-
-    @Override
-    public void onBackPressed()
+    @Override public void onBackPressed()
     {
         super.onBackPressed();
 
@@ -177,8 +229,6 @@ public class MainActivity extends AppCompatActivity implements PurchasesUpdatedL
                 //Special case for an alert's detail view and/or StoreFragment
                 if(tags[i].equals("AlertsFragment")) {
                     currentFragment.requireView().findViewById(R.id.alerts_generic_fragment_detail_container).setVisibility(View.GONE);
-                } else if(tags[i].equals("StoreFragment")) {
-                    currentFragment.requireView().findViewById(R.id.store_fragment_container).setVisibility(View.GONE);
                 }
             }
         }

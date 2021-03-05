@@ -37,12 +37,12 @@ public class MoreRecyclerViewAdapter extends RecyclerView.Adapter<RecyclerView.V
     //private static final int SUB_INFO_ROW = 3;
 
     String subscriptionType, totalDownload, totalUpload, firewallVersion, firewallReleaseDate, changeLog, connectedServer;
-    private String appVersion, username;
+    private final String appVersion, username;
 
-    private ArrayList<String> valuesList = new ArrayList<>();
+    private final ArrayList<String> valuesList = new ArrayList<>();
 
-    private List<String> mData;
-    private LayoutInflater mInflater;
+    private final List<String> mData;
+    private final LayoutInflater mInflater;
     private ItemClickListener mClickListener;
 
     //Constructor

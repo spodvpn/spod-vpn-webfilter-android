@@ -16,7 +16,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 public class StoreRecyclerViewAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
 {
-    private LayoutInflater mInflater;
+    private final LayoutInflater mInflater;
     private List<SkuDetails> mData;
     private List<String> mFreeTrialData;
     private ProductClickListener mClickListener;

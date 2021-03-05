@@ -27,12 +27,12 @@ public class AlertDetailRecyclerViewAdapter extends RecyclerView.Adapter<Recycle
 
     private static final int UNBLOCK_HOSTNAME_ROW = 3;
 
-    private List<String> mData;
-    private LayoutInflater mInflater;
+    private final List<String> mData;
+    private final LayoutInflater mInflater;
     private ItemClickListener mClickListener;
 
-    private String blockType, hostname;
-    private Long timestamp;
+    private final String blockType, hostname;
+    private final Long timestamp;
 
     AlertDetailRecyclerViewAdapter(Context context, List<String> data, String blockType, String hostname, Long timestamp)
     {

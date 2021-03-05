@@ -22,11 +22,11 @@ public class ListRecyclerViewAdapter extends RecyclerView.Adapter<RecyclerView.V
     private static final int TYPE_ITEM = 0;
     private static final int TYPE_FOOTER = 1;
 
-    private int listType;
-    private Context this_context;
+    private final int listType;
+    private final Context this_context;
 
     private List<String> mData;
-    private LayoutInflater mInflater;
+    private final LayoutInflater mInflater;
     private ListRecyclerViewAdapter.ItemClickListener mClickListener;
 
     //Constructor

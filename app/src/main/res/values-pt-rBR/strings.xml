@@ -80,8 +80,11 @@
     <string name="request_message">Mensagem</string>
     <string name="spodLogoDescription">Logo Spod</string>
     <string name="store_fragment_title">Comprar Assinatura</string>
-    <string name="switch_country_brazil">Mudando para servidores no Brasil!</string>
-    <string name="switch_country_usa">Mudando para servidores nos EUA!</string>
+
+    <!--REMOVER<string name="switch_country_brazil">Mudando para servidores no Brasil!</string>
+    <string name="switch_country_usa">Mudando para servidores nos EUA!</string>-->
+    <string name="change_region">Mudando para a nova região…</string>
+
     <string name="terms_annual_sub_text">"<![CDATA[<p>• Duração: %1$s<br>• Preço: %2$s<br>• Desconto: %3$s<br>• O pagamento será cobrado na sua conta do Google Play.<br>• A assinatura renova automaticamente e sua conta será cobrada pelo preço acima se não houver o cancelamento em pelo menos 24 horas antes do término do período.<br>• Após a compra você pode gerenciar suas assinaturas através das configurações da sua conta.<br>• Usuários novos podem desfrutar do Free Trial por um período de 1 mês, após o qual sua conta será cobrada automaticamente por uma %4$s no preço acima.<br>• Ao adquirir uma assinatura, qualquer período de Free Trial remanescente será perdido.<br><br>Para mais informações visite nossos <a href="%5$s">Termos de Uso</a> e <a href="%6$s">Política de Privacidade</a></p>]]> "</string>
     <string name="terms_continue_button">Continuar</string>
     <string name="terms_monthly_sub_text">"<![CDATA[<p>• Duração: %1$s<br>• Preço: %2$s<br>. O pagamento será cobrado na sua conta do Google Play.<br>• A assinatura renova automaticamente e sua conta será cobrada pelo preço acima se não houver o cancelamento em pelo menos 24 horas antes do término do período.<br>• Após a compra você pode gerenciar suas assinaturas através das configurações da sua conta.<br>• Usuários novos podem desfrutar do Free Trial por um período de 1 mês, após o qual sua conta será cobrada automaticamente por uma %3$s no preço acima.<br>• Ao adquirir uma assinatura, qualquer período de Free Trial remanescente será perdido.<br><br>Para mais informações visite nossos <a href="%4$s">Termos de Uso</a> e <a href="%5$s">Política de Privacidade</a></p>]]> "</string>

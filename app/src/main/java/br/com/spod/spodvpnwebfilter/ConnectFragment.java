@@ -13,12 +13,14 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
 import android.provider.Settings;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.Display;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -29,7 +31,8 @@ import android.widget.TextView;
 
 import com.android.billingclient.api.BillingClient;
 import com.android.billingclient.api.Purchase;
-import com.google.firebase.iid.FirebaseInstanceId;
+import com.google.firebase.installations.FirebaseInstallations;
+import com.google.firebase.messaging.FirebaseMessaging;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -42,12 +45,15 @@ import org.strongswan.android.security.LocalCertificateStore;
 import org.strongswan.android.ui.VpnProfileControlActivity;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
+import androidx.core.content.res.ResourcesCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 
@@ -256,7 +262,7 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
         requireActivity().getApplicationContext().unbindService(mServiceConnection);
     }
 
-    @SuppressLint("UseCompatLoadingForDrawables")
+    //@SuppressLint("UseCompatLoadingForDrawables")
     @Override
     public void stateChanged()
     {
@@ -274,7 +280,8 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
                     statusButton.setBackgroundTintList(mainActivity.getResources().getColorStateList(R.color.connected_green, null));
 
                     //Change images (only if we were disconnected before)
-                    if (statusImageButton.getDrawable() != mainActivity.getResources().getDrawable(R.drawable.status_image_animation_off_on, null))
+                    //if (statusImageButton.getDrawable() != mainActivity.getResources().getDrawable(R.drawable.status_image_animation_off_on, null))
+                    if (statusImageButton.getDrawable() != ResourcesCompat.getDrawable(mainActivity.getResources(), R.drawable.status_image_animation_off_on, null))
                         statusImageButton.setImageResource(R.drawable.status_image_animation_off_on);
                 }
 
@@ -299,7 +306,11 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
                 turnOnAnimation.start();
 
                 //Step 3: Enable buttons
-                enableButtons(true);
+                try {
+                    enableButtons(true);
+                } catch (NullPointerException exception) {
+                    Log.v(TAG, "stateChanged: Received NullPointerException before enableButtons");
+                }
 
             } else if ((mService.getState() == VpnStateService.State.DISABLED || mService.getState() == VpnStateService.State.DISCONNECTING) && (statusImageButton.getAlpha() == 1.0f || !statusButton.getText().equals(getString(R.string.disconnected)))) {
                 statusButton.setText(R.string.disconnected);
@@ -307,7 +318,7 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
                 try {
                     statusButton.setWidth((int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 150, getResources().getDisplayMetrics()));
                 } catch (IllegalStateException exception) {
-                    Log.v(TAG, "Got an IllegalStateException, probably running in the background...");
+                    Log.v(TAG, "stateChanged: Got an IllegalStateException, probably running in the background...");
                 }
 
                 //Set connectedServer string
@@ -369,8 +380,8 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
                     Log.v(TAG, "Got an IllegalStateException, probably running in the background...");
                 }
             }
-        } catch (IllegalStateException exception) {
-            Log.v(TAG, "Got an IllegalStateException, probably running in the background...");
+        } catch (IllegalStateException | NullPointerException exception) {
+            Log.v(TAG, "stateChanged: Got an exception, probably running in the background...");
         }
     }
 
@@ -403,7 +414,7 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
         if(mService.getState() == VpnStateService.State.CONNECTED || mService.getState() == VpnStateService.State.CONNECTING) {
             //Currently connected or connecting: will disconnect
             mService.disconnect();
-            final Handler handler = new Handler();
+            final Handler handler = new Handler(Looper.getMainLooper());
             handler.postDelayed(this::stateChanged, 500);
         }
         else if(profile == null && mainActivity != null) {
@@ -439,7 +450,8 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
             intent.setAction(VpnProfileControlActivity.START_PROFILE);
             intent.putExtra(VpnProfileControlActivity.EXTRA_VPN_PROFILE_ID, uuid.toString());
             startActivity(intent);
-            final Handler handler = new Handler();
+
+            final Handler handler = new Handler(Looper.getMainLooper());
             handler.postDelayed(this::stateChanged, 500);
         }
         else {
@@ -472,7 +484,7 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
         if(currentState == VpnStateService.State.CONNECTING || currentState == VpnStateService.State.DISCONNECTING) {
             statusButton.setText(currentText);
 
-            final Handler handler = new Handler();
+            final Handler handler = new Handler(Looper.getMainLooper());
             handler.postDelayed(this::animateStatusButton, 500);
         }
         else {
@@ -567,40 +579,35 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
     {
         String status;
 
-        switch (v.getId()) {
-            case R.id.connect_block_trackers_button:
-            case R.id.connect_block_trackers_checkmark_button:
-            case R.id.connect_block_trackers_image_button:
-                status = (v.getAlpha() == 1.0f ? "desligado" : "ligado"); //Switch from enabled to disabled and vice-versa
-                updatePreferences(status, "block-tracking");
-                break;
-            case R.id.connect_block_threats_button:
-            case R.id.connect_block_threats_image_button:
-            case R.id.connect_block_threats_checkmark_button:
-                status = (v.getAlpha() == 1.0f ? "desligado" : "ligado"); //Switch from enabled to disabled and vice-versa
-                updatePreferences(status, "malware-phishing");
-                break;
-            case R.id.connect_website_button:
-                Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(getString(R.string.website_url)));
-                startActivity(browserIntent);
-                break;
-            case R.id.connect_toggle_always_on_button:
-            case R.id.connect_toggle_always_on_image_button:
-                Intent vpnSettingsIntent = new Intent(Settings.ACTION_VPN_SETTINGS);
-                vpnSettingsIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                startActivity(vpnSettingsIntent);
-                break;
-            case R.id.connect_send_notifications_button:
-            case R.id.connect_send_notifications_image_button:
-            case R.id.connect_send_notifications_checkmark_button:
-                SharedPreferences sharedPreferences = requireContext().getSharedPreferences(getString(R.string.preferences_key), Context.MODE_PRIVATE);
-                boolean sendNotifications = sharedPreferences.getBoolean(getString(R.string.preferences_send_notification), false);
-                if(sendNotifications)
-                    updateNotificationSettings(false, null); //sendNotifications is currently enabled and user clicked the button: disable!
-                else
-                    updateNotificationToken(true); //sendNotifications is currently disabled and user clicked the button: enable!
-
-                break;
+        if(v.getId() == R.id.connect_block_trackers_button || v.getId() == R.id.connect_block_trackers_checkmark_button || v.getId() == R.id.connect_block_trackers_image_button)
+        {
+            status = (v.getAlpha() == 1.0f ? "desligado" : "ligado"); //Switch from enabled to disabled and vice-versa
+            updatePreferences(status, "block-tracking");
+        }
+        else if(v.getId() == R.id.connect_block_threats_button || v.getId() == R.id.connect_block_threats_checkmark_button || v.getId() == R.id.connect_block_threats_image_button)
+        {
+            status = (v.getAlpha() == 1.0f ? "desligado" : "ligado"); //Switch from enabled to disabled and vice-versa
+            updatePreferences(status, "malware-phishing");
+        }
+        else if(v.getId() == R.id.connect_website_button)
+        {
+            Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(getString(R.string.website_url)));
+            startActivity(browserIntent);
+        }
+        else if(v.getId() == R.id.connect_toggle_always_on_button || v.getId() == R.id.connect_toggle_always_on_image_button)
+        {
+            Intent vpnSettingsIntent = new Intent(Settings.ACTION_VPN_SETTINGS);
+            vpnSettingsIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(vpnSettingsIntent);
+        }
+        else if(v.getId() == R.id.connect_send_notifications_button || v.getId() == R.id.connect_send_notifications_checkmark_button || v.getId() == R.id.connect_send_notifications_image_button)
+        {
+            SharedPreferences sharedPreferences = requireContext().getSharedPreferences(getString(R.string.preferences_key), Context.MODE_PRIVATE);
+            boolean sendNotifications = sharedPreferences.getBoolean(getString(R.string.preferences_send_notification), false);
+            if(sendNotifications)
+                updateNotificationSettings(false, null); //sendNotifications is currently enabled and user clicked the button: disable!
+            else
+                updateNotificationToken(true); //sendNotifications is currently disabled and user clicked the button: enable!
         }
     }
 
@@ -634,15 +641,21 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
         //Actually make the request
         globalMethods.APIRequest("https://spod.com.br/services/vpn/atualizarPreferencias", postData, response -> {
             //Hide progress bar and show buttons again!
-            mProgressBar.setVisibility(View.GONE);
-            blockTrackersButton.setVisibility(View.VISIBLE);
-            blockTrackersImageButton.setVisibility(View.VISIBLE);
-            blockTrackersCheckmarkButton.setVisibility(View.VISIBLE);
-            blockThreatsButton.setVisibility(View.VISIBLE);
-            blockThreatsImageButton.setVisibility(View.VISIBLE);
-            blockThreatsCheckmarkButton.setVisibility(View.VISIBLE);
-            if(this.shouldShouldSettingsAppButton) settingsAppButton.setVisibility(View.VISIBLE);
-            if(this.shouldShouldSettingsAppButton) settingsAppImageButton.setVisibility(View.VISIBLE);
+            try {
+                mProgressBar.setVisibility(View.GONE);
+                blockTrackersButton.setVisibility(View.VISIBLE);
+                blockTrackersImageButton.setVisibility(View.VISIBLE);
+                blockTrackersCheckmarkButton.setVisibility(View.VISIBLE);
+                blockThreatsButton.setVisibility(View.VISIBLE);
+                blockThreatsImageButton.setVisibility(View.VISIBLE);
+                blockThreatsCheckmarkButton.setVisibility(View.VISIBLE);
+                if (this.shouldShouldSettingsAppButton)
+                    settingsAppButton.setVisibility(View.VISIBLE);
+                if (this.shouldShouldSettingsAppButton)
+                    settingsAppImageButton.setVisibility(View.VISIBLE);
+            } catch (IllegalStateException | NullPointerException exception) {
+                Log.v(TAG, "updatePreferences: Got exception while modifying UI");
+            }
 
             //Handle response
             JSONObject jsonResponse;
@@ -737,7 +750,13 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
                     VpnProfile user_profile = new VpnProfile();
                     user_profile.setUsername(username);
                     user_profile.setPassword(password);
-                    user_profile.setGateway(getString(R.string.default_vpn_gateway));
+
+                    //user_profile.setGateway(getString(R.string.default_vpn_gateway));
+                    //Set default gateway based on user's locale
+                    Locale locale = getResources().getConfiguration().getLocales().get(0);
+                    String serverHostname = globalMethods.getRegionForCountry(locale.getCountry());
+                    user_profile.setGateway(serverHostname);
+
                     user_profile.setId(0);
                     user_profile.setName("Spod VPN");
                     user_profile.setVpnType(VpnType.IKEV2_EAP);
@@ -873,12 +892,8 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
         }
     }
 
-    void changeServerLocation()
+    void changeRegion(String serverHostname)
     {
-        if(mService.getState() == VpnStateService.State.CONNECTING) {
-            return; //Ignore because we're currently connecting!
-        }
-
         //Open VPN profile
         SharedPreferences sharedPreferences = requireContext().getSharedPreferences(getString(R.string.preferences_key), Context.MODE_PRIVATE);
         String username = sharedPreferences.getString(getString(R.string.preferences_username), "");
@@ -892,29 +907,31 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
             user_profile = mDataSource.getVpnProfile(uuid);
         }
 
+
+
         String message = null;
-        int icon;
+        if (user_profile != null)
+        {
+            if(mService.getState() == VpnStateService.State.CONNECTING)
+            {
+                String[] serversHostnames = {"vpn.spod.com.br", "us.vpn.spod.com.br", "eu.vpn.spod.com.br", "in.vpn.spod.com.br"};
+                MainActivity mainActivity1 = (MainActivity) getActivity();
+                MenuItem item = Objects.requireNonNull(mainActivity1).actionBarMenu.findItem(R.id.region_spinner);
+                CustomSpinner regionSpinner = (CustomSpinner) item.getActionView();
+                regionSpinner.setSelection(Arrays.asList(serversHostnames).indexOf(user_profile.getGateway()), true); //reset selection to current configured region
+                mDataSource.close();
+                return; //Ignore because we're currently connecting
+            }
 
-        if (user_profile != null) {
-            if(user_profile.getGateway().startsWith("us")) {
-                //Currently connected to USA, switch to Brazil
-                user_profile.setGateway("vpn.spod.com.br");
-                message = getString(R.string.switch_country_brazil);
-                icon = R.drawable.brazil_flag;
+            if(user_profile.getGateway().equals(serverHostname)) {
+                mDataSource.close();
+                return; //Ignore, we're already connected to this region!
             }
-            else {
-                //Currently connected to Brazil, switch to USA
-                user_profile.setGateway("us.vpn.spod.com.br");
-                message = getString(R.string.switch_country_usa);
-                icon = R.drawable.usa_flag;
-            }
+
+            user_profile.setGateway(serverHostname);
+            message = getString(R.string.change_region);
+
             mDataSource.updateVpnProfile(user_profile); //Update profile in database
-
-            //Change button icon (country flag) to reflect new server location
-            MainActivity mainActivity = (MainActivity)getActivity();
-            if (mainActivity != null) {
-                mainActivity.actionBarMenu.getItem(0).setIcon(icon);
-            }
         }
         mDataSource.close();
 
@@ -929,14 +946,14 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
         }
 
         mService.reconnect();
-        final Handler handler = new Handler();
+        //final Handler handler = new Handler();
+        final Handler handler = new Handler(Looper.getMainLooper());
         handler.postDelayed(this::stateChanged, 500);
     }
 
     void updateNotificationToken(boolean shouldEnable)
     {
-        FirebaseInstanceId.getInstance().getInstanceId()
-                .addOnCompleteListener(task -> {
+        FirebaseMessaging.getInstance().getToken().addOnCompleteListener(task -> {
                     if(!task.isSuccessful()) {
                         Log.v(TAG, "updateNotificationToken: Task failed!");
                         return;
@@ -944,7 +961,7 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
 
                     // Get new Instance ID token
                     try {
-                        String token = Objects.requireNonNull(task.getResult()).getToken();
+                        String token = Objects.requireNonNull(task.getResult());
                         MainActivity mainActivity = (MainActivity)getActivity();
                         if(mainActivity != null) mainActivity.firebaseTokenId = token;
 

@@ -2,11 +2,22 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <item
+    <!--<item
         android:id="@+id/connect_country_button"
         android:title="@null"
         app:showAsAction="always"
         android:icon="@drawable/usa_flag"
+        />-->
+
+    <item
+        android:id="@+id/region_spinner"
+        android:title="@null"
+        android:background="@null"
+        android:spinnerMode="dropdown"
+        android:layout_marginStart="10dp"
+        android:layout_marginEnd="40dp"
+        app:showAsAction="ifRoom"
+        app:actionViewClass="br.com.spod.spodvpnwebfilter.CustomSpinner"
         />
 
 </menu>

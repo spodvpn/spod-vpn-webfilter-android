@@ -35,14 +35,14 @@ public class AlertsGenericRecyclerAdapter extends RecyclerView.Adapter<RecyclerV
     private static final int MILLISECONDS_PER_BLOCK = 50;
     private static final long BYTES_PER_BLOCK = 150000L;
 
-    private LayoutInflater mInflater;
+    private final LayoutInflater mInflater;
     private ItemClickListener mClickListener;
 
     private ArrayList<Object> alertsArray;
-    private Context fragmentContext;
+    private final Context fragmentContext;
 
-    private int page;
-    private AlertsFragment.AlertsPagerAdapter pagerAdapter;
+    private final int page;
+    private final AlertsFragment.AlertsPagerAdapter pagerAdapter;
 
     AlertsGenericRecyclerAdapter(Context context, ArrayList<Object> data, int pageNumber, AlertsFragment.AlertsPagerAdapter pagerAdapter) {
         this.mInflater = LayoutInflater.from(context);

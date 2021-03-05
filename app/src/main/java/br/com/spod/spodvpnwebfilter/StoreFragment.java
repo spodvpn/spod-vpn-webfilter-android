@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 import android.provider.Settings;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -29,7 +30,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
-import java.util.Objects;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -47,7 +47,7 @@ public class StoreFragment extends Fragment implements PurchasesUpdatedListener,
     private List<SkuDetails> skuDetailsList;
     private ProgressBar mProgressBar;
 
-    private List<String> skuList = Arrays.asList("spod_vpn_monthly_subscription", "spod_vpn_yearly_subscription");
+    private final List<String> skuList = Arrays.asList("spod_vpn_monthly_subscription", "spod_vpn_yearly_subscription");
 
     private StoreRecyclerViewAdapter adapter;
 
@@ -188,7 +188,7 @@ public class StoreFragment extends Fragment implements PurchasesUpdatedListener,
 
                         this.freeTrialTries++;
                         if (this.freeTrialTries < 5) { //5 is a hardcoded limit!
-                            final Handler handler = new Handler();
+                            final Handler handler = new Handler(Looper.getMainLooper());
                             handler.postDelayed(this::checkCustomFreeTrial, 1000);
                         }
                     }
@@ -347,7 +347,7 @@ public class StoreFragment extends Fragment implements PurchasesUpdatedListener,
         }
         else {
             //Subscribe to FreeTrial (3 days)
-            final Handler handler = new Handler();
+            final Handler handler = new Handler(Looper.getMainLooper());
             handler.postDelayed(() -> returnToMainFragment(true), 600);
         }
     }

@@ -9,7 +9,6 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import java.text.NumberFormat;
-import java.util.Objects;
 
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
@@ -93,23 +92,23 @@ public class AlertsGenericFragment extends Fragment implements AlertsGenericRecy
             titleView.setText(R.string.more_tab_second_section);
             titleView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 23);
             bannerView.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.banner_web_filter_summary));
-            iconView.setImageDrawable(ContextCompat.getDrawable(getContext(), R.drawable.web_filter_icon));
+            iconView.setImageDrawable(ContextCompat.getDrawable(requireContext(), R.drawable.web_filter_icon));
             counterView.setVisibility(View.GONE);
         }
         else if(page == TRACKERS_PAGE) {
             titleView.setText(R.string.alerts_blocked_trackers_title);
             bannerView.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.banner_blocked_trackers));
-            iconView.setImageDrawable(ContextCompat.getDrawable(getContext(), R.drawable.block_trackers_icon));
+            iconView.setImageDrawable(ContextCompat.getDrawable(requireContext(), R.drawable.block_trackers_icon));
         }
         else if(page == THREATS_PAGE) {
             titleView.setText(R.string.alerts_blocked_threats_title);
             bannerView.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.banner_blocked_threats));
-            iconView.setImageDrawable(ContextCompat.getDrawable(getContext(), R.drawable.block_threats_icon_bw));
+            iconView.setImageDrawable(ContextCompat.getDrawable(requireContext(), R.drawable.block_threats_icon_bw));
         } else {
             //SITES_PAGE
             titleView.setText(R.string.alerts_blocked_sites_title);
             bannerView.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.banner_blocked_sites));
-            iconView.setImageDrawable(ContextCompat.getDrawable(getContext(), R.drawable.block_sites_icon));
+            iconView.setImageDrawable(ContextCompat.getDrawable(requireContext(), R.drawable.block_sites_icon));
         }
 
         //Setup swipe refresh layout
