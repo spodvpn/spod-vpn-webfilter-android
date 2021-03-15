@@ -679,8 +679,8 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
                 } else {
                     globalMethods.showAlertWithMessage(getString(R.string.error_from_server, jsonResponse.getString(getString(R.string.request_message))), true);
                 }
-            } catch (JSONException exception) {
-                Log.v(TAG, "updatePreferences: JSONException: " + exception.getLocalizedMessage());
+            } catch (JSONException | IllegalStateException exception) {
+                Log.v(TAG, "updatePreferences: Got exception: " + exception.getLocalizedMessage());
                 globalMethods.showAlertWithMessage(getString(R.string.error_connecting_to_server), true);
             }
         });
@@ -782,8 +782,8 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
                     Log.v(TAG, "requestCredentials: Error from server: " + jsonResponse.getString(getString(R.string.request_message)));
                     globalMethods.showAlertWithMessage(getString(R.string.error_from_server, jsonResponse.getString(getString(R.string.request_message))), true);
                 }
-            } catch (JSONException exception) {
-                Log.v(TAG, "requestCredentials: JSONException: " + exception.getLocalizedMessage());
+            } catch (JSONException | IllegalStateException exception) {
+                Log.v(TAG, "requestCredentials: Got exception: " + exception.getLocalizedMessage());
                 globalMethods.showAlertWithMessage(getString(R.string.error_connecting_to_server), true);
             }
         });

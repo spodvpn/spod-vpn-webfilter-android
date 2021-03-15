@@ -1,6 +1,7 @@
 package br.com.spod.spodvpnwebfilter;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -19,6 +20,8 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 public class AlertsGenericFragment extends Fragment implements AlertsGenericRecyclerAdapter.ItemClickListener, SwipeRefreshLayout.OnRefreshListener
 {
+    private static final String TAG = "AlertsGenericFragment";
+
     private static final int SUMMARY_PAGE = 0;
     private static final int TRACKERS_PAGE = 1;
     private static final int THREATS_PAGE = 2;
@@ -128,7 +131,13 @@ public class AlertsGenericFragment extends Fragment implements AlertsGenericRecy
         return view;
     }
 
-    @Override public void onRefresh() { pagerAdapter.refreshAlerts(getActivity(), mSwipeRefresh); }
+    @Override public void onRefresh() {
+        try {
+            pagerAdapter.refreshAlerts(getActivity(), mSwipeRefresh);
+        } catch (NullPointerException | IllegalStateException exception) {
+            Log.v(TAG, "onRefresh: Got exception: "+exception.getLocalizedMessage());
+        }
+    }
 
     @Override
     public void onItemClick(View view, int position)
