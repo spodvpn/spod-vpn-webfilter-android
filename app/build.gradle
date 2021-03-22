@@ -7,8 +7,8 @@ android {
         applicationId "br.com.spod.spodvpnwebfilter"
         minSdkVersion 24
         targetSdkVersion 30
-        versionCode 73
-        versionName "1.4.1"
+        versionCode 74
+        versionName "1.4.2"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         resConfigs "en", "pt-rBR"
     }

@@ -782,9 +782,11 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
                     Log.v(TAG, "requestCredentials: Error from server: " + jsonResponse.getString(getString(R.string.request_message)));
                     globalMethods.showAlertWithMessage(getString(R.string.error_from_server, jsonResponse.getString(getString(R.string.request_message))), true);
                 }
-            } catch (JSONException | IllegalStateException exception) {
+            } catch (JSONException exception) {
                 Log.v(TAG, "requestCredentials: Got exception: " + exception.getLocalizedMessage());
                 globalMethods.showAlertWithMessage(getString(R.string.error_connecting_to_server), true);
+            } catch (IllegalStateException exception) {
+                Log.v(TAG, "requestCredentials: Got IllegalStateException");
             }
         });
     }
@@ -1105,6 +1107,8 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
             } catch (JSONException exception) {
                 Log.v(TAG, "updateNotificationSettings: JSONException: " + exception.getLocalizedMessage());
                 globalMethods.showAlertWithMessage(getString(R.string.error_connecting_to_server), true);
+            } catch (IllegalStateException exception) {
+                Log.v(TAG, "updateNotificationSettings: Got IllegalStateException");
             }
         });
     }
