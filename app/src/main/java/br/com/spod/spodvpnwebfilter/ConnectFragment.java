@@ -679,9 +679,11 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
                 } else {
                     globalMethods.showAlertWithMessage(getString(R.string.error_from_server, jsonResponse.getString(getString(R.string.request_message))), true);
                 }
-            } catch (JSONException | IllegalStateException exception) {
+            } catch (JSONException exception) {
                 Log.v(TAG, "updatePreferences: Got exception: " + exception.getLocalizedMessage());
                 globalMethods.showAlertWithMessage(getString(R.string.error_connecting_to_server), true);
+            } catch (IllegalStateException exception) {
+                Log.v(TAG, "updatePreferences: Got IllegalStateException: " + exception.getLocalizedMessage());
             }
         });
     }
