@@ -5,6 +5,8 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -39,6 +41,7 @@ public class MoreFragment extends Fragment implements MoreRecyclerViewAdapter.It
     private static final int COPYRIGHT_ROW = 20;
     private static final int SUB_INFO_ROW = 3;
 
+    private boolean firstRequest = true;
     private GlobalMethods globalMethods;
 
     private SwipeRefreshLayout mSwipeRefresh;
@@ -195,7 +198,7 @@ public class MoreFragment extends Fragment implements MoreRecyclerViewAdapter.It
             postData.put("Regiao", getString(R.string.region)); //Region-specific
             Long last_reset_timestamp = requireActivity().getSharedPreferences(requireActivity().getString(R.string.preferences_key), Context.MODE_PRIVATE).getLong(getString(R.string.preferences_reset_download_upload), 0L);
             postData.put("ResetDownloadUpload", last_reset_timestamp); //Reset download/upload option
-
+            postData.put("firstRequest", firstRequest);
         } catch (JSONException exception) {
             Log.v(TAG, "JSONException while trying to load more info: " + exception.getLocalizedMessage());
             exception.printStackTrace();
@@ -227,6 +230,12 @@ public class MoreFragment extends Fragment implements MoreRecyclerViewAdapter.It
                     Date date = new Date(jsonResponse.optLong("FirewallUpdateDate", 0L) * 1000L);
                     DateFormat format = new SimpleDateFormat("MMM d, HH:mm", Locale.getDefault());
                     adapter.firewallReleaseDate = format.format(date);
+
+                    if(firstRequest) {
+                        firstRequest = false;
+                        final Handler handler = new Handler(Looper.getMainLooper());
+                        handler.postDelayed(this::refreshMoreInfo, 500);
+                    }
 
                 } else {
                     globalMethods.showAlertWithMessage(getString(R.string.error_from_server, jsonResponse.getString(getString(R.string.request_message))), true);

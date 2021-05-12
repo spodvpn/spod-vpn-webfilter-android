@@ -99,8 +99,11 @@ class GlobalMethods
                 //Add credentials if we have them (not always mandatory)
                 if(profile != null && profile.getUsername() != null && profile.getPassword() != null) {
                     try {
-                        postData.put("Usuario", profile.getUsername());
-                        postData.put("Senha", profile.getPassword());
+                        //if(postData.has("firstRequest") && !postData.getBoolean("firstRequest")) {
+                        if(! postData.has("firstRequest") || !postData.getBoolean("firstRequest")) {
+                            postData.put("Usuario", profile.getUsername());
+                            postData.put("Senha", profile.getPassword());
+                        }
                     } catch (JSONException exception) {
                         Log.v(TAG, "JSONException while trying create POST params: " + exception.getLocalizedMessage());
                         //exception.printStackTrace();
