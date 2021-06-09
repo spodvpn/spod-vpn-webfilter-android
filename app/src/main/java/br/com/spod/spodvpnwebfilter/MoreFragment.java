@@ -199,9 +199,8 @@ public class MoreFragment extends Fragment implements MoreRecyclerViewAdapter.It
             Long last_reset_timestamp = requireActivity().getSharedPreferences(requireActivity().getString(R.string.preferences_key), Context.MODE_PRIVATE).getLong(getString(R.string.preferences_reset_download_upload), 0L);
             postData.put("ResetDownloadUpload", last_reset_timestamp); //Reset download/upload option
             postData.put("firstRequest", firstRequest);
-        } catch (JSONException exception) {
-            Log.v(TAG, "JSONException while trying to load more info: " + exception.getLocalizedMessage());
-            exception.printStackTrace();
+        } catch (JSONException | IllegalStateException exception) {
+            Log.v(TAG, "Exception while trying to load more info: " + exception.getLocalizedMessage());
         }
 
         //Actually make the request
