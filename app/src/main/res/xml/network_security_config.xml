@@ -4,6 +4,7 @@
         <domain includeSubdomains="true">spod.com.br</domain>
         <pin-set>
             <pin digest="SHA-256">ocgMy6r0cn2f2xbWdqkzsjJw4AO/YnBFqTfNu21HXj8=</pin>
+            <pin digest="SHA-256">9fO54UAO2XHyvXXhpvFofn5034a8r++DMtJxbVPioT8=</pin>
         </pin-set>
     </domain-config>
 </network-security-config>

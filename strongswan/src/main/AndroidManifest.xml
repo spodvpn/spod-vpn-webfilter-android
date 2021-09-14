@@ -34,7 +34,8 @@
         <activity
             android:name=".ui.MainActivity"
             android:label="@string/main_activity_name"
-            android:launchMode="singleTop" >
+            android:launchMode="singleTop"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
             </intent-filter>
@@ -44,7 +45,8 @@
             android:theme="@style/TransparentActivity"
             android:taskAffinity=""
             android:excludeFromRecents="true"
-            android:launchMode="singleTask" >
+            android:launchMode="singleTask"
+            android:exported="true">
             <intent-filter>
                 <action android:name="org.strongswan.android.action.START_PROFILE" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -80,7 +82,8 @@
         <activity
             android:name=".ui.VpnProfileSelectActivity"
             android:label="@string/strongswan_shortcut"
-            android:icon="@mipmap/ic_shortcut" >
+            android:icon="@mipmap/ic_shortcut"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.CREATE_SHORTCUT" />
                 <category android:name="android.intent.category.DEFAULT" />
