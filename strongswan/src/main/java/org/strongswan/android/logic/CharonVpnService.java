@@ -487,7 +487,7 @@ public class CharonVpnService extends VpnService implements Runnable, VpnStateSe
 				intent.setAction(VpnProfileControlActivity.START_PROFILE);
 				intent.putExtra(VpnProfileControlActivity.EXTRA_VPN_PROFILE_ID, profile.getUUID().toString());
 				PendingIntent pending = PendingIntent.getActivity(getApplicationContext(), 0, intent,
-																  PendingIntent.FLAG_UPDATE_CURRENT);
+																  PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 				builder.addAction(R.drawable.ic_notification_connecting, getString(R.string.retry), pending);
 				add_action = true;
 			}
@@ -525,7 +525,7 @@ public class CharonVpnService extends VpnService implements Runnable, VpnStateSe
 				Intent intent = getPackageManager().getLaunchIntentForPackage("br.com.spod.spodvpnwebfilter");
 				intent.setAction(VpnProfileControlActivity.DISCONNECT);
 				PendingIntent pending = PendingIntent.getActivity(getApplicationContext(), 0, intent,
-																  PendingIntent.FLAG_UPDATE_CURRENT);
+																  PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 				builder.addAction(R.drawable.ic_notification_disconnect, getString(R.string.disconnect), pending);
 			}
 			if (error == ErrorState.NO_ERROR)
@@ -539,7 +539,7 @@ public class CharonVpnService extends VpnService implements Runnable, VpnStateSe
 		//Intent intent = new Intent(getApplicationContext(), MainActivity.class);
 		Intent intent = getPackageManager().getLaunchIntentForPackage("br.com.spod.spodvpnwebfilter");
 		PendingIntent pending = PendingIntent.getActivity(getApplicationContext(), 0, intent,
-														  PendingIntent.FLAG_UPDATE_CURRENT);
+														  PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 		builder.setContentIntent(pending);
 		return builder.build();
 	}
@@ -851,7 +851,7 @@ public class CharonVpnService extends VpnService implements Runnable, VpnStateSe
 			//Intent intent = new Intent(context, MainActivity.class);
 			Intent intent = getPackageManager().getLaunchIntentForPackage("br.com.spod.spodvpnwebfilter");
 			PendingIntent pending = PendingIntent.getActivity(context, 0, intent,
-															  PendingIntent.FLAG_UPDATE_CURRENT);
+															  PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 			builder.setConfigureIntent(pending);
 			return builder;
 		}
