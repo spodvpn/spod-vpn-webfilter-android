@@ -30,7 +30,9 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.android.billingclient.api.BillingClient;
+import com.android.billingclient.api.BillingResult;
 import com.android.billingclient.api.Purchase;
+import com.android.billingclient.api.PurchasesResponseListener;
 import com.google.firebase.installations.FirebaseInstallations;
 import com.google.firebase.messaging.FirebaseMessaging;
 
@@ -53,6 +55,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
+import androidx.annotation.NonNull;
 import androidx.core.content.res.ResourcesCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
@@ -419,29 +422,35 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
         }
         else if(profile == null && mainActivity != null) {
             //No VPN profile found: will setup
-            Purchase purchase = null;
 
-            Purchase.PurchasesResult purchasesResult = mainActivity.billingClient.queryPurchases(BillingClient.SkuType.SUBS);
-            if(purchasesResult.getPurchasesList() == null) {
-                if(this.globalMethods == null) this.globalMethods = new GlobalMethods(getActivity());
-                globalMethods.showAlertWithMessage(getString(R.string.billing_not_available), true);
-                return;
-            }
-            for (int i = 0; i<purchasesResult.getPurchasesList().size(); i++) {
-                if(purchasesResult.getPurchasesList().get(i).getPurchaseState() == Purchase.PurchaseState.PURCHASED) {
-                    purchase = purchasesResult.getPurchasesList().get(i); //Found correct purchase (receipt), send info for server validation
+            //Purchase.PurchasesResult purchasesResult = mainActivity.billingClient.queryPurchases(BillingClient.SkuType.SUBS);
+            mainActivity.billingClient.queryPurchasesAsync(BillingClient.SkuType.SUBS, new PurchasesResponseListener() {
+                @Override
+                public void onQueryPurchasesResponse(@NonNull BillingResult billingResult, @NonNull List<Purchase> list) {
+                    if(list.size() == 0) {
+                        globalMethods.showAlertWithMessage(getString(R.string.billing_not_available), true);
+                        return;
+                    }
+
+                    Purchase purchase = null;
+                    for (int i = 0; i<list.size(); i++) {
+                        if(list.get(i).getPurchaseState() == Purchase.PurchaseState.PURCHASED) {
+                            purchase = list.get(i); //Found correct purchase (receipt), send info for server validation
+                        }
+                    }
+
+                    if(purchase == null && ! mainActivity.subscribeToCustomFreeTrial) {
+                        //User has not purchased yet, send to store
+                        mService.disconnect();
+                        redirectToStore();
+                        return;
+
+                    }
+
+                    //Found purchase, asking credentials from server
+                    requestCredentials(purchase);
                 }
-            }
-
-            if(purchase == null && ! mainActivity.subscribeToCustomFreeTrial) {
-                //User has not purchased yet, send to store
-                mService.disconnect();
-                redirectToStore();
-                return;
-            }
-
-            //Found purchase, asking credentials from server
-            requestCredentials(purchase);
+            });
         }
         else if(mService.getState() == VpnStateService.State.DISABLED) {
             //Currently disconnected, will connect
@@ -797,9 +806,6 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
     {
         if(globalMethods == null) this.globalMethods = new GlobalMethods(getActivity());
 
-        //Create POST parameters JSONObject
-        JSONObject postData = new JSONObject();
-        try {
             MainActivity mainActivity = (MainActivity)getActivity();
             if (mainActivity != null && mainActivity.subscribeToCustomFreeTrial) {
                 requestCredentials(null);
@@ -811,56 +817,69 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
             }
 
             Purchase.PurchasesResult purchasesResult;
-            if (mainActivity != null) {
-                purchasesResult = mainActivity.billingClient.queryPurchases(BillingClient.SkuType.SUBS);
-                if(purchasesResult.getPurchasesList() != null) {
-                    for (int i = 0; i < purchasesResult.getPurchasesList().size(); i++) {
-                        if (purchasesResult.getPurchasesList().get(i).getPurchaseState() == Purchase.PurchaseState.PURCHASED) {
-                            //Found correct purchase (receipt), send info for server validation
-                            Purchase purchase = purchasesResult.getPurchasesList().get(i);
-                            postData.put("Recibo", purchase.getOriginalJson());
-                        }
+            if (mainActivity != null)
+            {
+                mainActivity.billingClient.queryPurchasesAsync(BillingClient.SkuType.SUBS, new PurchasesResponseListener() {
+                    @Override
+                    public void onQueryPurchasesResponse(@NonNull BillingResult billingResult, @NonNull List<Purchase> list) {
+                        //Create POST parameters JSONObject
+                        JSONObject postData = new JSONObject();
+                            if (list.size() > 0) {
+                                for (int i = 0; i < list.size(); i++) {
+                                    if (list.get(i).getPurchaseState() == Purchase.PurchaseState.PURCHASED) {
+                                        //Found correct purchase (receipt), send info for server validation
+                                        Purchase purchase = list.get(i);
+                                        try {
+                                            postData.put("Recibo", purchase.getOriginalJson());
+                                        } catch (JSONException e) {
+                                            e.printStackTrace();
+                                        }
+                                    }
+                                }
+                            }
+
+                            if (!postData.has("Recibo")) {
+                                try {
+                                    postData.put("Recibo", "FreeTrial3dias");
+                                } catch (JSONException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+
+                            //Actually make the request
+                            globalMethods.APIRequest("https://spod.com.br/services/vpn/validarRecibo4", postData, response -> {
+                                //Handle response here
+                                JSONObject jsonResponse;
+                                try {
+                                    jsonResponse = new JSONObject(response);
+
+                                    if (jsonResponse.getString("Status").equals(getString(R.string.request_status_success))) {
+                                        Log.v(TAG, "verifyReceipt: Success validating receipt!");
+                                        //Connect to the VPN if not already connected
+                                        if (mService.getState() == VpnStateService.State.DISABLED)
+                                            statusButtonClicked(statusButton);
+
+                                    } else {
+                                        //silent fail
+                                        if (jsonResponse.getString("Status").equals("Erro")) {
+                                            Log.v(TAG, "verifyReceipt: Detected Error from server...");
+                                            if (jsonResponse.getString("Mensagem").startsWith("Assinatura")) {
+                                                Log.v(TAG, "verifyReceipt: Error on subscription (invalid/expired), disconnect and send to store!");
+                                                mService.disconnect();
+                                                redirectToStore();
+                                            }
+                                        }
+                                    }
+                                } catch (JSONException exception) {
+                                    Log.v(TAG, "verifyReceipt: JSONException: " + exception.getLocalizedMessage());
+                                    exception.printStackTrace();
+                                } catch (IllegalStateException exception) {
+                                    Log.v(TAG, "Got an IllegalStateException, probably running in the background...");
+                                }
+                            });
                     }
-                }
+                });
             }
-            if(! postData.has("Recibo")) postData.put("Recibo", "FreeTrial3dias");
-        }
-        catch (JSONException exception) {
-            Log.v(TAG, "verifyReceipt: JSONException: " + exception.getLocalizedMessage());
-            exception.printStackTrace();
-        }
-
-        //Actually make the request
-        globalMethods.APIRequest("https://spod.com.br/services/vpn/validarRecibo4", postData, response -> {
-            //Handle response here
-            JSONObject jsonResponse;
-            try {
-                jsonResponse = new JSONObject(response);
-
-                if (jsonResponse.getString("Status").equals(getString(R.string.request_status_success))) {
-                    Log.v(TAG, "verifyReceipt: Success validating receipt!");
-                    //Connect to the VPN if not already connected
-                    if(mService.getState() == VpnStateService.State.DISABLED)
-                        statusButtonClicked(statusButton);
-
-                } else {
-                    //silent fail
-                    if(jsonResponse.getString("Status").equals("Erro")) {
-                        Log.v(TAG, "verifyReceipt: Detected Error from server...");
-                        if (jsonResponse.getString("Mensagem").startsWith("Assinatura")) {
-                            Log.v(TAG, "verifyReceipt: Error on subscription (invalid/expired), disconnect and send to store!");
-                            mService.disconnect();
-                            redirectToStore();
-                        }
-                    }
-                }
-            } catch (JSONException exception) {
-                Log.v(TAG, "verifyReceipt: JSONException: " + exception.getLocalizedMessage());
-                exception.printStackTrace();
-            } catch (IllegalStateException exception) {
-                Log.v(TAG, "Got an IllegalStateException, probably running in the background...");
-            }
-        });
     }
 
     private void redirectToStore()

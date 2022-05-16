@@ -19,6 +19,7 @@ import com.android.billingclient.api.PurchasesUpdatedListener;
 import com.android.billingclient.api.SkuDetailsParams;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.android.material.navigation.NavigationBarView;
 
 import org.strongswan.android.data.VpnProfile;
 import org.strongswan.android.data.VpnProfileDataSource;
@@ -52,8 +53,8 @@ public class MainActivity extends AppCompatActivity implements PurchasesUpdatedL
 
     private CustomSpinner regionSpinner;
 
-    private final BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
-            = new BottomNavigationView.OnNavigationItemSelectedListener() {
+    private final NavigationBarView.OnItemSelectedListener mOnNavigationItemSelectedListener
+            = new NavigationBarView.OnItemSelectedListener() {
         @Override
         public boolean onNavigationItemSelected(@NonNull MenuItem item)
         {
@@ -87,7 +88,7 @@ public class MainActivity extends AppCompatActivity implements PurchasesUpdatedL
         setupBillingClient();
 
         bottomNavigation = findViewById(R.id.navigation);
-        bottomNavigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
+        bottomNavigation.setOnItemSelectedListener(mOnNavigationItemSelectedListener);
 
         //Open default main fragment
         openFragment(ConnectFragment.newInstance(), false, "ConnectFragment");

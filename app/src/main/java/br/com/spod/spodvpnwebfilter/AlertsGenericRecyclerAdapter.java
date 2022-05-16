@@ -19,7 +19,7 @@ import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentActivity;
 import androidx.recyclerview.widget.RecyclerView;
-import androidx.viewpager.widget.ViewPager;
+import androidx.viewpager2.widget.ViewPager2;
 
 public class AlertsGenericRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
 {
@@ -280,7 +280,7 @@ public class AlertsGenericRecyclerAdapter extends RecyclerView.Adapter<RecyclerV
             try {
                 FragmentActivity context = (FragmentActivity) fragmentContext;
                 AlertsFragment alertsFragment = (AlertsFragment) context.getSupportFragmentManager().findFragmentByTag("AlertsFragment");
-                ViewPager viewPager = Objects.requireNonNull(alertsFragment).requireView().findViewById(R.id.alerts_fragment_view_pager);
+                ViewPager2 viewPager = Objects.requireNonNull(alertsFragment).requireView().findViewById(R.id.alerts_fragment_view_pager);
                 viewPager.setCurrentItem(pageNumber);
             } catch (Exception exception) {
                 exception.printStackTrace();

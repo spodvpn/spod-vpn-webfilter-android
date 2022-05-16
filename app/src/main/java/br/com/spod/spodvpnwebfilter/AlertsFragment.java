@@ -25,10 +25,11 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.fragment.app.FragmentManager;
-import androidx.fragment.app.FragmentPagerAdapter;
 import androidx.fragment.app.FragmentTransaction;
+import androidx.lifecycle.Lifecycle;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
-import androidx.viewpager.widget.ViewPager;
+import androidx.viewpager2.adapter.FragmentStateAdapter;
+import androidx.viewpager2.widget.ViewPager2;
 
 public class AlertsFragment extends Fragment
 {
@@ -37,7 +38,7 @@ public class AlertsFragment extends Fragment
     // Required empty public constructor
     public AlertsFragment() {}
 
-    private FragmentPagerAdapter adapterViewPager;
+    private FragmentStateAdapter adapterViewPager;
     //private GlobalMethods globalMethods;
 
     public static AlertsFragment newInstance() {
@@ -53,19 +54,19 @@ public class AlertsFragment extends Fragment
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_alerts, container, false);
 
-        ViewPager viewPager = view.findViewById(R.id.alerts_fragment_view_pager);
+        ViewPager2 viewPager = view.findViewById(R.id.alerts_fragment_view_pager);
         viewPager.setClipToPadding(false);
-        viewPager.setPageMargin(12);
+        //viewPager.setPageMargin(12);
 
         //Check if it's already initialized
         if(adapterViewPager != null) {
             //Already initialized: Re-init
             adapterViewPager = null;
-            adapterViewPager = new AlertsPagerAdapter(getChildFragmentManager());
+            adapterViewPager = new AlertsPagerAdapter(getChildFragmentManager(), getLifecycle());
             viewPager.setAdapter(null);
         } else {
             //Create from scratch
-            adapterViewPager = new AlertsPagerAdapter(getChildFragmentManager());
+            adapterViewPager = new AlertsPagerAdapter(getChildFragmentManager(), getLifecycle());
         }
         viewPager.setAdapter(adapterViewPager);
         viewPager.setOffscreenPageLimit(3);
@@ -76,7 +77,7 @@ public class AlertsFragment extends Fragment
         return view;
     }
 
-    public static class AlertsPagerAdapter extends FragmentPagerAdapter
+    public static class AlertsPagerAdapter extends FragmentStateAdapter
     {
         private static final int NUM_ITEMS = 4;
         private GlobalMethods globalMethods;
@@ -85,16 +86,16 @@ public class AlertsFragment extends Fragment
         //Array to hold all 4 adapters (Summary, Trackers, Threats and Sites)
         ArrayList<AlertsGenericRecyclerAdapter> adapters = new ArrayList<>();
 
-        AlertsPagerAdapter(FragmentManager fragmentManager) {
-            super(fragmentManager, FragmentPagerAdapter.BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT);
+        AlertsPagerAdapter(@NonNull FragmentManager fragmentManager, @NonNull Lifecycle lifecycle) {
+            super(fragmentManager, lifecycle);
             adapters.clear();
         }
 
         @Override
-        public int getCount() { return NUM_ITEMS; }
+        public int getItemCount() { return NUM_ITEMS; }
 
         @NonNull @Override
-        public Fragment getItem(int position)
+        public Fragment /*/getItem*/createFragment(int position)
         {
             switch (position) {
                 default:
@@ -113,10 +114,10 @@ public class AlertsFragment extends Fragment
             }
         }
 
-        @Override
+        /*@Override
         public CharSequence getPageTitle(int position) {
             return "Page " + position;
-        }
+        }*/
 
         void showDetail(FragmentActivity context, String blockType, String hostname, Long timestamp)
         {

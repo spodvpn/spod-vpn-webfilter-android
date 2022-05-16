@@ -18,6 +18,7 @@ import com.android.billingclient.api.BillingClientStateListener;
 import com.android.billingclient.api.BillingFlowParams;
 import com.android.billingclient.api.BillingResult;
 import com.android.billingclient.api.Purchase;
+import com.android.billingclient.api.PurchasesResponseListener;
 import com.android.billingclient.api.PurchasesUpdatedListener;
 import com.android.billingclient.api.SkuDetails;
 import com.android.billingclient.api.SkuDetailsParams;
@@ -101,10 +102,15 @@ public class StoreFragment extends Fragment implements PurchasesUpdatedListener,
     {
         billingClient = BillingClient.newBuilder(requireActivity()).setListener(this).enablePendingPurchases().build();
 
+        Log.v(TAG, "setupBillingClient: Begin");
         billingClient.startConnection(new BillingClientStateListener() {
             @Override
             public void onBillingSetupFinished(@NonNull BillingResult result) {
-                if(mProgressBar != null) mProgressBar.setVisibility(View.GONE);
+                //Log.v(TAG, "setupBillingClient: onBillingSetupFinished with ResponseCode: "+result.getResponseCode());
+                if(mProgressBar != null) {
+                    final Handler handler = new Handler(Looper.getMainLooper());
+                    handler.postDelayed(() -> mProgressBar.setVisibility(View.GONE), 500);
+                }
                 if (result.getResponseCode() == BillingClient.BillingResponseCode.OK) {
                     Log.v(TAG, "BILLING | startConnection | RESULT OK");
 
@@ -147,55 +153,69 @@ public class StoreFragment extends Fragment implements PurchasesUpdatedListener,
 
     private void checkCustomFreeTrial()
     {
-        boolean hasProfile = false;
-        boolean hasReceipt = false;
-
         try {
             MainActivity mainActivity = (MainActivity) getActivity();
-            Purchase.PurchasesResult purchasesResult;
             if (mainActivity != null) {
                 //Check receipt
-                purchasesResult = mainActivity.billingClient.queryPurchases(BillingClient.SkuType.SUBS);
-                if (purchasesResult.getPurchasesList() != null) {
-                    for (int i = 0; i < purchasesResult.getPurchasesList().size(); i++) {
-                        if (purchasesResult.getPurchasesList().get(i).getPurchaseState() == Purchase.PurchaseState.PURCHASED)
-                            hasReceipt = true;
+                Log.v(TAG, "checkCustomFreeTrial: Calling queryPurchasesAsync()");
+                mainActivity.billingClient.queryPurchasesAsync(BillingClient.SkuType.SUBS, new PurchasesResponseListener() {
+                            @Override
+                            public void onQueryPurchasesResponse(@NonNull BillingResult billingResult, @NonNull List<Purchase> list) {
+                                boolean hasProfile = false;
+                                boolean hasReceipt = false;
+
+                                for (int i = 0; i < list.size(); i++) {
+                                    if (list.get(i).getPurchaseState() == Purchase.PurchaseState.PURCHASED)
+                                        hasReceipt = true;
+                                }
+
+                                //Check profile
+                                VpnProfileDataSource mDataSource = new VpnProfileDataSource(mainActivity);
+                                SharedPreferences sharedPreferences = mainActivity.getSharedPreferences(getString(R.string.preferences_key), Context.MODE_PRIVATE);
+                                String username = sharedPreferences.getString(getString(R.string.preferences_username), "");
+                                mDataSource.open();
+                                if (username.length() > 0) hasProfile = true;
+                                mDataSource.close();
+
+                                if (!hasProfile && !hasReceipt) {
+                                    prepareForFreeTrial();
+                                }
+                            }
+                        });
+            }
+        } catch (NullPointerException exception) {
+            Log.v(TAG, "Got a NullPointerException at checkCustomFreeTrial, probably running in the background...");
+        }
+    }
+
+    private void prepareForFreeTrial() {
+        try {
+            MainActivity mainActivity = (MainActivity) getActivity();
+            //Purchase.PurchasesResult purchasesResult;
+            if (mainActivity != null) {
+                //Eligible for custom free trial, get firebaseTokenId
+                if (mainActivity.firebaseTokenId.length() > 0) {
+                    //Already have firebaseTokenId, get SSAID and send to SPOD
+                    if (mProgressBar != null) mProgressBar.setVisibility(View.VISIBLE);
+                    getCustomFreeTrial();
+                } else {
+                    //No firebaseTokenId yet!
+                    if (this.freeTrialTries == 0) {
+                        //First time, call connectFragment.updateNotificationToken(false) and try again in 1 second ?
+                        ConnectFragment connectFragment = (ConnectFragment) requireActivity().getSupportFragmentManager().findFragmentByTag("ConnectFragment");
+                        if (connectFragment != null)
+                            connectFragment.updateNotificationToken(false);
                     }
-                }
 
-                //Check profile
-                VpnProfileDataSource mDataSource = new VpnProfileDataSource(mainActivity);
-                SharedPreferences sharedPreferences = mainActivity.getSharedPreferences(getString(R.string.preferences_key), Context.MODE_PRIVATE);
-                String username = sharedPreferences.getString(getString(R.string.preferences_username), "");
-                mDataSource.open();
-                if (username.length() > 0) hasProfile = true;
-                mDataSource.close();
-
-                if (!hasProfile && !hasReceipt) {
-                    //Eligible for custom free trial, get firebaseTokenId
-                    if (mainActivity.firebaseTokenId.length() > 0) {
-                        //Already have firebaseTokenId, get SSAID and send to SPOD
-                        if (mProgressBar != null) mProgressBar.setVisibility(View.VISIBLE);
-                        getCustomFreeTrial();
-                    } else {
-                        //No firebaseTokenId yet!
-                        if (this.freeTrialTries == 0) {
-                            //First time, call connectFragment.updateNotificationToken(false) and try again in 1 second ?
-                            ConnectFragment connectFragment = (ConnectFragment) requireActivity().getSupportFragmentManager().findFragmentByTag("ConnectFragment");
-                            if (connectFragment != null)
-                                connectFragment.updateNotificationToken(false);
-                        }
-
-                        this.freeTrialTries++;
-                        if (this.freeTrialTries < 5) { //5 is a hardcoded limit!
-                            final Handler handler = new Handler(Looper.getMainLooper());
-                            handler.postDelayed(this::checkCustomFreeTrial, 1000);
-                        }
+                    this.freeTrialTries++;
+                    if (this.freeTrialTries < 5) { //5 is a hardcoded limit!
+                        final Handler handler = new Handler(Looper.getMainLooper());
+                        handler.postDelayed(this::checkCustomFreeTrial, 1000);
                     }
                 }
             }
         } catch (NullPointerException exception) {
-            Log.v(TAG, "Got a NullPointerException at checkCustomFreeTrial, probably running in the background...");
+            Log.v(TAG, "Got a NullPointerException at prepareForFreeTrial, probably running in the background...");
         }
     }
 
@@ -297,6 +317,7 @@ public class StoreFragment extends Fragment implements PurchasesUpdatedListener,
     @Override
     public void onItemClick(View view, int position)
     {
+        Log.v(TAG, "onItemClick: "+position);
         Object productData = adapter.getItem(position);
         selected_row = position;
 

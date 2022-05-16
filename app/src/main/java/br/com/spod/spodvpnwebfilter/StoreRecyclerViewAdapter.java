@@ -1,6 +1,8 @@
 package br.com.spod.spodvpnwebfilter;
 
 import android.content.Context;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -95,9 +97,12 @@ public class StoreRecyclerViewAdapter extends RecyclerView.Adapter<RecyclerView.
     }
 
     //Method for reloading list data
-    void reloadData(List<SkuDetails> data, List<String> freeTrialInfo) {
+    void reloadData(List<SkuDetails> data, List<String> freeTrialInfo)
+    {
         mData = data;
         mFreeTrialData = freeTrialInfo;
-        notifyDataSetChanged();
+
+        final Handler handler = new Handler(Looper.getMainLooper());
+        handler.postDelayed(this::notifyDataSetChanged, 500);
     }
 }
