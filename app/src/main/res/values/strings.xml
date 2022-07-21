@@ -69,8 +69,8 @@
     <string name="custom_list_text_hint">Manually add hostname</string>
     <string name="custom_list_button_description">Add hostname button</string>
     <string name="custom_list_recycler_view_button_hint">Remove hostname button</string>
-    <string name="custom_list_unblock_description">Hostnames added to this list will no longer be blocked by the Web Filter on this device.</string>
-    <string name="custom_list_block_description">Hostnames added to this list will be blocked by the Web Filter for this specific device only.</string>
+    <string name="custom_list_unblock_description">Hostnames added to this list will no longer be blocked by the Web Filter on any device using your current subscription.</string>
+    <string name="custom_list_block_description">Hostnames added to this list will be blocked by the Web Filter for any device using your current subscription.</string>
 
     <string name="request_status_success" translatable="false">Sucesso</string>
     <string name="request_message">Message</string>

@@ -14,6 +14,7 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 import androidx.fragment.app.Fragment;
@@ -144,7 +145,7 @@ public class AlertDetailFragment extends Fragment implements AlertDetailRecycler
         }
 
         //Actually make the request
-        globalMethods.APIRequest("https://spod.com.br/services/vpn/atualizarListas", postData, response -> {
+        globalMethods.APIRequest("https://spod.com.br/services/vpn/atualizarListas2", postData, response -> {
             //Handle response here
             mProgressBar.setVisibility(View.GONE); //stop progress bar
             recyclerView.setVisibility(View.VISIBLE);
@@ -161,22 +162,15 @@ public class AlertDetailFragment extends Fragment implements AlertDetailRecycler
                     if(blockType.equals(getString(R.string.site)))
                     {
                         //Remove hostname from 'Blocked Sites' (where it was initially added)
-                        Set<String> listSet = preferences.getStringSet(list, null);
-                        if (listSet != null) {
-                            listSet.remove(blockedHostname);
-                        }
+                        Set<String> listSet = new HashSet<>(Objects.requireNonNull(preferences.getStringSet(list, null)));
+                        listSet.remove(blockedHostname);
                         preferencesEditor.putStringSet(list, listSet);
                         preferencesEditor.apply();
                     }
                     else
                     {
                         //Add hostname to local 'Blocked Sites' list (SharedPreferences)
-                        Set<String> listSet = preferences.getStringSet(list, null);
-                        if(listSet == null) {
-                            //Currently empty list, create a new one
-                            listSet = new HashSet<>();
-                        }
-
+                        Set<String> listSet = new HashSet<>(Objects.requireNonNull(preferences.getStringSet(list, null)));
                         listSet.add(blockedHostname);
                         preferencesEditor.putStringSet(list, listSet);
                         preferencesEditor.apply();

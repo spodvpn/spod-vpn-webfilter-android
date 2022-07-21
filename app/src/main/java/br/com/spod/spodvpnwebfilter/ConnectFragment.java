@@ -648,7 +648,7 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
         }
 
         //Actually make the request
-        globalMethods.APIRequest("https://spod.com.br/services/vpn/atualizarPreferencias", postData, response -> {
+        globalMethods.APIRequest("https://spod.com.br/services/vpn/atualizarPreferencias2", postData, response -> {
             //Hide progress bar and show buttons again!
             try {
                 mProgressBar.setVisibility(View.GONE);

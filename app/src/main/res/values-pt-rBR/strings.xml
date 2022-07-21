@@ -38,12 +38,12 @@
     <string name="connecting.">Conectando.</string>
     <string name="connecting..">Conectando..</string>
     <string name="connecting...">Conectando…</string>
-    <string name="custom_list_block_description">Hostnames adicionados neste lista serão bloqueados pelo Filtro Web para este aparelho.</string>
+    <string name="custom_list_block_description">Hostnames adicionados nesta lista serão bloqueados pelo Filtro Web em qualquer aparelho que utilize a mesma assinatura.</string>
     <string name="custom_list_button_description">Botão adicionar hostname</string>
     <string name="custom_list_empty">Nenhum hostname</string>
     <string name="custom_list_recycler_view_button_hint">Botão remover hostname</string>
     <string name="custom_list_text_hint">Adicionar hostname manualmente</string>
-    <string name="custom_list_unblock_description">Hostnames adicionados nesta lista não serão mais bloqueados pelo Filtro Web neste aparelho.</string>
+    <string name="custom_list_unblock_description">Hostnames adicionados nesta lista não serão mais bloqueados pelo Filtro Web em qualquer aparelho que utilize a mesma assinatura.</string>
     <string name="default_vpn_gateway">vpn.spod.com.br</string>
     <string name="disconnect">Desconectar</string>
     <string name="disconnected">Desconectado</string>

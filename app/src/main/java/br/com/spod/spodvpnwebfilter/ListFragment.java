@@ -17,7 +17,9 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 import androidx.fragment.app.Fragment;
@@ -204,7 +206,7 @@ public class ListFragment extends Fragment implements ListRecyclerViewAdapter.It
         }
 
         //Actually make the request
-        globalMethods.APIRequest("https://spod.com.br/services/vpn/atualizarListas", postData, response -> {
+        globalMethods.APIRequest("https://spod.com.br/services/vpn/atualizarListas2", postData, response -> {
             //Handle response here
             JSONObject jsonResponse;
             try {
@@ -215,16 +217,21 @@ public class ListFragment extends Fragment implements ListRecyclerViewAdapter.It
                     //Add hostname to local list (SharedPreferences)
                     String list = (listType == 0 ? getString(R.string.preferences_whitelist_key) : getString(R.string.preferences_blacklist_key));
                     SharedPreferences preferences = requireContext().getSharedPreferences(getString(R.string.preferences_key), Context.MODE_PRIVATE);
-                    Set<String> listSet = preferences.getStringSet(list, null);
-                    if(listSet == null) {
+                    //Set<String> listSet = preferences.getStringSet(list, null);
+                    Set<String> listSet = new HashSet<>(Objects.requireNonNull(preferences.getStringSet(list, null)));
+
+                    //ToDo: TMP DEBUG: TESTAR!
+                    /*if(listSet == null) {
                         //Currently empty list, create a new one
                         listSet = new HashSet<>();
-                    }
+                    }*/
 
                     listSet.add(addHostnameText.getText().toString());
                     SharedPreferences.Editor preferencesEditor = preferences.edit();
                     preferencesEditor.putStringSet(list, listSet);
                     preferencesEditor.apply();
+
+                    Log.v(TAG, "addHostname: Preferencias modificadas, listSet: "+Arrays.toString(Objects.requireNonNull(preferences.getStringSet(list, null)).toArray()));
 
                     addHostnameText.setText(""); //clear input text field
                     adapter.reloadData(listSet);
@@ -261,7 +268,7 @@ public class ListFragment extends Fragment implements ListRecyclerViewAdapter.It
         }
 
         //Actually make the request
-        globalMethods.APIRequest("https://spod.com.br/services/vpn/atualizarListas", postData, response -> {
+        globalMethods.APIRequest("https://spod.com.br/services/vpn/atualizarListas2", postData, response -> {
             //Handle response here
             JSONObject jsonResponse;
             try {
@@ -273,10 +280,8 @@ public class ListFragment extends Fragment implements ListRecyclerViewAdapter.It
                     //Remove hostname from local list (SharedPreferences)
                     String list = (listType == 0 ? getString(R.string.preferences_whitelist_key) : getString(R.string.preferences_blacklist_key));
                     SharedPreferences preferences = requireContext().getSharedPreferences(getString(R.string.preferences_key), Context.MODE_PRIVATE);
-                    Set<String> listSet = preferences.getStringSet(list, null);
-                    if (listSet != null) {
-                        listSet.remove(adapter.getItem(position));
-                    }
+                    Set<String> listSet = new HashSet<>(Objects.requireNonNull(preferences.getStringSet(list, null)));
+                    listSet.remove(adapter.getItem(position));
                     SharedPreferences.Editor preferencesEditor = preferences.edit();
                     preferencesEditor.putStringSet(list, listSet);
                     preferencesEditor.apply();
