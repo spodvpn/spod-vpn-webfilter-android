@@ -33,6 +33,7 @@ import com.android.billingclient.api.BillingClient;
 import com.android.billingclient.api.BillingResult;
 import com.android.billingclient.api.Purchase;
 import com.android.billingclient.api.PurchasesResponseListener;
+import com.android.billingclient.api.QueryPurchasesParams;
 import com.google.firebase.installations.FirebaseInstallations;
 import com.google.firebase.messaging.FirebaseMessaging;
 
@@ -806,20 +807,21 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
     {
         if(globalMethods == null) this.globalMethods = new GlobalMethods(getActivity());
 
-            MainActivity mainActivity = (MainActivity)getActivity();
-            if (mainActivity != null && mainActivity.subscribeToCustomFreeTrial) {
-                requestCredentials(null);
-                return;
-            }
-            if (mainActivity != null && (!mainActivity.billingSetupFinished || Objects.requireNonNull(requireContext().getSharedPreferences(getString(R.string.preferences_key), Context.MODE_PRIVATE).getString(getString(R.string.preferences_username), "")).isEmpty())) {
-                Log.v(TAG, "verifyReceipt: Abort because billingClient is NOT ready yet or no username found!");
-                return;
-            }
+        MainActivity mainActivity = (MainActivity)getActivity();
+        if (mainActivity != null && mainActivity.subscribeToCustomFreeTrial) {
+            requestCredentials(null);
+            return;
+        }
+        if (mainActivity != null && (!mainActivity.billingSetupFinished || Objects.requireNonNull(requireContext().getSharedPreferences(getString(R.string.preferences_key), Context.MODE_PRIVATE).getString(getString(R.string.preferences_username), "")).isEmpty())) {
+            Log.v(TAG, "verifyReceipt: Abort because billingClient is NOT ready yet or no username found!");
+            return;
+        }
 
-            Purchase.PurchasesResult purchasesResult;
-            if (mainActivity != null)
-            {
-                mainActivity.billingClient.queryPurchasesAsync(BillingClient.SkuType.SUBS, new PurchasesResponseListener() {
+        //Purchase.PurchasesResult purchasesResult;
+        if (mainActivity != null)
+        {
+            mainActivity.billingClient.queryPurchasesAsync(
+                    QueryPurchasesParams.newBuilder().setProductType(BillingClient.ProductType.SUBS).build(), new PurchasesResponseListener() {
                     @Override
                     public void onQueryPurchasesResponse(@NonNull BillingResult billingResult, @NonNull List<Purchase> list) {
                         //Create POST parameters JSONObject
