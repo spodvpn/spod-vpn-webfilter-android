@@ -17,20 +17,22 @@ import com.android.billingclient.api.BillingClient;
 import com.android.billingclient.api.BillingClientStateListener;
 import com.android.billingclient.api.BillingFlowParams;
 import com.android.billingclient.api.BillingResult;
+import com.android.billingclient.api.ProductDetails;
 import com.android.billingclient.api.Purchase;
-import com.android.billingclient.api.PurchasesResponseListener;
 import com.android.billingclient.api.PurchasesUpdatedListener;
-import com.android.billingclient.api.SkuDetails;
-import com.android.billingclient.api.SkuDetailsParams;
+import com.android.billingclient.api.QueryProductDetailsParams;
+import com.android.billingclient.api.QueryPurchasesParams;
+import com.google.common.collect.ImmutableList;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.strongswan.android.data.VpnProfileDataSource;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -45,11 +47,8 @@ public class StoreFragment extends Fragment implements PurchasesUpdatedListener,
     private static final String TAG = "StoreFragment";
 
     private  BillingClient billingClient;
-    private List<SkuDetails> skuDetailsList;
+    private List<ProductDetails> productsList;
     private ProgressBar mProgressBar;
-
-    private final List<String> skuList = Arrays.asList("spod_vpn_monthly_subscription", "spod_vpn_yearly_subscription");
-
     private StoreRecyclerViewAdapter adapter;
 
     private GlobalMethods globalMethods;
@@ -81,7 +80,7 @@ public class StoreFragment extends Fragment implements PurchasesUpdatedListener,
         LinearLayoutManager mLayoutManager = new LinearLayoutManager(getActivity());
         recyclerView.setLayoutManager(mLayoutManager);
 
-        adapter = new StoreRecyclerViewAdapter(getActivity(), skuDetailsList);
+        adapter = new StoreRecyclerViewAdapter(getActivity(), productsList);
         adapter.setClickListener(this);
         recyclerView.setAdapter(adapter);
 
@@ -117,20 +116,32 @@ public class StoreFragment extends Fragment implements PurchasesUpdatedListener,
                     //Success, query for products!
                     if(billingClient.isReady()) {
                         Log.v(TAG, "setupBillingClient: billingClint isReady!");
-                        SkuDetailsParams params = SkuDetailsParams.newBuilder().setSkusList(skuList).setType(BillingClient.SkuType.SUBS).build();
 
-                        billingClient.querySkuDetailsAsync(params, (billingResult, list) -> {
-                            if(result.getResponseCode() == BillingClient.BillingResponseCode.OK)
-                            {
-                                //Log.v(TAG, "setupBillingClient: querySkuDetailsAsync returned OK : "+list.toString());
-                                skuDetailsList = list; //save list
-                                adapter.reloadData(skuDetailsList, null); //reload recycler view
-                            }
-                            else
-                                {
-                                Log.v(TAG, "Can't querySkuDetailsAsync, responseCode: "+result.getResponseCode());
-                            }
-                        });
+                        ImmutableList<QueryProductDetailsParams.Product> productList = ImmutableList.of(
+                                QueryProductDetailsParams.Product.newBuilder()
+                                        .setProductId("spod_vpn_monthly_subscription")
+                                        .setProductType(BillingClient.ProductType.SUBS).build(),
+                                QueryProductDetailsParams.Product.newBuilder()
+                                        .setProductId("spod_vpn_yearly_subscription")
+                                        .setProductType(BillingClient.ProductType.SUBS)
+                                        .build());
+
+                        QueryProductDetailsParams params = QueryProductDetailsParams.newBuilder().setProductList(productList).build();
+
+                        billingClient.queryProductDetailsAsync(
+                                params,
+                                (billingResult, productDetailsList) -> {
+                                    // Process the result
+                                    if(billingResult.getResponseCode() == BillingClient.BillingResponseCode.OK) {
+                                        Log.v(TAG, "setupBillingClient: querySkuDetailsAsync responseCode OK, proceeding...");
+                                        productsList = productDetailsList; //save list
+                                        adapter.reloadData(productsList, null); //reload recycler view
+
+                                    } else {
+                                        Log.v(TAG, "Can't querySkuDetailsAsync, responseCode: "+ billingResult.getResponseCode());
+                                    }
+                                }
+                        );
                     }
                     else Log.v(TAG, "ERROR: billingClient NOT ready!");
                 } else {
@@ -157,31 +168,32 @@ public class StoreFragment extends Fragment implements PurchasesUpdatedListener,
             MainActivity mainActivity = (MainActivity) getActivity();
             if (mainActivity != null) {
                 //Check receipt
+                QueryPurchasesParams params = QueryPurchasesParams.newBuilder()
+                        .setProductType(BillingClient.ProductType.SUBS)
+                        .build();
+
                 Log.v(TAG, "checkCustomFreeTrial: Calling queryPurchasesAsync()");
-                mainActivity.billingClient.queryPurchasesAsync(BillingClient.SkuType.SUBS, new PurchasesResponseListener() {
-                            @Override
-                            public void onQueryPurchasesResponse(@NonNull BillingResult billingResult, @NonNull List<Purchase> list) {
-                                boolean hasProfile = false;
-                                boolean hasReceipt = false;
+                mainActivity.billingClient.queryPurchasesAsync(params, (billingResult, list) -> {
+                    boolean hasProfile = false;
+                    boolean hasReceipt = false;
 
-                                for (int i = 0; i < list.size(); i++) {
-                                    if (list.get(i).getPurchaseState() == Purchase.PurchaseState.PURCHASED)
-                                        hasReceipt = true;
-                                }
+                    for (int i = 0; i < list.size(); i++) {
+                        if (list.get(i).getPurchaseState() == Purchase.PurchaseState.PURCHASED)
+                            hasReceipt = true;
+                    }
 
-                                //Check profile
-                                VpnProfileDataSource mDataSource = new VpnProfileDataSource(mainActivity);
-                                SharedPreferences sharedPreferences = mainActivity.getSharedPreferences(getString(R.string.preferences_key), Context.MODE_PRIVATE);
-                                String username = sharedPreferences.getString(getString(R.string.preferences_username), "");
-                                mDataSource.open();
-                                if (username.length() > 0) hasProfile = true;
-                                mDataSource.close();
+                    //Check profile
+                    VpnProfileDataSource mDataSource = new VpnProfileDataSource(mainActivity);
+                    SharedPreferences sharedPreferences = mainActivity.getSharedPreferences(getString(R.string.preferences_key), Context.MODE_PRIVATE);
+                    String username = sharedPreferences.getString(getString(R.string.preferences_username), "");
+                    mDataSource.open();
+                    if (!username.isEmpty()) hasProfile = true;
+                    mDataSource.close();
 
-                                if (!hasProfile && !hasReceipt) {
-                                    prepareForFreeTrial();
-                                }
-                            }
-                        });
+                    if (!hasProfile && !hasReceipt) {
+                        prepareForFreeTrial();
+                    }
+                });
             }
         } catch (NullPointerException exception) {
             Log.v(TAG, "Got a NullPointerException at checkCustomFreeTrial, probably running in the background...");
@@ -194,7 +206,7 @@ public class StoreFragment extends Fragment implements PurchasesUpdatedListener,
             //Purchase.PurchasesResult purchasesResult;
             if (mainActivity != null) {
                 //Eligible for custom free trial, get firebaseTokenId
-                if (mainActivity.firebaseTokenId.length() > 0) {
+                if (!mainActivity.firebaseTokenId.isEmpty()) {
                     //Already have firebaseTokenId, get SSAID and send to SPOD
                     if (mProgressBar != null) mProgressBar.setVisibility(View.VISIBLE);
                     getCustomFreeTrial();
@@ -262,7 +274,7 @@ public class StoreFragment extends Fragment implements PurchasesUpdatedListener,
                         freeTrialInfo.add(duration);
                         freeTrialInfo.add(description_text);
 
-                        adapter.reloadData(skuDetailsList, freeTrialInfo);
+                        adapter.reloadData(productsList, freeTrialInfo);
 
                     }
                 } catch (JSONException exception) {
@@ -282,6 +294,7 @@ public class StoreFragment extends Fragment implements PurchasesUpdatedListener,
         try {
             ConnectFragment connectFragment = (ConnectFragment) requireActivity().getSupportFragmentManager().findFragmentByTag("ConnectFragment");
             MainActivity mainActivity = (MainActivity)getActivity();
+            assert mainActivity != null;
             mainActivity.shouldRedirectToStore = false;
             mainActivity.subscribeToCustomFreeTrial = subscribeToCustomFreeTrial;
 
@@ -326,19 +339,18 @@ public class StoreFragment extends Fragment implements PurchasesUpdatedListener,
         String duration;
         String[] help_urls = getResources().getStringArray(R.array.help_urls); //2=terms of use, 3=privacy policy
 
-        if(productData.getClass().equals(SkuDetails.class))
+        if(productData.getClass().equals(ProductDetails.class))
         {
-            SkuDetails skuDetails = (SkuDetails)productData;
-            productTitle = skuDetails.getTitle().split("(?> \\(.+?\\))$")[0]; //Remove redundant app name from subscription's name
-
-            if (skuDetails.getSku().equals(skuList.get(0))) {
+            ProductDetails productDetails = (ProductDetails)productData;
+            productTitle = productDetails.getTitle().split("(?> \\(.+?\\))$")[0]; //Remove redundant app name from subscription's name
+            if(productDetails.getProductId().equals("spod_vpn_monthly_subscription")) {
                 //Monthly
                 duration = getString(R.string.monthly_duration);
-                htmlString = String.format(Locale.getDefault(), getString(R.string.terms_monthly_sub_text), duration, skuDetails.getPrice(), productTitle, help_urls[2], help_urls[3]);
+                htmlString = String.format(Locale.getDefault(), getString(R.string.terms_monthly_sub_text), duration, Objects.requireNonNull(productDetails.getSubscriptionOfferDetails()).get(0).getPricingPhases().getPricingPhaseList().get(0).getFormattedPrice(), productTitle, help_urls[2], help_urls[3]);
             } else {
                 //Annual
                 duration = getString(R.string.annual_duration);
-                htmlString = String.format(Locale.getDefault(), getString(R.string.terms_annual_sub_text), duration, skuDetails.getPrice(), getString(R.string.terms_annual_discount), productTitle, help_urls[2], help_urls[3]);
+                htmlString = String.format(Locale.getDefault(), getString(R.string.terms_annual_sub_text), duration, Objects.requireNonNull(productDetails.getSubscriptionOfferDetails()).get(0).getPricingPhases().getPricingPhaseList().get(0).getFormattedPrice(), getString(R.string.terms_annual_discount), productTitle, help_urls[2], help_urls[3]);
             }
         } else {
             List<String> freeTrialInfo = (List<String>) productData;
@@ -358,12 +370,16 @@ public class StoreFragment extends Fragment implements PurchasesUpdatedListener,
     void confirm_purchase()
     {
         Object productData = adapter.getItem(selected_row);
-        if(productData.getClass().equals(SkuDetails.class)) {
+        if(productData.getClass().equals(ProductDetails.class)) {
+            BillingFlowParams.ProductDetailsParams params = BillingFlowParams.ProductDetailsParams
+                    .newBuilder()
+                    .setProductDetails((ProductDetails)productData)
+                    .setOfferToken(Objects.requireNonNull(((ProductDetails) productData).getSubscriptionOfferDetails()).get(0).getOfferToken())
+                    .build();
             BillingFlowParams billingFlowParams = BillingFlowParams
                     .newBuilder()
-                    .setSkuDetails((SkuDetails)adapter.getItem(selected_row))
+                    .setProductDetailsParamsList(Collections.singletonList(params))
                     .build();
-
             billingClient.launchBillingFlow(requireActivity(), billingFlowParams);
         }
         else {

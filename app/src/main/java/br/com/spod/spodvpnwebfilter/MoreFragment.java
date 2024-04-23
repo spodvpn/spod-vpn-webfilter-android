@@ -215,7 +215,7 @@ public class MoreFragment extends Fragment implements MoreRecyclerViewAdapter.It
                     //Get connected server (if connected)
                     MainActivity mainActivity = (MainActivity)getActivity();
                     if (mainActivity != null) {
-                        adapter.connectedServer = (mainActivity.server_connected.length() > 0 ? mainActivity.server_connected : getString(R.string.not_available));
+                        adapter.connectedServer = (!mainActivity.server_connected.isEmpty() ? mainActivity.server_connected : getString(R.string.not_available));
                     }
 
                     //Get values from JSON

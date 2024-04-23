@@ -133,7 +133,7 @@ public class ListRecyclerViewAdapter extends RecyclerView.Adapter<RecyclerView.V
         ArrayList<String> listArray = new ArrayList<>(listSet);
 
         for(int i=0; i<listSet.size(); i++) {
-            if (listArray.get(i).equals("")) continue;
+            if (listArray.get(i).isEmpty()) continue;
             rowsList.add(listArray.get(i));
         }
 

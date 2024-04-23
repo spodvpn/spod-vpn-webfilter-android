@@ -266,7 +266,7 @@ public class AlertsFragment extends Fragment
                 profileExists = true;
                 //Detect current connection status
                 MainActivity mainActivity = (MainActivity)fragmentActivity;
-                if(mainActivity.server_connected != null && mainActivity.server_connected.length() > 0) {
+                if(mainActivity.server_connected != null && !mainActivity.server_connected.isEmpty()) {
                     isConnected = true;
                 }
             }

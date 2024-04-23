@@ -91,10 +91,10 @@ public class ListFragment extends Fragment implements ListRecyclerViewAdapter.It
         String list = (listType == 0 ? getString(R.string.preferences_whitelist_key) : getString(R.string.preferences_blacklist_key));
         SharedPreferences preferences = requireContext().getSharedPreferences(getString(R.string.preferences_key), Context.MODE_PRIVATE);
         Set<String> listSet = preferences.getStringSet(list, null);
-        if(listSet != null && listSet.size() > 0) {
+        if(listSet != null && !listSet.isEmpty()) {
             ArrayList<String> listArray = new ArrayList<>(listSet);
             for (int i = 0; i < listArray.size(); i++) {
-                if(listArray.get(i).equals("")) continue;
+                if(listArray.get(i).isEmpty()) continue;
                 rowsList.add(listArray.get(i));
             }
         }
@@ -183,7 +183,7 @@ public class ListFragment extends Fragment implements ListRecyclerViewAdapter.It
     private void addHostname()
     {
         //First step is to check for a valid hostname!
-        if(addHostnameText.getText().toString().equals("")) return; //Empty field, ignore
+        if(addHostnameText.getText().toString().isEmpty()) return; //Empty field, ignore
         if(! addHostnameText.getText().toString().matches("^(([a-zA-Z\\d]|[a-zA-Z\\d][a-zA-Z\\d\\-]*[a-zA-Z\\d])\\.)*([A-Za-z\\d]|[A-Za-z\\d][A-Za-z\\d\\-]*[A-Za-z\\d])$") || addHostnameText.getText().toString().contains(":") || addHostnameText.getText().toString().contains("/") || addHostnameText.getText().toString().contains(",")) {
             //Invalid hostname
             Log.v(TAG, "Invalid hostname, show an error dialog/alert !");

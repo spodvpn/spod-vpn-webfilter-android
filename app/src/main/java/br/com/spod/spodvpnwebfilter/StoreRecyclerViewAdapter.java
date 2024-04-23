@@ -9,7 +9,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
 
-import com.android.billingclient.api.SkuDetails;
+import com.android.billingclient.api.ProductDetails;
 
 import java.util.List;
 
@@ -19,11 +19,11 @@ import androidx.recyclerview.widget.RecyclerView;
 public class StoreRecyclerViewAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
 {
     private final LayoutInflater mInflater;
-    private List<SkuDetails> mData;
+    private List<ProductDetails> mData;
     private List<String> mFreeTrialData;
     private ProductClickListener mClickListener;
 
-    StoreRecyclerViewAdapter(Context context, List<SkuDetails> data) {
+    StoreRecyclerViewAdapter(Context context, List<ProductDetails> data) {
         this.mInflater = LayoutInflater.from(context);
         this.mData = data;
     }
@@ -44,10 +44,11 @@ public class StoreRecyclerViewAdapter extends RecyclerView.Adapter<RecyclerView.
             productViewHolder.subtitleTextView.setText(mFreeTrialData.get(1));
             productViewHolder.buyButton.setText(mFreeTrialData.get(2));
         } else {
-            SkuDetails skuDetails = (mFreeTrialData != null) ? mData.get(position-1) : mData.get(position);
-            productViewHolder.titleTextView.setText(skuDetails.getTitle().split("(?> \\(.+?\\))$")[0]); //remove redundant app name in product's title
-            productViewHolder.subtitleTextView.setText(skuDetails.getDescription());
-            productViewHolder.buyButton.setText(skuDetails.getPrice());
+            ProductDetails productDetails = (mFreeTrialData != null) ? mData.get(position-1) : mData.get(position);
+            productViewHolder.titleTextView.setText(productDetails.getTitle().split("(?> \\(.+?\\))$")[0]); //remove redundant app name in product's title
+            productViewHolder.subtitleTextView.setText(productDetails.getDescription());
+            assert productDetails.getSubscriptionOfferDetails() != null;
+            productViewHolder.buyButton.setText(productDetails.getSubscriptionOfferDetails().get(0).getPricingPhases().getPricingPhaseList().get(0).getFormattedPrice());
         }
     }
 
@@ -97,7 +98,7 @@ public class StoreRecyclerViewAdapter extends RecyclerView.Adapter<RecyclerView.
     }
 
     //Method for reloading list data
-    void reloadData(List<SkuDetails> data, List<String> freeTrialInfo)
+    void reloadData(List<ProductDetails> data, List<String> freeTrialInfo)
     {
         mData = data;
         mFreeTrialData = freeTrialInfo;

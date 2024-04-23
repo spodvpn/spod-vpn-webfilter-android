@@ -16,19 +16,21 @@ import com.android.billingclient.api.BillingClientStateListener;
 import com.android.billingclient.api.BillingResult;
 import com.android.billingclient.api.Purchase;
 import com.android.billingclient.api.PurchasesUpdatedListener;
-import com.android.billingclient.api.SkuDetailsParams;
+import com.android.billingclient.api.QueryProductDetailsParams;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.navigation.NavigationBarView;
+import com.google.common.collect.ImmutableList;
 
 import org.strongswan.android.data.VpnProfile;
 import org.strongswan.android.data.VpnProfileDataSource;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.UUID;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
@@ -46,7 +48,14 @@ public class MainActivity extends AppCompatActivity implements PurchasesUpdatedL
     boolean subscribeToCustomFreeTrial = false;
 
     BillingClient billingClient;
-    private final List<String> skuList = Arrays.asList("spod_vpn_monthly_subscription", "spod_vpn_yearly_subscription");
+    ImmutableList<QueryProductDetailsParams.Product> productList = ImmutableList.of(
+            QueryProductDetailsParams.Product.newBuilder()
+                    .setProductId("spod_vpn_monthly_subscription")
+                    .setProductType(BillingClient.ProductType.SUBS).build(),
+            QueryProductDetailsParams.Product.newBuilder()
+                    .setProductId("spod_vpn_yearly_subscription")
+                    .setProductType(BillingClient.ProductType.SUBS)
+            .build());
 
     private BottomNavigationView bottomNavigation;
     Menu actionBarMenu;
@@ -92,6 +101,50 @@ public class MainActivity extends AppCompatActivity implements PurchasesUpdatedL
 
         //Open default main fragment
         openFragment(ConnectFragment.newInstance(), false, "ConnectFragment");
+
+        OnBackPressedCallback onBackPressedCallback = new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                setEnabled(false);
+                getOnBackPressedDispatcher().onBackPressed();
+                setEnabled(true);
+                //Find current visible fragment and select bottomNavigation's corresponding item
+                String[] tags = {"ConnectFragment", "AlertsFragment", "MoreFragment"};
+                String[] titles = {getString(R.string.app_name), getString(R.string.title_alerts), getString(R.string.title_more_info)};
+
+                for (int i = 0; i < tags.length; i++) {
+                    Fragment currentFragment = getSupportFragmentManager().findFragmentByTag(tags[i]);
+                    if (currentFragment != null && currentFragment.isVisible()) {
+                        //Found the visible fragment
+                        bottomNavigation.getMenu().getItem(i).setChecked(true);
+
+                        //Enable action bar only on ConnectFragment
+                        if (currentFragment.getTag() != null) {
+                            if (currentFragment.getTag().equals("ConnectFragment")) {
+                                //Check if StoreFragment is visible
+                                Fragment storeFragment = getSupportFragmentManager().findFragmentByTag("StoreFragment");
+                                if (storeFragment == null || !storeFragment.isVisible()) {
+                                    //StoreFragment is not visible, proceed as usual
+                                    setTitle(titles[i]);
+                                    actionBarMenu.getItem(0).setVisible(true);
+                                }
+                            } else {
+                                //Hide actionBarMenu
+                                actionBarMenu.getItem(0).setVisible(false);
+                                setTitle(titles[i]);
+                            }
+                        }
+
+                        //Special case for an alert's detail view and/or StoreFragment
+                        if (tags[i].equals("AlertsFragment")) {
+                            currentFragment.requireView().findViewById(R.id.alerts_generic_fragment_detail_container).setVisibility(View.GONE);
+                        }
+                    }
+                }
+
+            }
+        };
+        getOnBackPressedDispatcher().addCallback(this, onBackPressedCallback);
     }
 
     @Override
@@ -115,7 +168,7 @@ public class MainActivity extends AppCompatActivity implements PurchasesUpdatedL
         if(regionSpinner == null) {
             //Create regionSpinner
             regionSpinner = (CustomSpinner)item.getActionView();
-            regionSpinner.removeSpinnerArrow();
+            Objects.requireNonNull(regionSpinner).removeSpinnerArrow();
 
             String[] serversHostnames = {"vpn.spod.com.br", "us.vpn.spod.com.br", "eu.vpn.spod.com.br", "in.vpn.spod.com.br"};
             String[] regionsArray = {"", "", "", ""};
@@ -133,12 +186,6 @@ public class MainActivity extends AppCompatActivity implements PurchasesUpdatedL
                     Log.v(TAG, "onItemSelected: Connect to server: "+serversHostnames[position]);
                     ConnectFragment fragment = (ConnectFragment) getSupportFragmentManager().findFragmentByTag("ConnectFragment");
                     if (fragment != null && fragment.isVisible()) fragment.changeRegion(serversHostnames[position]);
-
-                    /*
-                    if(mService.getState() == VpnStateService.State.CONNECTING) {
-                            return; //Ignore because we're currently connecting!
-                    }
-                     */
                 }
 
                 @Override public void onNothingSelected(AdapterView<?> parent) { }
@@ -195,46 +242,6 @@ public class MainActivity extends AppCompatActivity implements PurchasesUpdatedL
         return true;
     }
 
-    @Override public void onBackPressed()
-    {
-        super.onBackPressed();
-
-        //Find current visible fragment and select bottomNavigation's corresponding item
-        String[] tags = {"ConnectFragment", "AlertsFragment", "MoreFragment"};
-        String[] titles = {getString(R.string.app_name), getString(R.string.title_alerts), getString(R.string.title_more_info)};
-
-        for(int i=0; i< tags.length; i++) {
-            Fragment currentFragment = getSupportFragmentManager().findFragmentByTag(tags[i]);
-            if(currentFragment != null && currentFragment.isVisible()) {
-                //Found the visible fragment
-                bottomNavigation.getMenu().getItem(i).setChecked(true);
-
-                //Enable action bar only on ConnectFragment
-                if (currentFragment.getTag() != null) {
-                    if(currentFragment.getTag().equals("ConnectFragment")) {
-                        //Check if StoreFragment is visible
-                        Fragment storeFragment = getSupportFragmentManager().findFragmentByTag("StoreFragment");
-                        if(storeFragment == null || ! storeFragment.isVisible()) {
-                            //StoreFragment is not visible, proceed as usual
-                            setTitle(titles[i]);
-                            actionBarMenu.getItem(0).setVisible(true);
-                        }
-                    }
-                    else {
-                        //Hide actionBarMenu
-                        actionBarMenu.getItem(0).setVisible(false);
-                        setTitle(titles[i]);
-                    }
-                }
-
-                //Special case for an alert's detail view and/or StoreFragment
-                if(tags[i].equals("AlertsFragment")) {
-                    currentFragment.requireView().findViewById(R.id.alerts_generic_fragment_detail_container).setVisibility(View.GONE);
-                }
-            }
-        }
-    }
-
     private void openFragment(Fragment fragment, boolean addToBackStack, String tag)
     {
         Fragment currentFragment = getSupportFragmentManager().findFragmentByTag(tag);
@@ -259,16 +266,22 @@ public class MainActivity extends AppCompatActivity implements PurchasesUpdatedL
                     Log.v(TAG, "setupBillingClient: BILLING | startConnection | RESULT OK");
                     if(billingClient.isReady())
                     {
-                        SkuDetailsParams params = SkuDetailsParams.newBuilder().setSkusList(skuList).setType(BillingClient.SkuType.SUBS).build();
-                        billingClient.querySkuDetailsAsync(params, (result1, skuDetailsList) -> {
-                            if (result1.getResponseCode() == BillingClient.BillingResponseCode.OK) {
-                                Log.v(TAG, "setupBillingClient: querySkuDetailsAsync, responseCode: "+ result1.getResponseCode());
-                                ConnectFragment connectFragment = (ConnectFragment)getSupportFragmentManager().findFragmentByTag("ConnectFragment");
-                                if(connectFragment != null) connectFragment.verifyReceipt(); //Everything ready, call verifyReceipt
-                            } else {
-                                Log.v(TAG, "setupBillingClient: Can't querySkuDetailsAsync, responseCode: "+ result1.getResponseCode());
-                            }
-                        });
+                        QueryProductDetailsParams params = QueryProductDetailsParams.newBuilder()
+                                .setProductList(productList)
+                                .build();
+                        billingClient.queryProductDetailsAsync(
+                                params,
+                                (billingResult, productDetailsList) -> {
+                                    // Process the result
+                                    if(billingResult.getResponseCode() == BillingClient.BillingResponseCode.OK) {
+                                        Log.v(TAG, "setupBillingClient: querySkuDetailsAsync responseCode OK, proceeding...");
+                                        ConnectFragment connectFragment = (ConnectFragment)getSupportFragmentManager().findFragmentByTag("ConnectFragment");
+                                        if(connectFragment != null) connectFragment.verifyReceipt(); //Everything ready, call verifyReceipt
+                                    } else {
+                                        Log.v(TAG, "setupBillingClient: Can't querySkuDetailsAsync, responseCode: "+ billingResult.getResponseCode());
+                                    }
+                                }
+                        );
                     } else {
                         Log.v(TAG, "setupBillingClient: Billing Client not ready");
                     }

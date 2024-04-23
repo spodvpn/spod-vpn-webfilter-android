@@ -30,11 +30,8 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.android.billingclient.api.BillingClient;
-import com.android.billingclient.api.BillingResult;
 import com.android.billingclient.api.Purchase;
-import com.android.billingclient.api.PurchasesResponseListener;
 import com.android.billingclient.api.QueryPurchasesParams;
-import com.google.firebase.installations.FirebaseInstallations;
 import com.google.firebase.messaging.FirebaseMessaging;
 
 import org.json.JSONArray;
@@ -56,7 +53,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
-import androidx.annotation.NonNull;
 import androidx.core.content.res.ResourcesCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
@@ -130,7 +126,7 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
         user_uuid = UUID.nameUUIDFromBytes(username.getBytes());
         mDataSource.open();
         VpnProfile profile = mDataSource.getVpnProfile(user_uuid);
-        if(username.length() == 0 || profile.getGateway() == null || profile.getGateway().length() == 0) {
+        if(username.isEmpty() || profile.getGateway() == null || profile.getGateway().isEmpty()) {
             //VPN has not been configured yet, show initial message
             if(globalMethods == null) this.globalMethods = new GlobalMethods(getActivity());
             globalMethods.showAlertWithMessage(getString(R.string.new_user_message), false);
@@ -230,7 +226,7 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
         try {
             SharedPreferences sharedPreferences = requireActivity().getSharedPreferences(requireActivity().getString(R.string.preferences_key), Context.MODE_PRIVATE);
             String username = sharedPreferences.getString(requireActivity().getString(R.string.preferences_username), "");
-            if (username.length() > 0) {
+            if (!username.isEmpty()) {
                 UUID uuid = UUID.nameUUIDFromBytes(username.getBytes());
                 VpnProfileDataSource mDataSource = new VpnProfileDataSource(getActivity());
                 mDataSource.open();
@@ -423,35 +419,39 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
         }
         else if(profile == null && mainActivity != null) {
             //No VPN profile found: will setup
+            QueryPurchasesParams params = QueryPurchasesParams.newBuilder()
+                            .setProductType(BillingClient.ProductType.SUBS)
+                            .build();
 
-            //Purchase.PurchasesResult purchasesResult = mainActivity.billingClient.queryPurchases(BillingClient.SkuType.SUBS);
-            mainActivity.billingClient.queryPurchasesAsync(BillingClient.SkuType.SUBS, new PurchasesResponseListener() {
-                @Override
-                public void onQueryPurchasesResponse(@NonNull BillingResult billingResult, @NonNull List<Purchase> list) {
-                    if(list.size() == 0) {
-                        globalMethods.showAlertWithMessage(getString(R.string.billing_not_available), true);
-                        return;
-                    }
-
-                    Purchase purchase = null;
-                    for (int i = 0; i<list.size(); i++) {
-                        if(list.get(i).getPurchaseState() == Purchase.PurchaseState.PURCHASED) {
-                            purchase = list.get(i); //Found correct purchase (receipt), send info for server validation
+            mainActivity.billingClient.queryPurchasesAsync(
+                    params,
+                    (billingResult, productDetailsList) -> {
+                        if(billingResult.getResponseCode() != BillingClient.BillingResponseCode.OK) {
+                            Log.v(TAG, "onQueryPurchasesResponse: BillingResult = "+ billingResult);
+                            globalMethods.showAlertWithMessage(getString(R.string.billing_not_available), true);
+                            return;
                         }
+
+                        Purchase purchase = null;
+                        for (int i = 0; i<productDetailsList.size(); i++) {
+                            Log.v(TAG, "AQUI - VEJA o que é: "+ productDetailsList);
+                            if(productDetailsList.get(i).getPurchaseState() == Purchase.PurchaseState.PURCHASED) {
+                                purchase = productDetailsList.get(i); //Found correct purchase (receipt), send info for server validation
+                            }
+                        }
+
+                        if(purchase == null && ! mainActivity.subscribeToCustomFreeTrial) {
+                            //User has not purchased yet, send to store
+                            mService.disconnect();
+                            redirectToStore();
+                            return;
+
+                        }
+
+                        //Found purchase, asking credentials from server
+                        requestCredentials(purchase);
                     }
-
-                    if(purchase == null && ! mainActivity.subscribeToCustomFreeTrial) {
-                        //User has not purchased yet, send to store
-                        mService.disconnect();
-                        redirectToStore();
-                        return;
-
-                    }
-
-                    //Found purchase, asking credentials from server
-                    requestCredentials(purchase);
-                }
-            });
+            );
         }
         else if(mService.getState() == VpnStateService.State.DISABLED) {
             //Currently disconnected, will connect
@@ -541,7 +541,7 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
                 //Turn on depending on user config (if enabled, Alpha will be set to 1.0f)!
                 SharedPreferences sharedPreferences = requireContext().getSharedPreferences(getString(R.string.preferences_key), Context.MODE_PRIVATE);
                 Set<String> enabled_lists = sharedPreferences.getStringSet(getString(R.string.preferences_lists_key), null);
-                if (enabled_lists != null && enabled_lists.size() > 0) {
+                if (enabled_lists != null && !enabled_lists.isEmpty()) {
                     if (enabled_lists.contains(getString(R.string.preferences_block_trackers_list))) {
                         blockTrackersButton.setAlpha(1.0f);
                         blockTrackersImageButton.setAlpha(1.0f);
@@ -821,12 +821,10 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
         if (mainActivity != null)
         {
             mainActivity.billingClient.queryPurchasesAsync(
-                    QueryPurchasesParams.newBuilder().setProductType(BillingClient.ProductType.SUBS).build(), new PurchasesResponseListener() {
-                    @Override
-                    public void onQueryPurchasesResponse(@NonNull BillingResult billingResult, @NonNull List<Purchase> list) {
+                    QueryPurchasesParams.newBuilder().setProductType(BillingClient.ProductType.SUBS).build(), (billingResult, list) -> {
                         //Create POST parameters JSONObject
                         JSONObject postData = new JSONObject();
-                            if (list.size() > 0) {
+                            if (!list.isEmpty()) {
                                 for (int i = 0; i < list.size(); i++) {
                                     if (list.get(i).getPurchaseState() == Purchase.PurchaseState.PURCHASED) {
                                         //Found correct purchase (receipt), send info for server validation
@@ -879,8 +877,7 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
                                     Log.v(TAG, "Got an IllegalStateException, probably running in the background...");
                                 }
                             });
-                    }
-                });
+                    });
             }
     }
 
@@ -943,7 +940,7 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
                 MainActivity mainActivity1 = (MainActivity) getActivity();
                 MenuItem item = Objects.requireNonNull(mainActivity1).actionBarMenu.findItem(R.id.region_spinner);
                 CustomSpinner regionSpinner = (CustomSpinner) item.getActionView();
-                regionSpinner.setSelection(Arrays.asList(serversHostnames).indexOf(user_profile.getGateway()), true); //reset selection to current configured region
+                Objects.requireNonNull(regionSpinner).setSelection(Arrays.asList(serversHostnames).indexOf(user_profile.getGateway()), true); //reset selection to current configured region
                 mDataSource.close();
                 return; //Ignore because we're currently connecting
             }
@@ -1091,7 +1088,7 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
 
             if(! status) postData.put("TokenID", "Disable");
             else {
-                if (tokenID != null && tokenID.length() > 0) postData.put("TokenID", tokenID);
+                if (tokenID != null && !tokenID.isEmpty()) postData.put("TokenID", tokenID);
                 else postData.put("TokenID", "Disable");
             }
         } catch (JSONException exception) {
