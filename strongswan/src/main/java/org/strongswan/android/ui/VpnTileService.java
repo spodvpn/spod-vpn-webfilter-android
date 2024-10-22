@@ -28,6 +28,8 @@ import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.service.quicksettings.Tile;
 import android.service.quicksettings.TileService;
+import android.provider.Settings;
+import android.app.PendingIntent;
 
 import org.strongswan.android.R;
 import org.strongswan.android.data.VpnProfile;
@@ -178,6 +180,13 @@ public class VpnTileService extends TileService implements VpnStateService.VpnSt
 				}
 				else
 				{
+					if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE && !Settings.canDrawOverlays(this))
+					{
+						Intent permIntent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION);
+						permIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+						startActivityAndCollapse(PendingIntent.getActivity(this, 0, permIntent, PendingIntent.FLAG_IMMUTABLE));
+						return;
+					}
 					startActivity(intent);
 				}
 				return;

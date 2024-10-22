@@ -3,7 +3,7 @@ include $(CLEAR_VARS)
 
 # use "bring your own device" (BYOD) features (also see USE_BYOD in
 # MainActivity.java)
-strongswan_USE_BYOD := true
+strongswan_USE_BYOD := false
 
 strongswan_CHARON_PLUGINS := android-log openssl fips-prf random nonce pubkey \
 	chapoly curve25519 pkcs1 pkcs8 pem xcbc hmac socket-default revocation \
@@ -21,7 +21,7 @@ strongswan_DIR := ../../../../strongswan-src/strongswan
 
 # includes
 strongswan_PATH := $(LOCAL_PATH)/$(strongswan_DIR)
-openssl_PATH := $(LOCAL_PATH)/openssl/include
+openssl_PATH := $(LOCAL_PATH)/openssl/src/include
 
 include $(strongswan_PATH)/Android.common.mk
 

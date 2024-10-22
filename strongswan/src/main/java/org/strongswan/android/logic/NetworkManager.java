@@ -96,7 +96,11 @@ public class NetworkManager extends BroadcastReceiver implements Runnable
 	private void registerLegacyReceiver()
 	{
 		/* deprecated since API level 28 */
-		mContext.registerReceiver(this, new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION));
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+			mContext.registerReceiver(this, new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION), Context.RECEIVER_EXPORTED);
+		} else {
+			mContext.registerReceiver(this, new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION));
+		}
 	}
 
 	public void Unregister()
