@@ -1,1 +1,2 @@
 APP_PLATFORM := android-19
+APP_ALLOW_MISSING_DEPS := true

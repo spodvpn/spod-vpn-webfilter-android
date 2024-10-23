@@ -4,7 +4,7 @@ Spod’s virtual network is the combination of a VPN and a firewall to bring you
 
 ## VPN - Virtual Private Network service
 
-Our VPN service is focused on develivering more security, privacy and anonymity for mobile users.
+Our VPN service is focused on delivering more security, privacy and anonymity for mobile users.
 
 * Security and Privacy: Everything between your device and our servers is encrypted using AES-256 to keep third parties from snooping into your traffic including which apps/websites you use and its data (username, passwords, etc).
 * Anonymity: We created a simple way to anonymize everything that goes through our network: There’s no registration!
