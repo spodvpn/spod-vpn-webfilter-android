@@ -21,6 +21,7 @@
             android:label="@string/app_title"
             android:configChanges="orientation"
             android:exported="true"
+            android:windowSoftInputMode="adjustResize"
             android:screenOrientation="portrait">
 
             <intent-filter>

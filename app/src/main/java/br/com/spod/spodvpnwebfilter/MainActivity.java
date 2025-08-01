@@ -34,8 +34,12 @@ import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
+
+import androidx.core.view.WindowInsetsCompat;
 
 public class MainActivity extends AppCompatActivity implements PurchasesUpdatedListener  {
 
@@ -98,6 +102,12 @@ public class MainActivity extends AppCompatActivity implements PurchasesUpdatedL
 
         bottomNavigation = findViewById(R.id.navigation);
         bottomNavigation.setOnItemSelectedListener(mOnNavigationItemSelectedListener);
+
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(android.R.id.content), (v, insets) -> {
+            Insets systemBarsInsets = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            v.setPadding(systemBarsInsets.left, systemBarsInsets.top, systemBarsInsets.right, systemBarsInsets.bottom);
+            return WindowInsetsCompat.CONSUMED;
+        });
 
         //Open default main fragment
         openFragment(ConnectFragment.newInstance(), false, "ConnectFragment");
