@@ -1,8 +1,9 @@
 /*
- * Copyright (C) 2012-2018 Tobias Brunner
+ * Copyright (C) 2012-2025 Tobias Brunner
  * Copyright (C) 2012 Giuliano Grassi
  * Copyright (C) 2012 Ralf Sager
- * HSR Hochschule fuer Technik Rapperswil
+ *
+ * Copyright (C) secunet Security Networks AG
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -29,13 +30,13 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.net.ProxyInfo;
 import android.net.VpnService;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.ParcelFileDescriptor;
-import android.preference.PreferenceManager;
 import android.security.KeyChain;
 import android.security.KeyChainException;
 import android.system.OsConstants;
@@ -45,6 +46,7 @@ import org.strongswan.android.R;
 import org.strongswan.android.data.VpnProfile;
 import org.strongswan.android.data.VpnProfile.SelectedAppsHandling;
 import org.strongswan.android.data.VpnProfileDataSource;
+import org.strongswan.android.data.VpnProfileSource;
 import org.strongswan.android.data.VpnType.VpnTypeFeature;
 import org.strongswan.android.logic.VpnStateService.ErrorState;
 import org.strongswan.android.logic.VpnStateService.State;
@@ -58,43 +60,28 @@ import org.strongswan.android.utils.IPRangeSet;
 import org.strongswan.android.utils.SettingsWriter;
 import org.strongswan.android.utils.Utils;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.net.HttpURLConnection;
 import java.net.Inet4Address;
 import java.net.Inet6Address;
 import java.net.InetAddress;
-import java.net.InterfaceAddress;
-import java.net.NetworkInterface;
-import java.net.URL;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ClosedByInterruptException;
 import java.security.PrivateKey;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
-import java.util.Date;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.SortedSet;
-import java.util.UUID;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
+import androidx.preference.PreferenceManager;
 
 public class CharonVpnService extends VpnService implements Runnable, VpnStateService.VpnStateListener
 {
@@ -118,11 +105,12 @@ public class CharonVpnService extends VpnService implements Runnable, VpnStateSe
 	private volatile boolean mTerminate;
 	private volatile boolean mIsDisconnecting;
 	private volatile boolean mShowNotification;
-	private BuilderAdapter mBuilderAdapter = new BuilderAdapter();
+	private final BuilderAdapter mBuilderAdapter = new BuilderAdapter();
 	private Handler mHandler;
 	private VpnStateService mService;
 	private final Object mServiceLock = new Object();
-	private final ServiceConnection mServiceConnection = new ServiceConnection() {
+	private final ServiceConnection mServiceConnection = new ServiceConnection()
+	{
 		@Override
 		public void onServiceDisconnected(ComponentName name)
 		{	/* since the service is local this is theoretically only called when the process is terminated */
@@ -210,20 +198,13 @@ public class CharonVpnService extends VpnService implements Runnable, VpnStateSe
 		mAppDir = getFilesDir().getAbsolutePath();
 
 		/* handler used to do changes in the main UI thread */
-		mHandler = new Handler();
+		mHandler = new Handler(getMainLooper());
 
-		mDataSource = new VpnProfileDataSource(this);
+		mDataSource = new VpnProfileSource(this);
 		mDataSource.open();
 		/* use a separate thread as main thread for charon */
 		mConnectionHandler = new Thread(this);
 		/* the thread is started when the service is bound */
-		try {
-			if(mService != null) mService.registerListener(this);
-			unbindService(mServiceConnection);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-
 		bindService(new Intent(this, VpnStateService.class),
 					mServiceConnection, Service.BIND_AUTO_CREATE);
 
@@ -313,7 +294,8 @@ public class CharonVpnService extends VpnService implements Runnable, VpnStateSe
 						SimpleFetcher.enable();
 						addNotification();
 						mBuilderAdapter.setProfile(mCurrentProfile);
-						if (initializeCharon(mBuilderAdapter, mLogFile, mAppDir, mCurrentProfile.getVpnType().has(VpnTypeFeature.BYOD)))
+						if (initializeCharon(mBuilderAdapter, mLogFile, mAppDir, mCurrentProfile.getVpnType().has(VpnTypeFeature.BYOD),
+											(mCurrentProfile.getFlags() & VpnProfile.FLAGS_IPv6_TRANSPORT) != 0))
 						{
 							Log.i(TAG, "charon started");
 
@@ -369,7 +351,7 @@ public class CharonVpnService extends VpnService implements Runnable, VpnStateSe
 	{
 		synchronized (this)
 		{
-			if (mNextProfile != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
+			if (mNextProfile != null)
 			{
 				mBuilderAdapter.setProfile(mNextProfile);
 				mBuilderAdapter.establishBlocking();
@@ -420,9 +402,22 @@ public class CharonVpnService extends VpnService implements Runnable, VpnStateSe
 			public void run()
 			{
 				mShowNotification = false;
-				stopForeground(true);
+				if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N)
+				{
+					stopForegroundCompat();
+				}
+				else
+				{
+					stopForeground(STOP_FOREGROUND_REMOVE);
+				}
 			}
 		});
+	}
+
+	@SuppressWarnings("deprecation")
+	private void stopForegroundCompat()
+	{
+		stopForeground(true);
 	}
 
 	/**
@@ -460,10 +455,10 @@ public class CharonVpnService extends VpnService implements Runnable, VpnStateSe
 			name = profile.getName();
 		}
 		NotificationCompat.Builder builder = new NotificationCompat.Builder(this, NOTIFICATION_CHANNEL)
-				.setSmallIcon(R.drawable.ic_notification)
-				.setCategory(NotificationCompat.CATEGORY_SERVICE)
-				.setVisibility(publicVersion ? NotificationCompat.VISIBILITY_PUBLIC
-											 : NotificationCompat.VISIBILITY_PRIVATE);
+			.setSmallIcon(R.drawable.ic_notification)
+			.setCategory(NotificationCompat.CATEGORY_SERVICE)
+			.setVisibility(publicVersion ? NotificationCompat.VISIBILITY_PUBLIC
+										 : NotificationCompat.VISIBILITY_PRIVATE);
 		int s = R.string.state_disabled;
 		if (error != ErrorState.NO_ERROR)
 		{
@@ -480,14 +475,17 @@ public class CharonVpnService extends VpnService implements Runnable, VpnStateSe
 					builder.setProgress(mService.getRetryTimeout(), retry, false);
 				}
 
-				//Modify intent to open main application activity instead
-				//Intent intent = new Intent(getApplicationContext(), VpnProfileControlActivity.class);
-				Intent intent = getPackageManager().getLaunchIntentForPackage("br.com.spod.spodvpnwebfilter");
+				Intent intent = new Intent(getApplicationContext(), VpnProfileControlActivity.class);
 				intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 				intent.setAction(VpnProfileControlActivity.START_PROFILE);
-				intent.putExtra(VpnProfileControlActivity.EXTRA_VPN_PROFILE_ID, profile.getUUID().toString());
+				intent.putExtra(VpnProfileControlActivity.EXTRA_VPN_PROFILE_UUID, profile.getUUID().toString());
+				int flags = PendingIntent.FLAG_UPDATE_CURRENT;
+				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+				{
+					flags |= PendingIntent.FLAG_IMMUTABLE;
+				}
 				PendingIntent pending = PendingIntent.getActivity(getApplicationContext(), 0, intent,
-																  PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+																  flags);
 				builder.addAction(R.drawable.ic_notification_connecting, getString(R.string.retry), pending);
 				add_action = true;
 			}
@@ -516,16 +514,20 @@ public class CharonVpnService extends VpnService implements Runnable, VpnStateSe
 			}
 		}
 		builder.setContentTitle(getString(s));
+
+		int flags = PendingIntent.FLAG_UPDATE_CURRENT;
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+		{
+			flags |= PendingIntent.FLAG_IMMUTABLE;
+		}
 		if (!publicVersion)
 		{
 			if (add_action)
 			{
-				//Modify intent to open main application activity instead
-				//Intent intent = new Intent(getApplicationContext(), VpnProfileControlActivity.class);
-				Intent intent = getPackageManager().getLaunchIntentForPackage("br.com.spod.spodvpnwebfilter");
+				Intent intent = new Intent(getApplicationContext(), VpnProfileControlActivity.class);
 				intent.setAction(VpnProfileControlActivity.DISCONNECT);
 				PendingIntent pending = PendingIntent.getActivity(getApplicationContext(), 0, intent,
-																  PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+																  flags);
 				builder.addAction(R.drawable.ic_notification_disconnect, getString(R.string.disconnect), pending);
 			}
 			if (error == ErrorState.NO_ERROR)
@@ -535,20 +537,19 @@ public class CharonVpnService extends VpnService implements Runnable, VpnStateSe
 			builder.setPublicVersion(buildNotification(true));
 		}
 
-		//Modify intent to open main application activity instead
-		//Intent intent = new Intent(getApplicationContext(), MainActivity.class);
-		Intent intent = getPackageManager().getLaunchIntentForPackage("br.com.spod.spodvpnwebfilter");
+		Intent intent = new Intent(getApplicationContext(), MainActivity.class);
 		PendingIntent pending = PendingIntent.getActivity(getApplicationContext(), 0, intent,
-														  PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+														  flags);
 		builder.setContentIntent(pending);
 		return builder.build();
 	}
 
 	@Override
-	public void stateChanged() {
+	public void stateChanged()
+	{
 		if (mShowNotification)
 		{
-			NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+			NotificationManager manager = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
 			manager.notify(VPN_STATE_NOTIFICATION_ID, buildNotification(false));
 		}
 	}
@@ -565,7 +566,7 @@ public class CharonVpnService extends VpnService implements Runnable, VpnStateSe
 		{
 			if (mService != null)
 			{
-			    mService.startConnection(profile);
+				mService.startConnection(profile);
 			}
 		}
 	}
@@ -806,9 +807,10 @@ public class CharonVpnService extends VpnService implements Runnable, VpnStateSe
 	 * @param logfile absolute path to the logfile
 	 * @param appdir absolute path to the data directory of the app
 	 * @param byod enable BYOD features
+	 * @param ipv6 enable IPv6 transport
 	 * @return TRUE if initialization was successful
 	 */
-	public native boolean initializeCharon(BuilderAdapter builder, String logfile, String appdir, boolean byod);
+	public native boolean initializeCharon(BuilderAdapter builder, String logfile, String appdir, boolean byod, boolean ipv6);
 
 	/**
 	 * Deinitialize charon, provided by libandroidbridge.so
@@ -830,7 +832,7 @@ public class CharonVpnService extends VpnService implements Runnable, VpnStateSe
 		private VpnService.Builder mBuilder;
 		private BuilderCache mCache;
 		private BuilderCache mEstablishedCache;
-		private PacketDropper mDropper = new PacketDropper();
+		private final PacketDropper mDropper = new PacketDropper();
 
 		public synchronized void setProfile(VpnProfile profile)
 		{
@@ -847,12 +849,20 @@ public class CharonVpnService extends VpnService implements Runnable, VpnStateSe
 			/* even though the option displayed in the system dialog says "Configure"
 			 * we just use our main Activity */
 			Context context = getApplicationContext();
-			//Modify intent to open main application activity instead
-			//Intent intent = new Intent(context, MainActivity.class);
-			Intent intent = getPackageManager().getLaunchIntentForPackage("br.com.spod.spodvpnwebfilter");
-			PendingIntent pending = PendingIntent.getActivity(context, 0, intent,
-															  PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+			Intent intent = new Intent(context, MainActivity.class);
+			int flags = PendingIntent.FLAG_UPDATE_CURRENT;
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+			{
+				flags |= PendingIntent.FLAG_IMMUTABLE;
+			}
+			PendingIntent pending = PendingIntent.getActivity(context, 0, intent, flags);
 			builder.setConfigureIntent(pending);
+
+			/* mark all VPN connections as unmetered (default changed for Android 10) */
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
+			{
+				builder.setMetered(false);
+			}
 			return builder;
 		}
 
@@ -956,7 +966,6 @@ public class CharonVpnService extends VpnService implements Runnable, VpnStateSe
 			return fd != null ? fd.detachFd() : -1;
 		}
 
-		@TargetApi(Build.VERSION_CODES.LOLLIPOP)
 		public synchronized void establishBlocking()
 		{
 			/* just choose some arbitrary values to block all traffic (except for what's configured in the profile) */
@@ -1044,9 +1053,8 @@ public class CharonVpnService extends VpnService implements Runnable, VpnStateSe
 			@Override
 			public synchronized void run()
 			{
-				try
+				try (FileInputStream plain = new FileInputStream(mFd.getFileDescriptor()))
 				{
-					FileInputStream plain = new FileInputStream(mFd.getFileDescriptor());
 					ByteBuffer packet = ByteBuffer.allocate(mCache.mMtu);
 					while (true)
 					{
@@ -1080,7 +1088,7 @@ public class CharonVpnService extends VpnService implements Runnable, VpnStateSe
 						}
 					}
 				}
-				catch (ClosedByInterruptException|InterruptedException e)
+				catch (final ClosedByInterruptException | InterruptedException e)
 				{
 					/* regular interruption */
 				}
@@ -1110,6 +1118,7 @@ public class CharonVpnService extends VpnService implements Runnable, VpnStateSe
 		private final List<InetAddress> mDnsServers = new ArrayList<>();
 		private int mMtu;
 		private boolean mIPv4Seen, mIPv6Seen, mDnsServersConfigured;
+		private ProxyInfo mProxyServer;
 
 		public BuilderCache(VpnProfile profile)
 		{
@@ -1161,6 +1170,17 @@ public class CharonVpnService extends VpnService implements Runnable, VpnStateSe
 						e.printStackTrace();
 					}
 				}
+			}
+
+			if (profile.getProxyHost() != null)
+			{
+				int port = profile.getProxyPort() != null ? profile.getProxyPort() : Constants.PROXY_PORT_DEFAULT;
+				List<String> exclusions = new ArrayList<>();
+				if (profile.getProxyExclusions() != null)
+				{
+					Collections.addAll(exclusions, profile.getProxyExclusions().split("\\s+"));
+				}
+				mProxyServer = ProxyInfo.buildDirectProxy(profile.getProxyHost(), port, exclusions);
 			}
 
 			/* set a default MTU, will be set by the daemon for regular interfaces */
@@ -1243,8 +1263,7 @@ public class CharonVpnService extends VpnService implements Runnable, VpnStateSe
 			}
 		}
 
-		@TargetApi(Build.VERSION_CODES.LOLLIPOP)
-		public void applyData(VpnService.Builder builder)
+		public void applyData(Builder builder)
 		{
 			for (IPRange address : mAddresses)
 			{
@@ -1286,7 +1305,7 @@ public class CharonVpnService extends VpnService implements Runnable, VpnStateSe
 						}
 					}
 				}
-				else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
+				else
 				{	/* allow traffic that would otherwise be blocked to bypass the VPN */
 					builder.allowFamily(OsConstants.AF_INET);
 				}
@@ -1326,7 +1345,7 @@ public class CharonVpnService extends VpnService implements Runnable, VpnStateSe
 						}
 					}
 				}
-				else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
+				else
 				{
 					builder.allowFamily(OsConstants.AF_INET6);
 				}
@@ -1336,8 +1355,7 @@ public class CharonVpnService extends VpnService implements Runnable, VpnStateSe
 				builder.addRoute("::", 0);
 			}
 			/* apply selected applications */
-			if (mSelectedApps.size() > 0 &&
-				Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
+			if (mSelectedApps.size() > 0)
 			{
 				switch (mAppHandling)
 				{
@@ -1371,6 +1389,10 @@ public class CharonVpnService extends VpnService implements Runnable, VpnStateSe
 						break;
 				}
 			}
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && mProxyServer != null)
+			{
+				builder.setHttpProxy(mProxyServer);
+			}
 			builder.setMtu(mMtu);
 		}
 
@@ -1381,11 +1403,7 @@ public class CharonVpnService extends VpnService implements Runnable, VpnStateSe
 			{
 				return false;
 			}
-			else if (addr instanceof Inet6Address)
-			{
-				return true;
-			}
-			return false;
+			return addr instanceof Inet6Address;
 		}
 	}
 

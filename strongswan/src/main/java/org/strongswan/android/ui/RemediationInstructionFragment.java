@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2013-2016 Tobias Brunner
- * HSR Hochschule fuer Technik Rapperswil
+ *
+ * Copyright (C) secunet Security Networks AG
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -15,6 +16,7 @@
 
 package org.strongswan.android.ui;
 
+import android.os.Build;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -26,6 +28,8 @@ import android.widget.TextView;
 import org.strongswan.android.R;
 import org.strongswan.android.logic.imc.RemediationInstruction;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.ListFragment;
 
 public class RemediationInstructionFragment extends ListFragment
@@ -49,13 +53,20 @@ public class RemediationInstructionFragment extends ListFragment
 	}
 
 	@Override
-	public void onActivityCreated(Bundle savedInstanceState)
+	public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState)
 	{
-		super.onActivityCreated(savedInstanceState);
+		super.onViewCreated(view, savedInstanceState);
 
 		if (savedInstanceState != null)
 		{
-			mInstruction = savedInstanceState.getParcelable(ARG_REMEDIATION_INSTRUCTION);
+			if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU)
+			{
+				mInstruction = getInstructionCompat(savedInstanceState);
+			}
+			else
+			{
+				mInstruction = savedInstanceState.getParcelable(ARG_REMEDIATION_INSTRUCTION, RemediationInstruction.class);
+			}
 		}
 		/* show dividers only between list items */
 		getListView().setHeaderDividersEnabled(false);
@@ -82,7 +93,14 @@ public class RemediationInstructionFragment extends ListFragment
 		Bundle args = getArguments();
 		if (args != null)
 		{
-			mInstruction = args.getParcelable(ARG_REMEDIATION_INSTRUCTION);
+			if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU)
+			{
+				mInstruction = getInstructionCompat(args);
+			}
+			else
+			{
+				mInstruction = args.getParcelable(ARG_REMEDIATION_INSTRUCTION, RemediationInstruction.class);
+			}
 		}
 		updateView(mInstruction);
 	}
@@ -113,5 +131,11 @@ public class RemediationInstructionFragment extends ListFragment
 			mHeader.setText("");
 			setListAdapter(null);
 		}
+	}
+
+	@SuppressWarnings("deprecation")
+	private static RemediationInstruction getInstructionCompat(Bundle bundle)
+	{
+		return bundle.getParcelable(ARG_REMEDIATION_INSTRUCTION);
 	}
 }

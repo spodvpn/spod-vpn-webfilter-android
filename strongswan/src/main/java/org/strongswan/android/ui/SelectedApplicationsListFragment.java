@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2017 Tobias Brunner
- * HSR Hochschule fuer Technik Rapperswil
+ *
+ * Copyright (C) secunet Security Networks AG
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -33,6 +34,7 @@ import org.strongswan.android.R;
 import org.strongswan.android.data.VpnProfileDataSource;
 import org.strongswan.android.ui.adapter.SelectedApplicationEntry;
 import org.strongswan.android.ui.adapter.SelectedApplicationsAdapter;
+import org.strongswan.android.utils.Utils;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -40,27 +42,34 @@ import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.SearchView;
+import androidx.core.view.MenuProvider;
 import androidx.fragment.app.ListFragment;
 import androidx.loader.app.LoaderManager;
 import androidx.loader.content.AsyncTaskLoader;
 import androidx.loader.content.Loader;
 
-public class SelectedApplicationsListFragment extends ListFragment implements LoaderManager.LoaderCallbacks<Pair<List<SelectedApplicationEntry>, List<String>>>, SearchView.OnQueryTextListener
+public class SelectedApplicationsListFragment extends ListFragment implements MenuProvider, LoaderManager.LoaderCallbacks<Pair<List<SelectedApplicationEntry>, List<String>>>, SearchView.OnQueryTextListener
 {
 	private SelectedApplicationsAdapter mAdapter;
 	private SortedSet<String> mSelection;
 
 	@Override
-	public void onActivityCreated(@Nullable Bundle savedInstanceState)
+	public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState)
 	{
-		super.onActivityCreated(savedInstanceState);
-		setHasOptionsMenu(true);
+		super.onViewCreated(view, savedInstanceState);
+		requireActivity().addMenuProvider(this, getViewLifecycleOwner());
 
-		getListView().setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
+		getListView().setClipToPadding(false);
+		Utils.applyWindowInsetsAsPaddingForLists(getListView());
+
+		final boolean readOnly = getActivity().getIntent().getBooleanExtra(VpnProfileDataSource.KEY_READ_ONLY, false);
+		getListView().setChoiceMode(readOnly ? ListView.CHOICE_MODE_NONE : ListView.CHOICE_MODE_MULTIPLE);
 
 		mAdapter = new SelectedApplicationsAdapter(getActivity());
+		mAdapter.setReadOnly(readOnly);
 		setListAdapter(mAdapter);
 		setListShown(false);
 
@@ -99,6 +108,11 @@ public class SelectedApplicationsListFragment extends ListFragment implements Lo
 	@Override
 	public void onListItemClick(ListView l, View v, int position, long id)
 	{
+		if (mAdapter.isReadOnly())
+		{
+			return;
+		}
+
 		super.onListItemClick(l, v, position, id);
 		SelectedApplicationEntry item = (SelectedApplicationEntry)getListView().getItemAtPosition(position);
 		item.setSelected(!item.isSelected());
@@ -125,17 +139,21 @@ public class SelectedApplicationsListFragment extends ListFragment implements Lo
 	}
 
 	@Override
-	public void onCreateOptionsMenu(Menu menu, MenuInflater inflater)
+	public void onCreateMenu(@NonNull Menu menu, @NonNull MenuInflater menuInflater)
 	{
 		MenuItem item = menu.add(R.string.search);
 		item.setIcon(android.R.drawable.ic_menu_search);
-		item.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+		item.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
 
 		SearchView sv = new SearchView(getActivity());
 		sv.setOnQueryTextListener(this);
 		item.setActionView(sv);
+	}
 
-		super.onCreateOptionsMenu(menu, inflater);
+	@Override
+	public boolean onMenuItemSelected(@NonNull MenuItem menuItem)
+	{
+		return false;
 	}
 
 	@Override

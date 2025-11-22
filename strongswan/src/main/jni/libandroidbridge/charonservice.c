@@ -2,7 +2,8 @@
  * Copyright (C) 2012-2020 Tobias Brunner
  * Copyright (C) 2012 Giuliano Grassi
  * Copyright (C) 2012 Ralf Sager
- * HSR Hochschule fuer Technik Rapperswil
+ *
+ * Copyright (C) secunet Security Networks AG
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -255,11 +256,14 @@ CALLBACK(bypass_single_socket_cb, void,
 }
 
 METHOD(charonservice_t, bypass_socket, bool,
-	private_charonservice_t *this, int fd, int family)
+	private_charonservice_t *this, int fd, bool track_fd)
 {
 	if (fd >= 0)
 	{
-		this->sockets->insert_last(this->sockets, (void*)(intptr_t)fd);
+		if (track_fd)
+		{
+			this->sockets->insert_last(this->sockets, (void*)(intptr_t)fd);
+		}
 		return bypass_single_socket(this, fd);
 	}
 	this->sockets->invoke_function(this->sockets, bypass_single_socket_cb, this);
@@ -479,7 +483,7 @@ static bool charonservice_register(plugin_t *plugin, plugin_feature_t *feature,
 /**
  * Set strongswan.conf options
  */
-static void set_options(char *logfile)
+static void set_options(char *logfile, jboolean ipv6)
 {
 	lib->settings->set_int(lib->settings,
 					"charon.plugins.android_log.loglevel", ANDROID_DEBUG_LEVEL);
@@ -503,6 +507,11 @@ static void set_options(char *logfile)
 					"charon.retransmit_base", ANDROID_RETRANSMIT_BASE);
 	lib->settings->set_bool(lib->settings,
 					"charon.initiator_only", TRUE);
+	/* the service currently can't handle make-before-break reauth and assumes
+	 * the old SA is deleted before the replacement and installs a special
+	 * replacement TUN device in-between */
+	lib->settings->set_bool(lib->settings,
+					"charon.make_before_break", FALSE);
 	lib->settings->set_bool(lib->settings,
 					"charon.close_ike_on_child_failure", TRUE);
 	lib->settings->set_bool(lib->settings,
@@ -516,10 +525,10 @@ static void set_options(char *logfile)
 	 * information */
 	lib->settings->set_bool(lib->settings,
 					"charon.plugins.socket-default.set_source", FALSE);
-	/* the Linux kernel does currently not support UDP encaspulation for IPv6
-	 * so lets disable IPv6 for now to avoid issues with dual-stack gateways */
+	/* the Linux kernel only supports UDP encap for IPv6 since 5.8, so let's use
+	 * IPv6 only if requested, to avoid issues with older dual-stack servers */
 	lib->settings->set_bool(lib->settings,
-					"charon.plugins.socket-default.use_ipv6", FALSE);
+					"charon.plugins.socket-default.use_ipv6", ipv6);
 
 #ifdef USE_BYOD
 	lib->settings->set_str(lib->settings,
@@ -545,6 +554,7 @@ static void charonservice_init(JNIEnv *env, jobject service, jobject builder,
 			PLUGIN_PROVIDE(CUSTOM, "kernel-ipsec"),
 		PLUGIN_CALLBACK(kernel_net_register, kernel_android_net_create),
 			PLUGIN_PROVIDE(CUSTOM, "kernel-net"),
+				PLUGIN_DEPENDS(CUSTOM, "socket"),
 		PLUGIN_CALLBACK(charonservice_register, NULL),
 			PLUGIN_PROVIDE(CUSTOM, "android-backend"),
 				PLUGIN_DEPENDS(CUSTOM, "libcharon"),
@@ -630,14 +640,35 @@ static void __attribute__ ((constructor))register_logger()
 }
 
 /**
+ * Determine the application ID of the app
+ */
+static char *get_app_id(JNIEnv *env, jobject service)
+{
+	jclass cls;
+	jmethodID method_id;
+	jstring jstr;
+	char *name = NULL;
+
+	cls = (*env)->FindClass(env, "android/content/Context");
+	method_id = (*env)->GetMethodID(env, cls, "getPackageName",
+									"()Ljava/lang/String;");
+	jstr = (*env)->CallObjectMethod(env, service, method_id);
+	if (jstr)
+	{
+		name = androidjni_convert_jstring(env, jstr);
+	}
+	return name;
+}
+
+/**
  * Initialize charon and the libraries via JNI
  */
 JNI_METHOD(CharonVpnService, initializeCharon, jboolean,
-	jobject builder, jstring jlogfile, jstring jappdir, jboolean byod)
+	jobject builder, jstring jlogfile, jstring jappdir, jboolean byod, jboolean ipv6)
 {
 	struct sigaction action;
 	struct utsname utsname;
-	char *logfile, *appdir, *plugins;
+	char *logfile, *appdir, *plugins, *app_id;
 
 	/* initialize library */
 	if (!library_init(NULL, "charon"))
@@ -655,7 +686,7 @@ JNI_METHOD(CharonVpnService, initializeCharon, jboolean,
 	/* set options before initializing other libraries that might read them */
 	logfile = androidjni_convert_jstring(env, jlogfile);
 
-	set_options(logfile);
+	set_options(logfile, ipv6);
 	free(logfile);
 
 	if (!libipsec_init())
@@ -683,10 +714,12 @@ JNI_METHOD(CharonVpnService, initializeCharon, jboolean,
 	{
 		memset(&utsname, 0, sizeof(utsname));
 	}
+	app_id = get_app_id(env, this);
 	DBG1(DBG_DMN, "+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+");
 	DBG1(DBG_DMN, "Starting IKE service (strongSwan "VERSION", %s, %s, "
-		 "%s %s, %s)", android_version_string, android_device_string,
-		  utsname.sysname, utsname.release, utsname.machine);
+		 "%s %s, %s, %s)", android_version_string, android_device_string,
+		  utsname.sysname, utsname.release, utsname.machine, app_id ?: "(unknown)");
+	free(app_id);
 
 #ifdef PLUGINS_BYOD
 	if (byod)
@@ -795,6 +828,7 @@ JNI_METHOD_P(org_strongswan_android_utils, Utils, parseInetAddressBytes, jbyteAr
 	host = host_create_from_string(str, 0);
 	if (!host)
 	{
+		library_deinit();
 		free(str);
 		return NULL;
 	}

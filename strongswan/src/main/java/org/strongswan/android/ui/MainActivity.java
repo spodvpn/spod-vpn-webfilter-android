@@ -2,7 +2,8 @@
  * Copyright (C) 2012-2018 Tobias Brunner
  * Copyright (C) 2012 Giuliano Grassi
  * Copyright (C) 2012 Ralf Sager
- * HSR Hochschule fuer Technik Rapperswil
+ *
+ * Copyright (C) secunet Security Networks AG
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -20,8 +21,6 @@ package org.strongswan.android.ui;
 import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.os.AsyncTask;
-import android.os.Build;
 import android.os.Bundle;
 import android.text.format.Formatter;
 import android.view.Menu;
@@ -29,9 +28,13 @@ import android.view.MenuItem;
 import android.widget.Toast;
 
 import org.strongswan.android.R;
+import org.strongswan.android.data.ManagedConfiguration;
+import org.strongswan.android.data.ManagedConfigurationService;
 import org.strongswan.android.data.VpnProfile;
+import org.strongswan.android.logic.StrongSwanApplication;
 import org.strongswan.android.logic.TrustedCertificateManager;
 import org.strongswan.android.ui.VpnProfileListFragment.OnVpnProfileSelectedListener;
+import org.strongswan.android.utils.Utils;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -41,6 +44,7 @@ import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDialogFragment;
+import androidx.core.view.WindowCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
@@ -57,19 +61,27 @@ public class MainActivity extends AppCompatActivity implements OnVpnProfileSelec
 
 	private static final String DIALOG_TAG = "Dialog";
 
+	private ManagedConfigurationService mManagedConfigurationService;
+
 	@Override
 	public void onCreate(Bundle savedInstanceState)
 	{
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main);
+		WindowCompat.enableEdgeToEdge(getWindow());
+		Utils.applyWindowInsetsAsMarginsForLists(findViewById(R.id.layout));
 
 		ActionBar bar = getSupportActionBar();
 		bar.setDisplayShowHomeEnabled(true);
 		bar.setDisplayShowTitleEnabled(false);
 		bar.setIcon(R.mipmap.ic_app);
 
-		/* load CA certificates in a background task */
-		new LoadCertificatesTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+		/* load CA certificates in a background thread */
+		((StrongSwanApplication)getApplication()).getExecutor().execute(() -> {
+			TrustedCertificateManager.getInstance().load();
+		});
+
+		mManagedConfigurationService = StrongSwanApplication.getInstance().getManagedConfigurationService();
 	}
 
 	@Override
@@ -82,9 +94,12 @@ public class MainActivity extends AppCompatActivity implements OnVpnProfileSelec
 	@Override
 	public boolean onPrepareOptionsMenu(Menu menu)
 	{
-		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT)
+		final MenuItem importProfile = menu.findItem(R.id.menu_import_profile);
+		if (importProfile != null)
 		{
-			menu.removeItem(R.id.menu_import_profile);
+			final ManagedConfiguration managedConfiguration = mManagedConfigurationService.getManagedConfiguration();
+			importProfile.setVisible(managedConfiguration.isAllowProfileImport());
+			importProfile.setEnabled(managedConfiguration.isAllowProfileImport());
 		}
 		return true;
 	}
@@ -92,21 +107,18 @@ public class MainActivity extends AppCompatActivity implements OnVpnProfileSelec
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item)
 	{
-		if(item.getItemId() == R.id.menu_import_profile) {
+		if (item.getItemId() == R.id.menu_import_profile) {
 			Intent intent = new Intent(this, VpnProfileImportActivity.class);
 			startActivity(intent);
 			return true;
-		}
-		else if(item.getItemId() == R.id.menu_manage_certs) {
+		} else if (item.getItemId() == R.id.menu_manage_certs) {
 			Intent certIntent = new Intent(this, TrustedCertificatesActivity.class);
 			startActivity(certIntent);
 			return true;
-		}
-		else if(item.getItemId() == R.id.menu_crl_cache) {
+		} else if (item.getItemId() == R.id.menu_crl_cache) {
 			clearCRLs();
 			return true;
-		}
-		else if(item.getItemId() == R.id.menu_show_log) {
+		} else if (item.getItemId() == R.id.menu_show_log) {
 			Intent logIntent = new Intent(this, LogActivity.class);
 			startActivity(logIntent);
 			return true;
@@ -114,36 +126,8 @@ public class MainActivity extends AppCompatActivity implements OnVpnProfileSelec
 			Intent settingsIntent = new Intent(this, SettingsActivity.class);
 			startActivity(settingsIntent);
 			return true;
-		}
-		else
+		} else
 			return super.onOptionsItemSelected(item);
-
-		/* switch cannot be used with resource IDs in an Android library
-		switch (item.getItemId())
-		{
-			case R.id.menu_import_profile:
-				Intent intent = new Intent(this, VpnProfileImportActivity.class);
-				startActivity(intent);
-				return true;
-			case R.id.menu_manage_certs:
-				Intent certIntent = new Intent(this, TrustedCertificatesActivity.class);
-				startActivity(certIntent);
-				return true;
-			case R.id.menu_crl_cache:
-				clearCRLs();
-				return true;
-			case R.id.menu_show_log:
-				Intent logIntent = new Intent(this, LogActivity.class);
-				startActivity(logIntent);
-				return true;
-			case R.id.menu_settings:
-				Intent settingsIntent = new Intent(this, SettingsActivity.class);
-				startActivity(settingsIntent);
-				return true;
-			default:
-				return super.onOptionsItemSelected(item);
-		}
-		*/
 	}
 
 	@Override
@@ -151,7 +135,7 @@ public class MainActivity extends AppCompatActivity implements OnVpnProfileSelec
 	{
 		Intent intent = new Intent(this, VpnProfileControlActivity.class);
 		intent.setAction(VpnProfileControlActivity.START_PROFILE);
-		intent.putExtra(VpnProfileControlActivity.EXTRA_VPN_PROFILE_ID, profile.getUUID().toString());
+		intent.putExtra(VpnProfileControlActivity.EXTRA_VPN_PROFILE_UUID, profile.getUUID().toString());
 		startActivity(intent);
 	}
 
@@ -183,18 +167,6 @@ public class MainActivity extends AppCompatActivity implements OnVpnProfileSelec
 		CRLCacheDialog dialog = new CRLCacheDialog();
 		dialog.setArguments(args);
 		dialog.show(this.getSupportFragmentManager(), DIALOG_TAG);
-	}
-
-	/**
-	 * Class that loads the cached CA certificates.
-	 */
-	private class LoadCertificatesTask extends AsyncTask<Void, Void, TrustedCertificateManager>
-	{
-		@Override
-		protected TrustedCertificateManager doInBackground(Void... params)
-		{
-			return TrustedCertificateManager.getInstance().load();
-		}
 	}
 
 	/**
@@ -232,26 +204,26 @@ public class MainActivity extends AppCompatActivity implements OnVpnProfileSelec
 			size = Formatter.formatFileSize(getActivity(), s);
 
 			AlertDialog.Builder builder = new AlertDialog.Builder(getActivity())
-					.setTitle(R.string.clear_crl_cache_title)
-					.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener()
+				.setTitle(R.string.clear_crl_cache_title)
+				.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener()
+				{
+					@Override
+					public void onClick(DialogInterface dialog, int which)
 					{
-						@Override
-						public void onClick(DialogInterface dialog, int which)
-						{
-							dismiss();
-						}
-					})
-					.setPositiveButton(R.string.clear, new DialogInterface.OnClickListener()
+						dismiss();
+					}
+				})
+				.setPositiveButton(R.string.clear, new DialogInterface.OnClickListener()
+				{
+					@Override
+					public void onClick(DialogInterface dialog, int whichButton)
 					{
-						@Override
-						public void onClick(DialogInterface dialog, int whichButton)
+						for (String file : list)
 						{
-							for (String file : list)
-							{
-								getActivity().deleteFile(file);
-							}
+							getActivity().deleteFile(file);
 						}
-					});
+					}
+				});
 			builder.setMessage(getActivity().getResources().getQuantityString(R.plurals.clear_crl_cache_msg, list.size(), list.size(), size));
 			return builder.create();
 		}

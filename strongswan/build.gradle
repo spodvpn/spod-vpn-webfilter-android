@@ -1,38 +1,31 @@
 apply plugin: 'com.android.library'
 
 android {
-    defaultConfig {
-        compileSdk 35
-    }
-    ndkVersion '21.0.6113669'
+    namespace = 'org.strongswan.android'
 
     defaultConfig {
-        minSdkVersion 15
-        targetSdkVersion 35
+        compileSdk = 36
+        minSdkVersion 21
+        targetSdkVersion 36
+        externalNativeBuild {
+            ndkBuild {
+                arguments '-j' + Runtime.runtime.availableProcessors()
+            }
+        }
     }
 
-    sourceSets.main {
-        // disables the default ndk-build call (with on-the-fly Android.mk files)
-        jniLibs.srcDir 'src/main/libs'
-    }
+    ndkVersion = "27.3.13750724"
 
-    tasks.register('buildNative', Exec) {
-        workingDir 'src/main/jni'
-        commandLine "${android.ndkDirectory}/ndk-build", '-j', Runtime.runtime.availableProcessors()
-    }
-
-    tasks.register('cleanNative', Exec) {
-        workingDir 'src/main/jni'
-        commandLine "${android.ndkDirectory}/ndk-build", 'clean'
+    externalNativeBuild {
+        ndkBuild {
+            path 'src/main/jni/Android.mk'
+        }
     }
 
     tasks.withType(JavaCompile).configureEach {
         compileTask ->
-            compileTask.dependsOn buildNative
             options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
     }
-
-    clean.dependsOn 'cleanNative'
 
     buildTypes {
         release {
@@ -44,18 +37,16 @@ android {
         targetCompatibility 1.8
         sourceCompatibility 1.8
     }
-    namespace 'org.strongswan.android'
 }
 
 dependencies {
-    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'androidx.appcompat:appcompat:1.7.1'
+    implementation 'androidx.core:core:1.17.0'
+    implementation 'androidx.lifecycle:lifecycle-process:2.9.4'
     implementation 'androidx.preference:preference:1.2.1'
-    implementation 'androidx.legacy:legacy-support-v4:1.0.0'
-    implementation 'com.google.android.material:material:1.11.0'
-
+    implementation 'androidx.localbroadcastmanager:localbroadcastmanager:1.1.0'
+    implementation 'com.google.android.material:material:1.13.0'
     testImplementation 'junit:junit:4.13.2'
-    testImplementation 'org.mockito:mockito-core:2.28.2'
-    testImplementation 'org.powermock:powermock-core:2.0.2'
-    testImplementation 'org.powermock:powermock-module-junit4:2.0.2'
-    testImplementation 'org.powermock:powermock-api-mockito2:2.0.2'
+    testImplementation 'org.assertj:assertj-core:3.27.6'
+    testImplementation 'org.mockito:mockito-core:5.20.0'
 }

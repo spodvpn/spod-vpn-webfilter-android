@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2013 Tobias Brunner
- * HSR Hochschule fuer Technik Rapperswil
+ *
+ * Copyright (C) secunet Security Networks AG
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -16,6 +17,7 @@
 package org.strongswan.android.ui;
 
 import android.content.Context;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ListView;
@@ -26,6 +28,8 @@ import org.strongswan.android.ui.adapter.RemediationInstructionAdapter;
 
 import java.util.ArrayList;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.ListFragment;
 
 public class RemediationInstructionsFragment extends ListFragment
@@ -46,13 +50,20 @@ public class RemediationInstructionsFragment extends ListFragment
 	}
 
 	@Override
-	public void onActivityCreated(Bundle savedInstanceState)
+	public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState)
 	{
-		super.onActivityCreated(savedInstanceState);
+		super.onViewCreated(view, savedInstanceState);
 
 		if (savedInstanceState != null)
 		{
-			mInstructions = savedInstanceState.getParcelableArrayList(EXTRA_REMEDIATION_INSTRUCTIONS);
+			if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU)
+			{
+				mInstructions = getInstructionsCompat(savedInstanceState);
+			}
+			else
+			{
+				mInstructions = savedInstanceState.getParcelableArrayList(EXTRA_REMEDIATION_INSTRUCTIONS, RemediationInstruction.class);
+			}
 			mCurrentPosition = savedInstanceState.getInt(KEY_POSITION);
 		}
 	}
@@ -81,7 +92,7 @@ public class RemediationInstructionsFragment extends ListFragment
 	{
 		super.onStart();
 
-		boolean two_pane = getFragmentManager().findFragmentById(R.id.remediation_instruction_fragment) != null;
+		boolean two_pane = getParentFragmentManager().findFragmentById(R.id.remediation_instruction_fragment) != null;
 		if (two_pane)
 		{	/* two-pane layout, make list items selectable */
 			getListView().setChoiceMode(ListView.CHOICE_MODE_SINGLE);
@@ -90,7 +101,14 @@ public class RemediationInstructionsFragment extends ListFragment
 		Bundle args = getArguments();
 		if (mInstructions == null && args != null)
 		{
-			mInstructions = args.getParcelableArrayList(EXTRA_REMEDIATION_INSTRUCTIONS);
+			if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU)
+			{
+				mInstructions = getInstructionsCompat(args);
+			}
+			else
+			{
+				mInstructions = args.getParcelableArrayList(EXTRA_REMEDIATION_INSTRUCTIONS, RemediationInstruction.class);
+			}
 		}
 		updateView(mInstructions);
 
@@ -119,5 +137,11 @@ public class RemediationInstructionsFragment extends ListFragment
 		}
 		mInstructions = instructions;
 		mAdapter.setData(mInstructions);
+	}
+
+	@SuppressWarnings("deprecation")
+	public static ArrayList<RemediationInstruction> getInstructionsCompat(Bundle bundle)
+	{
+		 return bundle.getParcelableArrayList(RemediationInstructionsFragment.EXTRA_REMEDIATION_INSTRUCTIONS);
 	}
 }

@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    Copyright (C) 2016 Tobias Brunner
-    HSR Hochschule fuer Technik Rapperswil
+    Copyright (C) 2025 Tobias Brunner
+
+    Copyright (C) secunet Security Networks AG
 
     This program is free software; you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by the
@@ -13,12 +14,9 @@
     or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
     for more details.
 -->
-<resources>
-
-    <style name="ApplicationTheme" parent="ApplicationTheme.Base">
-    </style>
-
-    <style name="AlertDialogTheme" parent="AlertDialogTheme.Base">
-    </style>
-
-</resources>
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/fragment_container"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true" />

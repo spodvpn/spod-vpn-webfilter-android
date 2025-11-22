@@ -27,6 +27,7 @@ import com.google.common.collect.ImmutableList;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.strongswan.android.data.VpnProfileDataSource;
+import org.strongswan.android.data.VpnProfileSource;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -183,7 +184,7 @@ public class StoreFragment extends Fragment implements PurchasesUpdatedListener,
                     }
 
                     //Check profile
-                    VpnProfileDataSource mDataSource = new VpnProfileDataSource(mainActivity);
+                    VpnProfileDataSource mDataSource = new VpnProfileSource(mainActivity);
                     SharedPreferences sharedPreferences = mainActivity.getSharedPreferences(getString(R.string.preferences_key), Context.MODE_PRIVATE);
                     String username = sharedPreferences.getString(getString(R.string.preferences_username), "");
                     mDataSource.open();

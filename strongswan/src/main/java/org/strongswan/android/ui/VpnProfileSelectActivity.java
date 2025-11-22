@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2012-2018 Tobias Brunner
- * HSR Hochschule fuer Technik Rapperswil
+ *
+ * Copyright (C) secunet Security Networks AG
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -21,11 +22,13 @@ import android.os.Bundle;
 import org.strongswan.android.R;
 import org.strongswan.android.data.VpnProfile;
 import org.strongswan.android.ui.VpnProfileListFragment.OnVpnProfileSelectedListener;
+import org.strongswan.android.utils.Utils;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.pm.ShortcutInfoCompat;
 import androidx.core.content.pm.ShortcutManagerCompat;
 import androidx.core.graphics.drawable.IconCompat;
+import androidx.core.view.WindowCompat;
 
 public class VpnProfileSelectActivity extends AppCompatActivity implements OnVpnProfileSelectedListener
 {
@@ -34,6 +37,8 @@ public class VpnProfileSelectActivity extends AppCompatActivity implements OnVpn
 	{
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.vpn_profile_select);
+		WindowCompat.enableEdgeToEdge(getWindow());
+		Utils.applyWindowInsetsAsMarginsForLists(findViewById(R.id.layout));
 
 		/* we should probably return a result also if the user clicks the back
 		 * button before selecting a profile */
@@ -44,7 +49,7 @@ public class VpnProfileSelectActivity extends AppCompatActivity implements OnVpn
 	public void onVpnProfileSelected(VpnProfile profile)
 	{
 		Intent shortcut = new Intent(VpnProfileControlActivity.START_PROFILE);
-		shortcut.putExtra(VpnProfileControlActivity.EXTRA_VPN_PROFILE_ID, profile.getUUID().toString());
+		shortcut.putExtra(VpnProfileControlActivity.EXTRA_VPN_PROFILE_UUID, profile.getUUID().toString());
 
 		ShortcutInfoCompat.Builder builder = new ShortcutInfoCompat.Builder(this, profile.getUUID().toString());
 		builder.setIntent(shortcut);

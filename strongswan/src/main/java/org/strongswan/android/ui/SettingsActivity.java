@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2018 Tobias Brunner
- * HSR Hochschule fuer Technik Rapperswil
+ *
+ * Copyright (C) secunet Security Networks AG
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -18,7 +19,10 @@ package org.strongswan.android.ui;
 import android.os.Bundle;
 import android.view.MenuItem;
 
+import org.strongswan.android.R;
+
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.WindowCompat;
 
 public class SettingsActivity extends AppCompatActivity
 {
@@ -27,12 +31,18 @@ public class SettingsActivity extends AppCompatActivity
 	protected void onCreate(Bundle savedInstanceState)
 	{
 		super.onCreate(savedInstanceState);
+		setContentView(R.layout.settings_activity);
+		WindowCompat.enableEdgeToEdge(getWindow());
 
 		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
-		getSupportFragmentManager().beginTransaction()
-							.replace(android.R.id.content, new SettingsFragment())
-							.commit();
+		if (savedInstanceState == null)
+		{
+			getSupportFragmentManager().beginTransaction()
+				.setReorderingAllowed(true)
+				.add(R.id.fragment_container, SettingsFragment.class, null)
+				.commit();
+		}
 	}
 
 	@Override

@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2012-2019 Tobias Brunner
- * HSR Hochschule fuer Technik Rapperswil
+ *
+ * Copyright (C) secunet Security Networks AG
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -21,7 +22,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.ConnectivityManager;
 import android.net.Network;
-import android.net.NetworkInfo;
 import android.net.NetworkRequest;
 import android.os.Build;
 
@@ -96,11 +96,7 @@ public class NetworkManager extends BroadcastReceiver implements Runnable
 	private void registerLegacyReceiver()
 	{
 		/* deprecated since API level 28 */
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-			mContext.registerReceiver(this, new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION), Context.RECEIVER_EXPORTED);
-		} else {
-			mContext.registerReceiver(this, new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION));
-		}
+		mContext.registerReceiver(this, new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION));
 	}
 
 	public void Unregister()
@@ -130,10 +126,12 @@ public class NetworkManager extends BroadcastReceiver implements Runnable
 		}
 	}
 
+	@SuppressWarnings("deprecation")
 	public boolean isConnected()
 	{
+		/* deprecated since API level 29 */
 		ConnectivityManager cm = (ConnectivityManager)mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
-		NetworkInfo info = null;
+		android.net.NetworkInfo info = null;
 		if (cm != null)
 		{
 			info = cm.getActiveNetworkInfo();

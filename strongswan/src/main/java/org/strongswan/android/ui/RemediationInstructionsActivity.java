@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2013 Tobias Brunner
- * HSR Hochschule fuer Technik Rapperswil
+ *
+ * Copyright (C) secunet Security Networks AG
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -17,6 +18,8 @@ package org.strongswan.android.ui;
 
 import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.WindowCompat;
+
 import android.view.MenuItem;
 
 import org.strongswan.android.R;
@@ -32,6 +35,7 @@ public class RemediationInstructionsActivity extends AppCompatActivity implement
 	{
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.remediation_instructions);
+		WindowCompat.enableEdgeToEdge(getWindow());
 		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
 		if (savedInstanceState != null)
@@ -42,7 +46,16 @@ public class RemediationInstructionsActivity extends AppCompatActivity implement
 		if (frag != null)
 		{	/* two-pane layout, update fragment */
 			Bundle extras = getIntent().getExtras();
-			ArrayList<RemediationInstruction> list = extras.getParcelableArrayList(RemediationInstructionsFragment.EXTRA_REMEDIATION_INSTRUCTIONS);
+			ArrayList<RemediationInstruction> list = null;
+			if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.TIRAMISU)
+			{
+				list = RemediationInstructionsFragment.getInstructionsCompat(extras);
+			}
+			else
+			{
+				list = extras.getParcelableArrayList(RemediationInstructionsFragment.EXTRA_REMEDIATION_INSTRUCTIONS,
+													 RemediationInstruction.class);
+			}
 			frag.updateView(list);
 		}
 		else

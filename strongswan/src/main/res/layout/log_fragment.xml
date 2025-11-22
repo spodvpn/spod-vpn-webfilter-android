@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
     Copyright (C) 2012-2018 Tobias Brunner
-    HSR Hochschule fuer Technik Rapperswil
+
+    Copyright (C) secunet Security Networks AG
 
     This program is free software; you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by the
@@ -13,23 +14,24 @@
     or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
     for more details.
 -->
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical" >
+    android:paddingBottom="0dp"
+    android:paddingTop="5dp"
+    android:paddingStart="5dp"
+    android:paddingEnd="5dp" >
 
     <ListView
         android:id="@+id/log"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_margin="10dp"
         android:dividerHeight="0dp"
         android:divider="@null"
         android:fadeScrollbars="false"
         android:scrollbarFadeDuration="0"
         android:scrollbarAlwaysDrawVerticalTrack="true"
-        android:transcriptMode="normal">
+        android:transcriptMode="normal"
+        android:clipToPadding="false" />
 
-    </ListView>
-
-</LinearLayout>
+</FrameLayout>
