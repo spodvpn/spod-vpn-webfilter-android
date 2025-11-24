@@ -12,6 +12,7 @@ import android.widget.TextView;
 
 import org.strongswan.android.data.VpnProfile;
 import org.strongswan.android.data.VpnProfileDataSource;
+import org.strongswan.android.data.VpnProfileSource;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -56,7 +57,7 @@ public class MoreRecyclerViewAdapter extends RecyclerView.Adapter<RecyclerView.V
         SharedPreferences sharedPreferences = context.getSharedPreferences(context.getString(R.string.preferences_key), Context.MODE_PRIVATE);
         UUID uuid = UUID.nameUUIDFromBytes(Objects.requireNonNull(sharedPreferences.getString(context.getString(R.string.preferences_username), "")).getBytes());
 
-        VpnProfileDataSource mDataSource = new VpnProfileDataSource(context);
+        VpnProfileDataSource mDataSource = new VpnProfileSource(context);
         mDataSource.open();
         VpnProfile profile = mDataSource.getVpnProfile(uuid);
         if(profile != null && profile.getUsername() != null) username = profile.getUsername();

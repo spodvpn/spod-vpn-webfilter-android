@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2012 Tobias Brunner
- * HSR Hochschule fuer Technik Rapperswil
+ *
+ * Copyright (C) secunet Security Networks AG
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -25,10 +26,12 @@ import android.widget.Toast;
 import org.strongswan.android.R;
 import org.strongswan.android.data.LogContentProvider;
 import org.strongswan.android.logic.CharonVpnService;
+import org.strongswan.android.utils.Utils;
 
 import java.io.File;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.WindowCompat;
 
 public class LogActivity extends AppCompatActivity
 {
@@ -37,6 +40,8 @@ public class LogActivity extends AppCompatActivity
 	{
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.log_activity);
+		WindowCompat.enableEdgeToEdge(getWindow());
+		Utils.applyWindowInsetsAsMarginsForLists(findViewById(R.id.layout));
 
 		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 	}
@@ -51,25 +56,20 @@ public class LogActivity extends AppCompatActivity
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item)
 	{
-		if(item.getItemId() == android.R.id.home) {
+		if (item.getItemId() == android.R.id.home) {
 			finish();
 			return true;
-		}
-		else if(item.getItemId() == R.id.menu_send_log) {
+		} else if (item.getItemId() == R.id.menu_send_log) {
 			File logfile = new File(getFilesDir(), CharonVpnService.LOG_FILE);
-			if (!logfile.exists() || logfile.length() == 0)
-			{
+			if (!logfile.exists() || logfile.length() == 0) {
 				Toast.makeText(this, getString(R.string.empty_log), Toast.LENGTH_SHORT).show();
 				return true;
 			}
 
 			String version = "";
-			try
-			{
+			try {
 				version = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
-			}
-			catch (NameNotFoundException e)
-			{
+			} catch (NameNotFoundException e) {
 				e.printStackTrace();
 			}
 
@@ -81,40 +81,6 @@ public class LogActivity extends AppCompatActivity
 			startActivity(Intent.createChooser(intent, getString(R.string.send_log)));
 			return true;
 		}
-
-		/* switch statement cannot be used with resources in an Android library
-		switch (item.getItemId())
-		{
-			case android.R.id.home:
-				finish();
-				return true;
-			case R.id.menu_send_log:
-				File logfile = new File(getFilesDir(), CharonVpnService.LOG_FILE);
-				if (!logfile.exists() || logfile.length() == 0)
-				{
-					Toast.makeText(this, getString(R.string.empty_log), Toast.LENGTH_SHORT).show();
-					return true;
-				}
-
-				String version = "";
-				try
-				{
-					version = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
-				}
-				catch (NameNotFoundException e)
-				{
-					e.printStackTrace();
-				}
-
-				Intent intent = new Intent(Intent.ACTION_SEND);
-				intent.putExtra(Intent.EXTRA_EMAIL, new String[]{MainActivity.CONTACT_EMAIL});
-				intent.putExtra(Intent.EXTRA_SUBJECT, String.format(getString(R.string.log_mail_subject), version));
-				intent.setType("text/plain");
-				intent.putExtra(Intent.EXTRA_STREAM, LogContentProvider.createContentUri());
-				startActivity(Intent.createChooser(intent, getString(R.string.send_log)));
-				return true;
-		}
-		 */
 		return super.onOptionsItemSelected(item);
 	}
 }

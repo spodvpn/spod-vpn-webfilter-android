@@ -5,9 +5,9 @@ include $(CLEAR_VARS)
 # MainActivity.java)
 strongswan_USE_BYOD := false
 
-strongswan_CHARON_PLUGINS := android-log openssl fips-prf random nonce pubkey \
-	chapoly curve25519 pkcs1 pkcs8 pem xcbc hmac socket-default revocation \
-	eap-identity eap-mschapv2 eap-md5 eap-gtc eap-tls x509
+strongswan_CHARON_PLUGINS := android-log socket-default openssl nonce \
+	pkcs1 pem x509 xcbc kdf revocation \
+	eap-identity eap-mschapv2 eap-md5 eap-gtc eap-tls
 
 ifneq ($(strongswan_USE_BYOD),)
 strongswan_BYOD_PLUGINS := eap-ttls eap-tnc tnc-imc tnc-tnccs tnccs-20
@@ -21,7 +21,7 @@ strongswan_DIR := ../../../../strongswan-src/strongswan
 
 # includes
 strongswan_PATH := $(LOCAL_PATH)/$(strongswan_DIR)
-openssl_PATH := $(LOCAL_PATH)/openssl/src/include
+openssl_PATH := $(LOCAL_PATH)/openssl/include
 
 include $(strongswan_PATH)/Android.common.mk
 
@@ -49,6 +49,7 @@ strongswan_CFLAGS := \
 	-DHAVE_IPSEC_MODE_BEET \
 	-DHAVE_IPSEC_DIR_FWD \
 	-DHAVE_IN6ADDR_ANY \
+	-DHAVE_IN6_PKTINFO \
 	-DHAVE_NETINET_IP6_H \
 	-DCONFIG_H_INCLUDED \
 	-DMONOLITHIC \

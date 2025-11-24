@@ -1,8 +1,9 @@
 /*
- * Copyright (C) 2010-2018 Tobias Brunner
+ * Copyright (C) 2010-2020 Tobias Brunner
  * Copyright (C) 2012 Giuliano Grassi
  * Copyright (C) 2012 Ralf Sager
- * HSR Hochschule fuer Technik Rapperswil
+ *
+ * Copyright (C) secunet Security Networks AG
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -84,19 +85,14 @@ struct private_android_service_t {
 	bool use_dns_proxy;
 };
 
-/**
- * Outbound callback
- */
-static void send_esp(void *data, esp_packet_t *packet)
+CALLBACK(send_esp, void,
+	void *data, esp_packet_t *packet, bool encap)
 {
 	charon->sender->send_no_marker(charon->sender, (packet_t*)packet);
 }
 
-/**
- * Inbound callback
- */
-static void deliver_plain(private_android_service_t *this,
-						  ip_packet_t *packet)
+CALLBACK(deliver_plain, void,
+	private_android_service_t *this, ip_packet_t *packet)
 {
 	chunk_t encoding;
 	ssize_t len;
@@ -121,10 +117,8 @@ static void deliver_plain(private_android_service_t *this,
 	packet->destroy(packet);
 }
 
-/**
- * Receiver callback
- */
-static void receiver_esp_cb(void *data, packet_t *packet)
+CALLBACK(receiver_esp_cb, void,
+	void *data, packet_t *packet)
 {
 	esp_packet_t *esp_packet;
 
@@ -258,6 +252,41 @@ static bool add_routes(vpnservice_builder_t *builder, child_sa_t *child_sa)
 }
 
 /**
+ * Add DNS servers to the builder
+ */
+static bool add_dns_servers(vpnservice_builder_t *builder, ike_sa_t *ike_sa)
+{
+	enumerator_t *enumerator;
+	configuration_attribute_type_t type;
+	chunk_t data;
+	bool handled;
+	host_t *dns;
+
+	enumerator = ike_sa->create_attribute_enumerator(ike_sa);
+	while (enumerator->enumerate(enumerator, &type, &data, &handled))
+	{
+		switch (type)
+		{
+			case INTERNAL_IP4_DNS:
+				dns = host_create_from_chunk(AF_INET, data, 0);
+				break;
+			case INTERNAL_IP6_DNS:
+				dns = host_create_from_chunk(AF_INET6, data, 0);
+				break;
+			default:
+				continue;
+		}
+		if (dns && !dns->is_anyaddr(dns))
+		{
+			builder->add_dns(builder, dns);
+		}
+		DESTROY_IF(dns);
+	}
+	enumerator->destroy(enumerator);
+	return TRUE;
+}
+
+/**
  * Setup a new TUN device for the supplied SAs, also queues a job that
  * reads packets from this device.
  * Additional information such as DNS servers are gathered in appropriate
@@ -297,7 +326,8 @@ static bool setup_tun_device(private_android_service_t *this,
 		DBG1(DBG_DMN, "setting up TUN device failed, no virtual IP found");
 		return FALSE;
 	}
-	if (!add_routes(builder, child_sa) ||
+	if (!add_dns_servers(builder, ike_sa) ||
+		!add_routes(builder, child_sa) ||
 		!builder->set_mtu(builder, this->mtu))
 	{
 		return FALSE;
@@ -322,18 +352,14 @@ static bool setup_tun_device(private_android_service_t *this,
 
 	if (!already_registered)
 	{
-		charon->receiver->add_esp_cb(charon->receiver,
-								(receiver_esp_cb_t)receiver_esp_cb, NULL);
-		ipsec->processor->register_inbound(ipsec->processor,
-									  (ipsec_inbound_cb_t)deliver_plain, this);
-		ipsec->processor->register_outbound(ipsec->processor,
-									   (ipsec_outbound_cb_t)send_esp, NULL);
-		this->dns_proxy->register_cb(this->dns_proxy,
-								(dns_proxy_response_cb_t)deliver_plain, this);
+		charon->receiver->add_esp_cb(charon->receiver, receiver_esp_cb, NULL);
+		ipsec->processor->register_inbound(ipsec->processor, deliver_plain, this);
+		ipsec->processor->register_outbound(ipsec->processor, send_esp, NULL);
+		this->dns_proxy->register_cb(this->dns_proxy, deliver_plain, this);
 
 		lib->processor->queue_job(lib->processor,
 			(job_t*)callback_job_create((callback_job_cb_t)handle_plain, this,
-									NULL, (callback_job_cancel_t)return_false));
+									NULL, callback_job_cancel_thread));
 	}
 	return TRUE;
 }
@@ -385,14 +411,10 @@ static void close_tun_device(private_android_service_t *this)
 	this->tunfd = -1;
 	this->lock->unlock(this->lock);
 
-	this->dns_proxy->unregister_cb(this->dns_proxy,
-								(dns_proxy_response_cb_t)deliver_plain);
-	ipsec->processor->unregister_outbound(ipsec->processor,
-										 (ipsec_outbound_cb_t)send_esp);
-	ipsec->processor->unregister_inbound(ipsec->processor,
-										(ipsec_inbound_cb_t)deliver_plain);
-	charon->receiver->del_esp_cb(charon->receiver,
-								(receiver_esp_cb_t)receiver_esp_cb);
+	this->dns_proxy->unregister_cb(this->dns_proxy, deliver_plain);
+	ipsec->processor->unregister_outbound(ipsec->processor, send_esp);
+	ipsec->processor->unregister_inbound(ipsec->processor, deliver_plain);
+	charon->receiver->del_esp_cb(charon->receiver, receiver_esp_cb);
 	close(tunfd);
 }
 
@@ -403,7 +425,7 @@ CALLBACK(terminate, job_requeue_t,
 	uint32_t *id)
 {
 	charon->controller->terminate_ike(charon->controller, *id, FALSE,
-									  controller_cb_empty, NULL, 0);
+									  controller_cb_empty, NULL, LEVEL_SILENT, 0);
 	return JOB_REQUEUE_NONE;
 }
 
@@ -578,7 +600,7 @@ METHOD(listener_t, alert, bool,
 				lib->processor->queue_job(lib->processor,
 					(job_t*)callback_job_create_with_prio(
 						(callback_job_cb_t)reestablish, id, free,
-						(callback_job_cancel_t)return_false, JOB_PRIO_HIGH));
+						callback_job_cancel_thread, JOB_PRIO_HIGH));
 				break;
 			}
 			case ALERT_PEER_INIT_UNREACHABLE:
@@ -597,7 +619,7 @@ METHOD(listener_t, alert, bool,
 					lib->processor->queue_job(lib->processor,
 						(job_t*)callback_job_create_with_prio(
 							(callback_job_cb_t)terminate, id, free,
-							(callback_job_cancel_t)return_false, JOB_PRIO_HIGH));
+							callback_job_cancel_thread, JOB_PRIO_HIGH));
 					stay_registered = FALSE;
 				}
 				else
@@ -744,7 +766,7 @@ static job_requeue_t initiate(private_android_service_t *this)
 	auth_cfg_t *auth;
 	ike_cfg_create_t ike = {
 		.version = IKEV2,
-		.local = "0.0.0.0",
+		.local = "",
 		.local_port = charon->socket->get_port(charon->socket, FALSE),
 		.force_encap = TRUE,
 		.fragmentation = FRAGMENTATION_YES,
@@ -765,15 +787,14 @@ static job_requeue_t initiate(private_android_service_t *this)
 			},
 		},
 		.mode = MODE_TUNNEL,
-		.dpd_action = ACTION_RESTART,
-		.close_action = ACTION_RESTART,
+		.dpd_action = ACTION_START,
+		.close_action = ACTION_START,
 	};
 	char *type, *remote_id;
 
-	if (android_sdk_version >= ANDROID_LOLLIPOP)
-	{   /* only try once and notify the GUI on Android 5+ where we have a blocking TUN device */
-		peer.keyingtries = 1;
-	}
+	/* only try once and notify the GUI since Android 5+ where we have a
+	 * blocking TUN device */
+	peer.keyingtries = 1;
 
 	ike.remote = this->settings->get_str(this->settings, "connection.server",
 										 NULL);
@@ -875,25 +896,20 @@ static job_requeue_t initiate(private_android_service_t *this)
 	/* get us an IKE_SA */
 	ike_sa = charon->ike_sa_manager->checkout_by_config(charon->ike_sa_manager,
 														peer_cfg);
+	peer_cfg->destroy(peer_cfg);
 	if (!ike_sa)
 	{
-		peer_cfg->destroy(peer_cfg);
 		charonservice->update_status(charonservice,
 									 CHARONSERVICE_GENERIC_ERROR);
 		return JOB_REQUEUE_NONE;
 	}
-	if (!ike_sa->get_peer_cfg(ike_sa))
-	{
-		ike_sa->set_peer_cfg(ike_sa, peer_cfg);
-	}
-	peer_cfg->destroy(peer_cfg);
 
 	/* store the IKE_SA so we can track its progress */
 	this->ike_sa = ike_sa;
 
 	/* get an additional reference because initiate consumes one */
 	child_cfg->get_ref(child_cfg);
-	if (ike_sa->initiate(ike_sa, child_cfg, 0, NULL, NULL) != SUCCESS)
+	if (ike_sa->initiate(ike_sa, child_cfg, NULL) != SUCCESS)
 	{
 		DBG1(DBG_CFG, "failed to initiate tunnel");
 		charon->ike_sa_manager->checkin_and_destroy(charon->ike_sa_manager,

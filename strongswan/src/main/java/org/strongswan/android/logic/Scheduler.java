@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2020 Tobias Brunner
- * HSR Hochschule fuer Technik Rapperswil
+ *
+ * Copyright (C) secunet Security Networks AG
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -46,9 +47,12 @@ public class Scheduler extends BroadcastReceiver
 
 		IntentFilter filter = new IntentFilter();
 		filter.addAction(EXECUTE_JOB);
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-			mContext.registerReceiver(this, filter, Context.RECEIVER_EXPORTED);
-		} else {
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
+		{
+			mContext.registerReceiver(this, filter, Context.RECEIVER_NOT_EXPORTED);
+		}
+		else
+		{
 			mContext.registerReceiver(this, filter);
 		}
 	}
@@ -82,17 +86,17 @@ public class Scheduler extends BroadcastReceiver
 	 *
 	 * @return pending intent
 	 */
-	@SuppressLint("UnspecifiedImmutableFlag")
 	private PendingIntent createIntent()
 	{
 		/* using component/class doesn't work with dynamic broadcast receivers */
 		Intent intent = new Intent(EXECUTE_JOB);
 		intent.setPackage(mContext.getPackageName());
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-			return PendingIntent.getBroadcast(mContext, 0, intent, PendingIntent.FLAG_IMMUTABLE);
-		} else {
-			return PendingIntent.getBroadcast(mContext, 0, intent, 0);
+		int flags = 0;
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+		{
+			flags |= PendingIntent.FLAG_IMMUTABLE;
 		}
+		return PendingIntent.getBroadcast(mContext, 0, intent, flags);
 	}
 
 	/**

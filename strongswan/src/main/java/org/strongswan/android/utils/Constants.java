@@ -1,6 +1,7 @@
 /*
- * Copyright (C) 2016-2020 Tobias Brunner
- * HSR Hochschule fuer Technik Rapperswil
+ * Copyright (C) 2016-2025 Tobias Brunner
+ *
+ * Copyright (C) secunet Security Networks AG
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -43,6 +44,11 @@ public final class Constants
 	 */
 	public static final int NAT_KEEPALIVE_MAX = 120;
 	public static final int NAT_KEEPALIVE_MIN = 10;
+
+	/**
+	 * Default port for proxy servers
+	 */
+	public static final int PROXY_PORT_DEFAULT = 8080;
 
 	/**
 	 * Preference key for default VPN profile

@@ -39,6 +39,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.strongswan.android.data.VpnProfile;
 import org.strongswan.android.data.VpnProfileDataSource;
+import org.strongswan.android.data.VpnProfileSource;
 import org.strongswan.android.data.VpnType;
 import org.strongswan.android.logic.VpnStateService;
 import org.strongswan.android.security.LocalCertificateStore;
@@ -116,7 +117,7 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
 
         //Bind service and open profile's DataSource (database)
         requireActivity().getApplicationContext().bindService(new Intent(requireActivity().getApplicationContext(), VpnStateService.class), mServiceConnection, Service.BIND_AUTO_CREATE);
-        mDataSource = new VpnProfileDataSource(getActivity());
+        mDataSource = new VpnProfileSource(getActivity());
 
         SharedPreferences sharedPreferences = requireContext().getSharedPreferences(getString(R.string.preferences_key), Context.MODE_PRIVATE);
         String username = sharedPreferences.getString(getString(R.string.preferences_username), "");
@@ -228,7 +229,7 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
             String username = sharedPreferences.getString(requireActivity().getString(R.string.preferences_username), "");
             if (!username.isEmpty()) {
                 UUID uuid = UUID.nameUUIDFromBytes(username.getBytes());
-                VpnProfileDataSource mDataSource = new VpnProfileDataSource(getActivity());
+                VpnProfileDataSource mDataSource = new VpnProfileSource(getActivity());
                 mDataSource.open();
                 VpnProfile profile = mDataSource.getVpnProfile(uuid);
                 if (profile.getFlags() != VpnProfile.FLAGS_SUPPRESS_CERT_REQS) {
@@ -1014,7 +1015,7 @@ public class ConnectFragment extends Fragment implements VpnStateService.VpnStat
             if (username.getBytes().length > 0) {
                 uuid = UUID.nameUUIDFromBytes(username.getBytes());
             }
-            VpnProfileDataSource mDataSource = new VpnProfileDataSource(getContext());
+            VpnProfileDataSource mDataSource = new VpnProfileSource(getActivity());
             mDataSource.open();
             VpnProfile profile = null;
             if (uuid != null) {

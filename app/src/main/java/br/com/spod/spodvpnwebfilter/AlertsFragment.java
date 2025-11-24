@@ -16,12 +16,16 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.strongswan.android.data.VpnProfile;
 import org.strongswan.android.data.VpnProfileDataSource;
+import org.strongswan.android.data.VpnProfileSource;
 
 import java.util.ArrayList;
 import java.util.Objects;
 import java.util.UUID;
 
 import androidx.annotation.NonNull;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.fragment.app.FragmentManager;
@@ -143,7 +147,7 @@ public class AlertsFragment extends Fragment
             if (username.getBytes().length > 0) {
                 uuid = UUID.nameUUIDFromBytes(username.getBytes());
             }
-            VpnProfileDataSource mDataSource = new VpnProfileDataSource(fragmentActivity);
+            VpnProfileDataSource mDataSource = new VpnProfileSource(fragmentActivity);
             mDataSource.open();
             VpnProfile profile = null;
             if (uuid != null) {
@@ -252,7 +256,7 @@ public class AlertsFragment extends Fragment
             if (username.getBytes().length > 0) {
                 uuid = UUID.nameUUIDFromBytes(username.getBytes());
             }
-            VpnProfileDataSource mDataSource = new VpnProfileDataSource(fragmentActivity);
+            VpnProfileDataSource mDataSource = new VpnProfileSource(fragmentActivity);
             mDataSource.open();
             VpnProfile profile = null;
             if (uuid != null) {

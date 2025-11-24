@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2012-2017 Tobias Brunner
- * HSR Hochschule fuer Technik Rapperswil
+ *
+ * Copyright (C) secunet Security Networks AG
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -388,7 +389,7 @@ METHOD(private_key_t, get_type, key_type_t,
 
 METHOD(private_key_t, decrypt, bool,
 	private_private_key_t *this, encryption_scheme_t scheme,
-	chunk_t crypto, chunk_t *plain)
+	void *params, chunk_t crypto, chunk_t *plain)
 {
 	DBG1(DBG_LIB, "private key decryption is currently not supported via JNI");
 	return FALSE;
@@ -434,16 +435,7 @@ METHOD(private_key_t, destroy, void,
 		JNIEnv *env;
 
 		androidjni_attach_thread(&env);
-		if (android_sdk_version == ANDROID_JELLY_BEAN)
-		{	/* there is a bug in JB that causes a SIGSEGV if the key object is
-			 * garbage collected so we intentionally leak the reference to it */
-			DBG1(DBG_LIB, "intentionally leaking private key reference due to "
-				 "a bug in the framework");
-		}
-		else
-		{
-			(*env)->DeleteGlobalRef(env, this->key);
-		}
+		(*env)->DeleteGlobalRef(env, this->key);
 		(*env)->DeleteGlobalRef(env, this->signature_class);
 		androidjni_detach_thread();
 		this->pubkey->destroy(this->pubkey);

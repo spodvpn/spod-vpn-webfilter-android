@@ -16,6 +16,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.strongswan.android.data.VpnProfile;
 import org.strongswan.android.data.VpnProfileDataSource;
+import org.strongswan.android.data.VpnProfileSource;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -90,7 +91,7 @@ class GlobalMethods
                 UUID uuid;
                 if (username.getBytes().length > 0) {
                     uuid = UUID.nameUUIDFromBytes(username.getBytes());
-                    VpnProfileDataSource mDataSource = new VpnProfileDataSource(mActivity);
+                    VpnProfileDataSource mDataSource = new VpnProfileSource(mActivity);
                     mDataSource.open();
                     profile = mDataSource.getVpnProfile(uuid);
                     mDataSource.close();

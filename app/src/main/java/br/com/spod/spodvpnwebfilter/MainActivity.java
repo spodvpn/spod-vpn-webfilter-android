@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 
 import android.os.Bundle;
+import android.os.Build;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -24,6 +25,7 @@ import com.google.common.collect.ImmutableList;
 
 import org.strongswan.android.data.VpnProfile;
 import org.strongswan.android.data.VpnProfileDataSource;
+import org.strongswan.android.data.VpnProfileSource;
 
 import java.util.List;
 import java.util.Locale;
@@ -36,10 +38,11 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
-
-import androidx.core.view.WindowInsetsCompat;
 
 public class MainActivity extends AppCompatActivity implements PurchasesUpdatedListener  {
 
@@ -103,11 +106,16 @@ public class MainActivity extends AppCompatActivity implements PurchasesUpdatedL
         bottomNavigation = findViewById(R.id.navigation);
         bottomNavigation.setOnItemSelectedListener(mOnNavigationItemSelectedListener);
 
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(android.R.id.content), (v, insets) -> {
-            Insets systemBarsInsets = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBarsInsets.left, systemBarsInsets.top, systemBarsInsets.right, systemBarsInsets.bottom);
-            return WindowInsetsCompat.CONSUMED;
-        });
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
+            WindowCompat.enableEdgeToEdge(getWindow());
+            WindowInsetsControllerCompat controller = WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+            controller.setAppearanceLightStatusBars(true);
+            ViewCompat.setOnApplyWindowInsetsListener(findViewById(android.R.id.content), (v, insets) -> {
+                Insets systemBarsInsets = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+                v.setPadding(systemBarsInsets.left, systemBarsInsets.top, systemBarsInsets.right, systemBarsInsets.bottom);
+                return WindowInsetsCompat.CONSUMED;
+            });
+        }
 
         //Open default main fragment
         openFragment(ConnectFragment.newInstance(), false, "ConnectFragment");
@@ -218,7 +226,7 @@ public class MainActivity extends AppCompatActivity implements PurchasesUpdatedL
             });
 
             //If there's a VPN profile installed, use it to determine the correct country
-            VpnProfileDataSource mDataSource = new VpnProfileDataSource(this);
+            VpnProfileDataSource mDataSource = new VpnProfileSource(this);
             SharedPreferences sharedPreferences = getSharedPreferences(getString(R.string.preferences_key), Context.MODE_PRIVATE);
             String username = sharedPreferences.getString(getString(R.string.preferences_username), "");
             VpnProfile user_profile = null;
