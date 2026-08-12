@@ -17,6 +17,7 @@ import com.android.billingclient.api.BillingClient;
 import com.android.billingclient.api.BillingClientStateListener;
 import com.android.billingclient.api.BillingFlowParams;
 import com.android.billingclient.api.BillingResult;
+import com.android.billingclient.api.PendingPurchasesParams;
 import com.android.billingclient.api.ProductDetails;
 import com.android.billingclient.api.Purchase;
 import com.android.billingclient.api.PurchasesUpdatedListener;
@@ -100,7 +101,8 @@ public class StoreFragment extends Fragment implements PurchasesUpdatedListener,
 
     private void setupBillingClient()
     {
-        billingClient = BillingClient.newBuilder(requireActivity()).setListener(this).enablePendingPurchases().build();
+        PendingPurchasesParams pendingPurchaseParams = PendingPurchasesParams.newBuilder().build();
+        billingClient = BillingClient.newBuilder(requireActivity()).setListener(this).enablePendingPurchases(pendingPurchaseParams).build();
 
         Log.v(TAG, "setupBillingClient: Begin");
         billingClient.startConnection(new BillingClientStateListener() {
@@ -135,7 +137,7 @@ public class StoreFragment extends Fragment implements PurchasesUpdatedListener,
                                     // Process the result
                                     if(billingResult.getResponseCode() == BillingClient.BillingResponseCode.OK) {
                                         Log.v(TAG, "setupBillingClient: querySkuDetailsAsync responseCode OK, proceeding...");
-                                        productsList = productDetailsList; //save list
+                                        productsList = productDetailsList.getProductDetailsList(); //save list
                                         adapter.reloadData(productsList, null); //reload recycler view
 
                                     } else {

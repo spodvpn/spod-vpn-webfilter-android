@@ -43,6 +43,7 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
+import com.android.billingclient.api.PendingPurchasesParams;
 
 public class MainActivity extends AppCompatActivity implements PurchasesUpdatedListener  {
 
@@ -274,7 +275,8 @@ public class MainActivity extends AppCompatActivity implements PurchasesUpdatedL
 
     private void setupBillingClient()
     {
-        billingClient = BillingClient.newBuilder(this).setListener(this).enablePendingPurchases().build();
+	    PendingPurchasesParams pendingPurchaseParams = PendingPurchasesParams.newBuilder().enableOneTimeProducts().build();
+        billingClient = BillingClient.newBuilder(this).setListener(this).enablePendingPurchases(pendingPurchaseParams).enableAutoServiceReconnection().build();
         billingClient.startConnection(new BillingClientStateListener() {
             @Override
             public void onBillingSetupFinished(@NonNull BillingResult result) {
