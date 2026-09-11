@@ -101,7 +101,7 @@ public class StoreFragment extends Fragment implements PurchasesUpdatedListener,
 
     private void setupBillingClient()
     {
-        PendingPurchasesParams pendingPurchaseParams = PendingPurchasesParams.newBuilder().build();
+        PendingPurchasesParams pendingPurchaseParams = PendingPurchasesParams.newBuilder().enableOneTimeProducts().build();
         billingClient = BillingClient.newBuilder(requireActivity()).setListener(this).enablePendingPurchases(pendingPurchaseParams).build();
 
         Log.v(TAG, "setupBillingClient: Begin");
